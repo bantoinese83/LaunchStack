@@ -1,4 +1,4 @@
 
-> @template/validation@1.0.0 typecheck /Users/monarchlabsinc./.gemini/antigravity-ide/scratch/enterprise-app-template/packages/validation
+> @template/validation@1.0.0 typecheck /Users/monarchlabsinc./Desktop/enterprise-app-template/packages/validation
 > tsc --noEmit
 

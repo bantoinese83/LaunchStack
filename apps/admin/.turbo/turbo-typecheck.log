@@ -1,4 +1,4 @@
 
-> @template/admin@1.0.0 typecheck /Users/monarchlabsinc./.gemini/antigravity-ide/scratch/enterprise-app-template/apps/admin
+> @template/admin@1.0.0 typecheck /Users/monarchlabsinc./Desktop/enterprise-app-template/apps/admin
 > tsc --noEmit
 
