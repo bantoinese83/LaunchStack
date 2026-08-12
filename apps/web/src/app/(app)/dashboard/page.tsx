@@ -5,16 +5,13 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button, Card, Badge, Modal, Input, StatsCard, Avatar } from '@template/ui';
 import { createSupabaseBrowserClient, DomainAPI } from '@template/api';
-import { Workspace, Profile, WorkspaceMember } from '@template/types';
+import { Workspace, Profile, WorkspaceMember, InvitableWorkspaceRole } from '@template/types';
 import { inviteMemberSchema } from '@template/validation';
 import { BrevoEmailService } from '@template/email';
 import {
   LayoutDashboard,
-  Users,
-  CreditCard,
   MessageSquare,
   LogOut,
-  Plus,
   Shield,
   Copy,
   Check,
@@ -34,9 +31,7 @@ export default function DashboardPage() {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteRole, setInviteRole] = useState<'workspace_admin' | 'workspace_member'>(
-    'workspace_member'
-  );
+  const [inviteRole, setInviteRole] = useState<InvitableWorkspaceRole>('workspace_member');
   const [wsName, setWsName] = useState('');
   const [modalError, setModalError] = useState<string | null>(null);
   const [copiedSlug, setCopiedSlug] = useState(false);
@@ -373,7 +368,7 @@ export default function DashboardPage() {
               <label className="block text-xs font-semibold text-slate-300 uppercase">Role</label>
               <select
                 value={inviteRole}
-                onChange={(e) => setInviteRole(e.target.value as any)}
+                onChange={(e) => setInviteRole(e.target.value as InvitableWorkspaceRole)}
                 className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200"
               >
                 <option value="workspace_member">Workspace Member</option>

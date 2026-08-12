@@ -5,9 +5,9 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button, Card, Badge, Modal, Input, Avatar } from '@template/ui';
 import { createSupabaseBrowserClient, DomainAPI } from '@template/api';
-import { FeedbackPost, Workspace } from '@template/types';
+import { FeedbackCategory, FeedbackPost, Workspace } from '@template/types';
 import { createFeedbackSchema } from '@template/validation';
-import { ThumbsUp, Plus, ArrowLeft, Search, Check, Sparkles, Filter } from 'lucide-react';
+import { ThumbsUp, Plus, ArrowLeft, Search, Check } from 'lucide-react';
 import { analytics } from '@template/analytics';
 
 export default function FeedbackBoardPage() {
@@ -18,7 +18,7 @@ export default function FeedbackBoardPage() {
   const [showModal, setShowModal] = useState(false);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [category, setCategory] = useState<'bug' | 'feature' | 'improvement'>('feature');
+  const [category, setCategory] = useState<FeedbackCategory>('feature');
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -285,7 +285,7 @@ export default function FeedbackBoardPage() {
               </label>
               <select
                 value={category}
-                onChange={(e) => setCategory(e.target.value as any)}
+                onChange={(e) => setCategory(e.target.value as FeedbackCategory)}
                 className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200"
               >
                 <option value="feature">Feature Request</option>

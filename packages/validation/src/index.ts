@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { FEEDBACK_CATEGORIES, FEEDBACK_STATUSES, INVITABLE_WORKSPACE_ROLES } from '@template/types';
 
 // AUTH SCHEMAS
 export const loginSchema = z.object({
@@ -46,7 +47,7 @@ export const updateWorkspaceSchema = z.object({
 
 export const inviteMemberSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
-  role: z.enum(['workspace_admin', 'workspace_member']),
+  role: z.enum(INVITABLE_WORKSPACE_ROLES),
 });
 
 // FEEDBACK SCHEMAS
@@ -60,12 +61,12 @@ export const createFeedbackSchema = z.object({
     .string()
     .min(10, 'Description must be at least 10 characters')
     .max(2000, 'Description too long'),
-  category: z.enum(['bug', 'feature', 'improvement']),
+  category: z.enum(FEEDBACK_CATEGORIES),
 });
 
 export const updateFeedbackStatusSchema = z.object({
   postId: z.string().uuid('Invalid post ID'),
-  status: z.enum(['under_review', 'planned', 'in_progress', 'completed', 'declined']),
+  status: z.enum(FEEDBACK_STATUSES),
 });
 
 // BILLING SCHEMAS

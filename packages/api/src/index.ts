@@ -1,6 +1,5 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import {
-  AuditLog,
   FeedbackCategory,
   FeedbackPost,
   FeedbackStatus,
@@ -67,7 +66,10 @@ export class DomainAPI {
       .select('workspace:workspaces(*)')
       .eq('user_id', userId);
     if (error) throw new Error(error.message);
-    return (data || []).map((item: any) => item.workspace) as Workspace[];
+    return (data ?? [])
+      .map((item) => item.workspace as Workspace | Workspace[] | null)
+      .flat()
+      .filter((workspace): workspace is Workspace => workspace != null);
   }
 
   async getWorkspaceBySlug(slug: string): Promise<Workspace | null> {

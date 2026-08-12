@@ -12,6 +12,7 @@ const nextConfig = {
     '@template/email',
     '@template/analytics',
     '@template/feature-flags',
+    '@template/kv',
   ],
   output: 'standalone',
   async headers() {

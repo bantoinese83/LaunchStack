@@ -1,13 +1,35 @@
-export type SystemRole = 'user' | 'super_admin';
+export const SYSTEM_ROLES = ['user', 'super_admin'] as const;
+export type SystemRole = (typeof SYSTEM_ROLES)[number];
 
-export type WorkspaceRole = 'workspace_owner' | 'workspace_admin' | 'workspace_member';
+export const WORKSPACE_ROLES = ['workspace_owner', 'workspace_admin', 'workspace_member'] as const;
+export type WorkspaceRole = (typeof WORKSPACE_ROLES)[number];
 
-export type SubscriptionStatus =
-  'incomplete' | 'incomplete_expired' | 'trialing' | 'active' | 'past_due' | 'canceled' | 'unpaid';
+/** Roles that can be assigned via invite (owners are created with the workspace). */
+export const INVITABLE_WORKSPACE_ROLES = ['workspace_admin', 'workspace_member'] as const;
+export type InvitableWorkspaceRole = (typeof INVITABLE_WORKSPACE_ROLES)[number];
 
-export type FeedbackCategory = 'bug' | 'feature' | 'improvement';
+export const SUBSCRIPTION_STATUSES = [
+  'incomplete',
+  'incomplete_expired',
+  'trialing',
+  'active',
+  'past_due',
+  'canceled',
+  'unpaid',
+] as const;
+export type SubscriptionStatus = (typeof SUBSCRIPTION_STATUSES)[number];
 
-export type FeedbackStatus = 'under_review' | 'planned' | 'in_progress' | 'completed' | 'declined';
+export const FEEDBACK_CATEGORIES = ['bug', 'feature', 'improvement'] as const;
+export type FeedbackCategory = (typeof FEEDBACK_CATEGORIES)[number];
+
+export const FEEDBACK_STATUSES = [
+  'under_review',
+  'planned',
+  'in_progress',
+  'completed',
+  'declined',
+] as const;
+export type FeedbackStatus = (typeof FEEDBACK_STATUSES)[number];
 
 export interface Profile {
   id: string;

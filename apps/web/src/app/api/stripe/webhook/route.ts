@@ -1,27 +1,48 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { createSupabaseAdminClient } from '@template/api';
-import { BrevoEmailService } from '@template/email';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_mock', {
-  apiVersion: '2024-04-10',
-});
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || 'whsec_mock';
+const STRIPE_API_VERSION = '2024-04-10' as const;
+
+function getStripeClient(): Stripe {
+  const secret = process.env.STRIPE_SECRET_KEY;
+  if (!secret) {
+    throw new Error('STRIPE_SECRET_KEY is not configured');
+  }
+  return new Stripe(secret, { apiVersion: STRIPE_API_VERSION });
+}
+
+/**
+ * Production always verifies. Local/test may skip only when no real webhook secret is configured.
+ */
+function mustVerifySignature(webhookSecret: string | undefined): boolean {
+  if (process.env.NODE_ENV === 'production') return true;
+  return Boolean(webhookSecret && webhookSecret !== 'whsec_mock');
+}
 
 export async function POST(req: Request) {
   const body = await req.text();
-  const signature = req.headers.get('stripe-signature') || '';
+  const signature = req.headers.get('stripe-signature');
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
   let event: Stripe.Event;
   try {
-    if (process.env.NODE_ENV === 'production' && webhookSecret !== 'whsec_mock') {
-      event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+    if (mustVerifySignature(webhookSecret)) {
+      if (!webhookSecret || webhookSecret === 'whsec_mock') {
+        console.error('[Webhook] STRIPE_WEBHOOK_SECRET is required in production');
+        return NextResponse.json({ error: 'Webhook not configured' }, { status: 500 });
+      }
+      if (!signature) {
+        return NextResponse.json({ error: 'Missing stripe-signature header' }, { status: 400 });
+      }
+      event = getStripeClient().webhooks.constructEvent(body, signature, webhookSecret);
     } else {
       event = JSON.parse(body) as Stripe.Event;
     }
-  } catch (err: any) {
-    console.error(`[Webhook Signature Verification Failed]: ${err.message}`);
-    return NextResponse.json({ error: `Webhook Error: ${err.message}` }, { status: 400 });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown webhook error';
+    console.error(`[Webhook Signature Verification Failed]: ${message}`);
+    return NextResponse.json({ error: `Webhook Error: ${message}` }, { status: 400 });
   }
 
   const supabaseAdmin = createSupabaseAdminClient();
@@ -33,7 +54,7 @@ export async function POST(req: Request) {
       const subscriptionId = session.subscription as string;
 
       if (workspaceId && subscriptionId) {
-        const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+        const subscription = await getStripeClient().subscriptions.retrieve(subscriptionId);
         await supabaseAdmin.from('subscriptions').upsert({
           workspace_id: workspaceId,
           stripe_subscription_id: subscriptionId,

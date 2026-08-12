@@ -6,6 +6,16 @@ export interface SendEmailPayload {
   textContent?: string;
 }
 
+/** Escape user-controlled values before interpolating into HTML email bodies. */
+export function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 export class BrevoEmailService {
   private apiKey: string;
   private senderEmail: string;
@@ -54,21 +64,25 @@ export class BrevoEmailService {
 
       const data = await response.json();
       return { success: true, messageId: data.messageId };
-    } catch (err: any) {
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown email error';
       console.error('[BrevoEmailService Error]', err);
-      return { success: false, error: err.message || 'Unknown email error' };
+      return { success: false, error: message };
     }
   }
 
-  // EMAIL TEMPLATES
-  async sendWelcomeEmail(to: string, name: string): Promise<any> {
+  async sendWelcomeEmail(
+    to: string,
+    name: string
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    const safeName = escapeHtml(name);
     return this.sendEmail({
       to,
       toName: name,
       subject: 'Welcome to LaunchStack!',
       htmlContent: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
-          <h2 style="color: #0f172a;">Welcome aboard, ${name}! 👋</h2>
+          <h2 style="color: #0f172a;">Welcome aboard, ${safeName}! 👋</h2>
           <p style="color: #475569; line-height: 1.6;">Thank you for joining LaunchStack. You can now create your workspace, invite team members, and get started.</p>
           <a href="https://launchstack.com/dashboard" style="display: inline-block; background: #2563eb; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; margin-top: 16px;">Go to Dashboard</a>
         </div>
@@ -81,28 +95,37 @@ export class BrevoEmailService {
     inviterName: string,
     workspaceName: string,
     inviteUrl: string
-  ): Promise<any> {
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    const safeInviter = escapeHtml(inviterName);
+    const safeWorkspace = escapeHtml(workspaceName);
+    const safeUrl = escapeHtml(inviteUrl);
     return this.sendEmail({
       to,
       subject: `You've been invited to join ${workspaceName} on LaunchStack`,
       htmlContent: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
           <h2 style="color: #0f172a;">Workspace Invitation</h2>
-          <p style="color: #475569; line-height: 1.6;"><strong>${inviterName}</strong> has invited you to collaborate in the workspace <strong>${workspaceName}</strong>.</p>
-          <a href="${inviteUrl}" style="display: inline-block; background: #16a34a; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; margin-top: 16px;">Accept Invitation</a>
+          <p style="color: #475569; line-height: 1.6;"><strong>${safeInviter}</strong> has invited you to collaborate in the workspace <strong>${safeWorkspace}</strong>.</p>
+          <a href="${safeUrl}" style="display: inline-block; background: #16a34a; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; margin-top: 16px;">Accept Invitation</a>
         </div>
       `,
     });
   }
 
-  async sendFeedbackStatusUpdate(to: string, postTitle: string, newStatus: string): Promise<any> {
+  async sendFeedbackStatusUpdate(
+    to: string,
+    postTitle: string,
+    newStatus: string
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    const safeTitle = escapeHtml(postTitle);
+    const safeStatus = escapeHtml(newStatus.replace(/_/g, ' '));
     return this.sendEmail({
       to,
       subject: `Update on feedback: "${postTitle}"`,
       htmlContent: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
           <h2 style="color: #0f172a;">Feedback Status Updated</h2>
-          <p style="color: #475569; line-height: 1.6;">The feedback item <strong>"${postTitle}"</strong> has been updated to status: <strong style="text-transform: capitalize; color: #2563eb;">${newStatus.replace('_', ' ')}</strong>.</p>
+          <p style="color: #475569; line-height: 1.6;">The feedback item <strong>"${safeTitle}"</strong> has been updated to status: <strong style="text-transform: capitalize; color: #2563eb;">${safeStatus}</strong>.</p>
         </div>
       `,
     });

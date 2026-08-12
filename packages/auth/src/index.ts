@@ -1,4 +1,4 @@
-import { SystemRole, WorkspaceMember, WorkspaceRole } from '@template/types';
+import { SystemRole, WorkspaceMember, WorkspaceRole, WORKSPACE_ROLES } from '@template/types';
 
 export const isSuperAdmin = (role?: SystemRole | null): boolean => {
   return role === 'super_admin';
@@ -13,15 +13,15 @@ export const isWorkspaceAdmin = (memberRole?: WorkspaceRole | null): boolean => 
 };
 
 export const isWorkspaceMember = (memberRole?: WorkspaceRole | null): boolean => {
-  return !!memberRole;
+  return !!memberRole && (WORKSPACE_ROLES as readonly string[]).includes(memberRole);
 };
 
 export const canManageBilling = (memberRole?: WorkspaceRole | null): boolean => {
-  return memberRole === 'workspace_owner';
+  return isWorkspaceOwner(memberRole);
 };
 
 export const canManageMembers = (memberRole?: WorkspaceRole | null): boolean => {
-  return memberRole === 'workspace_owner' || memberRole === 'workspace_admin';
+  return isWorkspaceAdmin(memberRole);
 };
 
 export const canModerateFeedback = (

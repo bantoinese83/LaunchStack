@@ -1,10 +1,21 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { createCheckoutSchema } from '@template/validation';
-import { createSupabaseAdminClient, DomainAPI } from '@template/api';
+import { createSupabaseAdminClient } from '@template/api';
 
-const stripeSecret = process.env.STRIPE_SECRET_KEY || 'sk_test_mock_key';
-const stripe = new Stripe(stripeSecret, { apiVersion: '2024-04-10' });
+const STRIPE_API_VERSION = '2024-04-10' as const;
+
+function getStripeClient(): Stripe {
+  const secret = process.env.STRIPE_SECRET_KEY;
+  if (!secret) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('STRIPE_SECRET_KEY is not configured');
+    }
+    // Local/dev fallback so the route can still be exercised without live Stripe keys
+    return new Stripe('sk_test_mock', { apiVersion: STRIPE_API_VERSION });
+  }
+  return new Stripe(secret, { apiVersion: STRIPE_API_VERSION });
+}
 
 export async function POST(req: Request) {
   try {
@@ -17,9 +28,8 @@ export async function POST(req: Request) {
 
     const { workspaceId, priceId } = validation.data;
     const adminSupabase = createSupabaseAdminClient();
-    const api = new DomainAPI(adminSupabase);
+    const stripe = getStripeClient();
 
-    // Retrieve workspace
     const { data: workspace, error: wsError } = await adminSupabase
       .from('workspaces')
       .select('*')
@@ -27,10 +37,9 @@ export async function POST(req: Request) {
       .single();
 
     if (wsError || !workspace) {
-      return NextResponse.json({ error: 'Workspace not found' }, { status: 44 });
+      return NextResponse.json({ error: 'Workspace not found' }, { status: 404 });
     }
 
-    // Create or retrieve Stripe Customer
     let stripeCustomerId = workspace.stripe_customer_id;
     if (!stripeCustomerId) {
       const customer = await stripe.customers.create({
@@ -44,20 +53,21 @@ export async function POST(req: Request) {
         .eq('id', workspaceId);
     }
 
-    // Create Stripe Checkout Session
+    const origin = req.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || '';
     const session = await stripe.checkout.sessions.create({
       customer: stripeCustomerId,
       mode: 'subscription',
       payment_method_types: ['card'],
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${req.headers.get('origin')}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${req.headers.get('origin')}/dashboard`,
+      success_url: `${origin}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/dashboard`,
       metadata: { workspace_id: workspaceId },
     });
 
     return NextResponse.json({ url: session.url });
-  } catch (err: any) {
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Internal server error';
     console.error('[Stripe Checkout Route Error]', err);
-    return NextResponse.json({ error: err.message || 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
