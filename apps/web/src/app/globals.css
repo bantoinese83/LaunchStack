@@ -57,14 +57,58 @@ body {
   }
 }
 
+@keyframes float-soft {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.atlas-ink-panel {
+  background-color: var(--ink);
+  background-image:
+    linear-gradient(
+      135deg,
+      transparent 0%,
+      transparent 48%,
+      rgba(15, 110, 86, 0.32) 48%,
+      rgba(15, 110, 86, 0.32) 50%,
+      transparent 50%
+    ),
+    radial-gradient(ellipse 80% 60% at 70% 40%, rgba(15, 110, 86, 0.18), transparent 55%);
+}
+
+.atlas-float {
+  animation: float-soft 7s ease-in-out infinite;
+}
+
+.atlas-float-delayed {
+  animation: float-soft 7s ease-in-out 1.2s infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .atlas-rule,
+  .atlas-float,
+  .atlas-float-delayed,
   .animate-\[rise_220ms_ease-out\],
   .animate-\[rise_350ms_ease-out\],
   .animate-\[rise_400ms_ease-out\],
   .animate-\[rise_500ms_ease-out\],
   .animate-\[rise_600ms_ease-out\],
-  .animate-\[rise_700ms_ease-out\] {
+  .animate-\[rise_700ms_ease-out\],
+  .animate-\[fade-in_800ms_ease-out\] {
     animation: none !important;
   }
 }
