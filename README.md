@@ -10,6 +10,7 @@
 [![Turborepo](https://img.shields.io/badge/Turborepo-Monorepo-EF4444?logo=turborepo)](https://turbo.build/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?logo=typescript)](https://www.typescriptlang.org/)
 [![Playwright](https://img.shields.io/badge/Playwright-E2E-2EAD33?logo=playwright)](https://playwright.dev/)
+[![Upstash](https://img.shields.io/badge/Upstash-Redis%20%26%20RateLimit-00E599?logo=upstash)](https://upstash.com/)
 
 _Stop rebuilding the same foundational boilerplate._ <br>
 _Start writing business logic on day one._
@@ -44,6 +45,7 @@ Sharing code across 3 separate apps is hard. LaunchStack solves this with hyper-
 - **`@template/auth`**: 🔐 Shared RBAC, permission matrices, and role assertions.
 - **`@template/validation`**: ✅ Zod schemas for API payload and form validations.
 - **`@template/feature-flags`**: 🚩 SaaS plan entitlements and tier limits.
+- **`@template/kv`**: ⚡ Edge Redis caching and API rate-limiting (via Upstash).
 - **`@template/email`**: ✉️ Transactional email templates (via Brevo).
 - **`@template/analytics`**: 📊 Event tracking schemas (via PostHog).
 - **`@template/config`**: ⚙️ Centralized ESLint, TS, and Env configurations.
@@ -63,7 +65,8 @@ We went the extra mile so you don't have to:
    - **E2E**: Playwright configured for deep web-flow verification.
 5. **🐛 Error Observability**: Fully integrated `@sentry/nextjs` for tracking unhandled exceptions on the Edge, Server, and Client.
 6. **🔒 Security Headers**: Hardened Next.js configs with strict Content-Security-Policy (CSP), HSTS, `X-Frame-Options`, and more to prevent XSS/Clickjacking.
-7. **🔎 Automated SEO**: Built-in `sitemap.ts` and `robots.ts` in the web app for instant Google indexing.
+7. **⚡ Edge Rate-Limiting & Caching**: `@template/kv` package powered by Upstash Redis and `@upstash/ratelimit` protecting Next.js API endpoints.
+8. **🔎 Automated SEO**: Built-in `sitemap.ts` and `robots.ts` in the web app for instant Google indexing.
 
 ---
 

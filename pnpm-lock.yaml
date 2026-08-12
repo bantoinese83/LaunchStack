@@ -59,6 +59,9 @@ importers:
       '@template/auth':
         specifier: workspace:*
         version: link:../../packages/auth
+      '@template/kv':
+        specifier: workspace:*
+        version: link:../../packages/kv
       '@template/types':
         specifier: workspace:*
         version: link:../../packages/types
@@ -199,6 +202,9 @@ importers:
       '@template/feature-flags':
         specifier: workspace:*
         version: link:../../packages/feature-flags
+      '@template/kv':
+        specifier: workspace:*
+        version: link:../../packages/kv
       '@template/types':
         specifier: workspace:*
         version: link:../../packages/types
@@ -347,6 +353,25 @@ importers:
       '@template/types':
         specifier: workspace:*
         version: link:../types
+    devDependencies:
+      '@template/config':
+        specifier: workspace:*
+        version: link:../config
+      '@types/node':
+        specifier: ^20.12.12
+        version: 20.19.43
+      typescript:
+        specifier: ^5.4.5
+        version: 5.9.3
+
+  packages/kv:
+    dependencies:
+      '@upstash/ratelimit':
+        specifier: ^1.1.3
+        version: 1.2.1
+      '@upstash/redis':
+        specifier: ^1.31.1
+        version: 1.38.2
     devDependencies:
       '@template/config':
         specifier: workspace:*
@@ -3010,6 +3035,16 @@ packages:
     resolution: {integrity: sha512-nAB74NfSNKknqQ1RrYj6uz8FcXEomu/MATJZxh/x+BArzN2U3JbOYC0APYzUIGhVY3m5hRxA8VPNdPBoG8txlA==}
     cpu: [x64]
     os: [win32]
+
+  '@upstash/core-analytics@0.0.9':
+    resolution: {integrity: sha512-9NXXxZ5y1/A/zqKLlVT7NsAWSggJfOjB0hG6Ffx29b4jbzHOiQVWB55h5+j2clT9Ib+mNPXn0iB5zN3aWLkICw==}
+    engines: {node: '>=16.0.0'}
+
+  '@upstash/ratelimit@1.2.1':
+    resolution: {integrity: sha512-o01lV1yFS5Fzj5KONZmNyVch/Qrlj785B2ob+kStUmxn8F6xXk7IHTQqVcHE+Ce3CmT/qQIwvMxDZftyJ5wYpQ==}
+
+  '@upstash/redis@1.38.2':
+    resolution: {integrity: sha512-RZ+JaRCVIS+ZTGnjOnDMr+/0aqDxsBb5rV6aW+Pys4SGELwr5lwE3UbLHRCHqMQ5Ulxj0b/CFBHfbmE175Otog==}
 
   '@vitejs/plugin-react@6.0.5':
     resolution: {integrity: sha512-BOVzne/NL162sMdResB25mUv+vWMF5NoAjNf09TeGlE7ZpszZWSD3winycicLJw72yeVsoCn/2kOhEuCvEShMA==}
@@ -6709,6 +6744,9 @@ packages:
     resolution: {integrity: sha512-nWJ91DjeOkej/TA8pXQ3myruKpKEYgqvpw9lz4OPHj/NWFNluYrjbz9j01CJ8yKQd2g4jFoOkINCTW2I5LEEyw==}
     engines: {node: '>= 0.4'}
 
+  uncrypto@0.1.3:
+    resolution: {integrity: sha512-Ql87qFHB3s/De2ClA9e0gsnS6zXG27SkTiSJwjCc9MebbfapQfuPzumMIUMi38ezPZVNFcHI9sUIepeQfw8J8Q==}
+
   undici-types@5.26.5:
     resolution: {integrity: sha512-JlCMO+ehdEIKqlFxk6IfVoAUVmgz7cU7zD/h9XZ0qzeosSHmUJVOzSQvvYSYWXkFXC+IfLKSIffhv0sVZup6pA==}
 
@@ -10276,6 +10314,18 @@ snapshots:
 
   '@unrs/resolver-binding-win32-x64-msvc@1.12.2':
     optional: true
+
+  '@upstash/core-analytics@0.0.9':
+    dependencies:
+      '@upstash/redis': 1.38.2
+
+  '@upstash/ratelimit@1.2.1':
+    dependencies:
+      '@upstash/core-analytics': 0.0.9
+
+  '@upstash/redis@1.38.2':
+    dependencies:
+      uncrypto: 0.1.3
 
   '@vitejs/plugin-react@6.0.5(babel-plugin-react-compiler@1.0.0)(vite@8.2.1(@types/node@20.19.43)(jiti@1.21.7)(terser@5.50.0)(yaml@2.9.0))':
     dependencies:
@@ -14824,6 +14874,8 @@ snapshots:
       has-bigints: 1.1.0
       has-symbols: 1.1.0
       which-boxed-primitive: 1.1.1
+
+  uncrypto@0.1.3: {}
 
   undici-types@5.26.5: {}
 

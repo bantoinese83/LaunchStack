@@ -18,6 +18,7 @@
     "@template/auth": "workspace:*",
     "@template/email": "workspace:*",
     "@template/feature-flags": "workspace:*",
+    "@template/kv": "workspace:*",
     "@template/types": "workspace:*",
     "@template/ui": "workspace:*",
     "@template/validation": "workspace:*",

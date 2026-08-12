@@ -14,6 +14,7 @@
     "@supabase/supabase-js": "^2.43.4",
     "@template/api": "workspace:*",
     "@template/auth": "workspace:*",
+    "@template/kv": "workspace:*",
     "@template/types": "workspace:*",
     "@template/ui": "workspace:*",
     "lucide-react": "^0.378.0",

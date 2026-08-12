@@ -1,34 +1,37 @@
 
-> @template/admin@1.0.0 build /Users/monarchlabsinc./.gemini/antigravity-ide/scratch/enterprise-app-template/apps/admin
+> @template/admin@1.0.0 build /Users/monarchlabsinc./Desktop/enterprise-app-template/apps/admin
 > next build
 
-  ▲ Next.js 14.2.35
-  - Experiments (use with caution):
-    · instrumentationHook
+▲ Next.js 16.3.0 (Turbopack)
+✓ Running next.config.mjs took 247ms
+- Experiments (use with caution):
+  · clientTraceMetadata
 
-   Creating an optimized production build ...
-[@sentry/nextjs] It appears you've configured a `sentry.server.config.ts` file. Please ensure to put this file's content into the `register()` function of a Next.js instrumentation file instead. To ensure correct functionality of the SDK, `Sentry.init` must be called inside of an instrumentation file. Learn more about setting up an instrumentation file in Next.js: https://nextjs.org/docs/app/building-your-application/optimizing/instrumentation. You can safely delete the `sentry.server.config.ts` file afterward.
-[@sentry/nextjs] It seems like you don't have a global error handler set up. It is recommended that you add a 'global-error.js' file with Sentry instrumentation so that React rendering errors are reported to Sentry. Read more: https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/#react-render-errors-in-app-router (you can suppress this warning by setting SENTRY_SUPPRESS_GLOBAL_ERROR_HANDLER_FILE_WARNING=1 as environment variable)
-[@sentry/nextjs] It appears you've configured a `sentry.edge.config.ts` file. Please ensure to put this file's content into the `register()` function of a Next.js instrumentation file instead. To ensure correct functionality of the SDK, `Sentry.init` must be called inside of an instrumentation file. Learn more about setting up an instrumentation file in Next.js: https://nextjs.org/docs/app/building-your-application/optimizing/instrumentation. You can safely delete the `sentry.edge.config.ts` file afterward.
-[@sentry/nextjs] DEPRECATION WARNING: It is recommended renaming your `sentry.client.config.ts` file, or moving its content to `instrumentation-client.ts`. When using Turbopack `sentry.client.config.ts` will no longer work. Read more about the `instrumentation-client.ts` file: https://nextjs.org/docs/app/api-reference/file-conventions/instrumentation-client
- ✓ Compiled successfully
-   Linting and checking validity of types ...
-   Collecting page data ...
-   Generating static pages (0/4) ...
-   Generating static pages (1/4) 
-   Generating static pages (2/4) 
-   Generating static pages (3/4) 
- ✓ Generating static pages (4/4)
-   Finalizing page optimization ...
-   Collecting build traces ...
+  Creating an optimized production build ...
+✓ Compiled successfully in 15.1s
+  Running next.config.js provided runAfterProductionCompile ...
+✓ Completed runAfterProductionCompile in 578ms
+  Running TypeScript ...
 
-Route (app)                              Size     First Load JS
-┌ ○ /                                    11 kB           169 kB
-└ ○ /_not-found                          1.03 kB         159 kB
-+ First Load JS shared by all            158 kB
-  ├ chunks/698-2cdef422f6ffcf9f.js       101 kB
-  ├ chunks/fe5bb071-d8cfdc0ecb0a16e5.js  53.8 kB
-  └ other shared chunks (total)          2.91 kB
+  We detected TypeScript in your project and reconfigured your tsconfig.json file for you.
+  The following suggested values were added to your tsconfig.json. These values can be changed to fit your project's needs:
+
+  	- include was updated to add '.next/dev/types/**/*.ts'
+
+  The following mandatory changes were made to your tsconfig.json:
+
+  	- moduleResolution was set to bundler (to match modern bundler resolution)
+  	- jsx was set to react-jsx (next.js uses the React automatic runtime)
+
+  Finished TypeScript in 1253ms ...
+  Collecting page data using 4 workers ...
+  Generating static pages using 4 workers (0/3) ...
+✓ Generating static pages using 4 workers (3/3) in 202ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+└ ○ /_not-found
 
 
 ○  (Static)  prerendered as static content
