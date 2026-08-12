@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { Button, Badge } from '@template/ui';
 import { ArrowRight, Check, ChevronDown } from 'lucide-react';
@@ -68,11 +69,11 @@ export default function MarketingLandingPage() {
         </div>
       </header>
 
-      {/* Hero — one composition: brand, headline, support, CTA */}
+      {/* Hero — brand, headline, support, CTA, product visual */}
       <section className="relative overflow-hidden border-b border-line">
-        <div className="absolute inset-y-0 right-0 hidden w-[42%] bg-ink md:block" aria-hidden />
+        <div className="absolute inset-y-0 right-0 hidden w-[48%] bg-ink md:block" aria-hidden />
         <div
-          className="absolute inset-y-0 right-0 hidden w-[42%] md:block"
+          className="absolute inset-y-0 right-0 hidden w-[48%] md:block"
           style={{
             backgroundImage:
               'linear-gradient(135deg, transparent 0%, transparent 48%, rgba(15,110,86,0.35) 48%, rgba(15,110,86,0.35) 50%, transparent 50%)',
@@ -80,7 +81,7 @@ export default function MarketingLandingPage() {
           aria-hidden
         />
 
-        <div className="relative mx-auto grid max-w-6xl gap-12 px-6 py-20 md:grid-cols-[1.15fr_0.85fr] md:py-28">
+        <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-6 py-16 md:grid-cols-[1fr_1.05fr] md:py-20 lg:py-24">
           <div className="animate-[rise_500ms_ease-out]">
             <p className="font-display text-sm font-semibold uppercase tracking-[0.22em] text-accent">
               LaunchStack
@@ -109,26 +110,45 @@ export default function MarketingLandingPage() {
             </div>
           </div>
 
-          <aside className="relative flex flex-col justify-end text-paper md:min-h-[320px] md:pl-10 md:py-4">
-            <div className="rounded-md border border-white/15 bg-ink p-6 md:border-0 md:bg-transparent md:p-0">
-              <p className="font-display text-2xl font-semibold leading-snug tracking-tight md:text-3xl">
-                Web. Admin. Mobile.
-                <span className="mt-2 block text-accent">One package graph.</span>
-              </p>
-              <dl className="mt-8 space-y-4 border-t border-white/15 pt-6 text-sm">
-                <div className="flex justify-between gap-4">
-                  <dt className="text-white/55">Runtime</dt>
-                  <dd className="font-medium">Next.js 16 · Expo 57</dd>
+          <aside className="relative flex justify-center md:min-h-[420px] md:justify-end md:pl-4">
+            <div className="relative flex w-full max-w-[420px] items-end justify-center gap-3 sm:gap-4 md:max-w-none md:justify-end">
+              <figure
+                className="relative z-10 w-[46%] max-w-[200px] animate-[rise_600ms_ease-out] md:w-[48%] md:max-w-[220px]"
+                style={{ animationDelay: '80ms' }}
+              >
+                <div className="overflow-hidden rounded-[1.35rem] border-[3px] border-ink bg-ink shadow-[0_24px_48px_-20px_rgba(0,0,0,0.55)] ring-1 ring-white/10 md:border-paper/20">
+                  <Image
+                    src="/marketing/signin-ios.png"
+                    alt="LaunchStack sign-in on iPhone"
+                    width={470}
+                    height={1024}
+                    className="h-auto w-full"
+                    priority
+                  />
                 </div>
-                <div className="flex justify-between gap-4">
-                  <dt className="text-white/55">Data</dt>
-                  <dd className="font-medium">Supabase + RLS</dd>
+                <figcaption className="mt-3 text-center font-display text-xs font-semibold uppercase tracking-[0.18em] text-muted md:text-paper/55">
+                  iOS
+                </figcaption>
+              </figure>
+
+              <figure
+                className="relative z-0 mb-6 w-[46%] max-w-[200px] animate-[rise_700ms_ease-out] md:mb-10 md:w-[48%] md:max-w-[220px]"
+                style={{ animationDelay: '160ms' }}
+              >
+                <div className="overflow-hidden rounded-[1.1rem] border-[3px] border-ink bg-ink shadow-[0_24px_48px_-20px_rgba(0,0,0,0.55)] ring-1 ring-white/10 md:border-paper/20">
+                  <Image
+                    src="/marketing/signin-android.png"
+                    alt="LaunchStack sign-in on Android"
+                    width={460}
+                    height={1024}
+                    className="h-auto w-full"
+                    priority
+                  />
                 </div>
-                <div className="flex justify-between gap-4">
-                  <dt className="text-white/55">Revenue</dt>
-                  <dd className="font-medium">Stripe fail-closed</dd>
-                </div>
-              </dl>
+                <figcaption className="mt-3 text-center font-display text-xs font-semibold uppercase tracking-[0.18em] text-muted md:text-paper/55">
+                  Android
+                </figcaption>
+              </figure>
             </div>
           </aside>
         </div>
