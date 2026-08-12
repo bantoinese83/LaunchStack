@@ -32,7 +32,10 @@ If you prefer Vercel over Docker:
 1. Connect the monorepo to Vercel.
 2. Set Root Directory for customer app to `apps/web`.
 3. Set Root Directory for admin portal to `apps/admin`.
-4. Configure environment variables in the Vercel Dashboard.
+4. Configure environment variables in the Vercel Dashboard. Required for billing:
+   - `STRIPE_SECRET_KEY`
+   - `STRIPE_WEBHOOK_SECRET` (must be the real endpoint signing secret in production — see [Security](./security.md))
+   - Optional for rate limiting: `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`
 
 ## Mobile App (`apps/mobile`) — Expo EAS Deployment
 

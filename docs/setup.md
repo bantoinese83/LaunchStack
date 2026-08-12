@@ -6,7 +6,7 @@ This guide walks you through setting up and running the full-stack monorepo (`La
 
 ## Prerequisites
 
-- **Node.js**: `v18.0.0` or higher
+- **Node.js**: `v22.0.0` or higher (matches GitHub Actions CI)
 - **pnpm**: `v9.0.0` or higher (`npm i -g pnpm`)
 - **Docker Desktop**: Required for local Supabase emulator
 - **Supabase CLI**: `brew install supabase/tap/supabase` (optional but recommended)
@@ -17,8 +17,8 @@ This guide walks you through setting up and running the full-stack monorepo (`La
 ## 1. Clone & Install Dependencies
 
 ```bash
-git clone https://github.com/your-org/launchstack-monorepo.git
-cd launchstack-monorepo
+git clone https://github.com/bantoinese83/LaunchStack.git
+cd LaunchStack
 pnpm install
 ```
 
@@ -39,8 +39,13 @@ NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
 BREVO_API_KEY=xkeysib-...
+UPSTASH_REDIS_REST_URL=https://...upstash.io
+UPSTASH_REDIS_REST_TOKEN=AXXX...
 ```
+
+> **Stripe note**: Local webhook fixtures may omit `STRIPE_WEBHOOK_SECRET` (unsigned JSON is allowed outside production). Production **must** set a real secret or the webhook route returns `500`.
 
 ---
 
@@ -49,13 +54,15 @@ BREVO_API_KEY=xkeysib-...
 Initialize and start the Supabase PostgreSQL local container:
 
 ```bash
-supabase start
+pnpm db:start
+# or: supabase start
 ```
 
 Run migrations and insert seed data:
 
 ```bash
-supabase db reset
+pnpm db:reset
+# or: supabase db reset
 ```
 
 ---

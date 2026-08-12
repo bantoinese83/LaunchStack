@@ -15,6 +15,30 @@ Row Level Security is enabled on all core database tables (`profiles`, `workspac
 
 - Never commit `.env` or production service role keys to source control.
 - Validate environment variables at build time using `@template/config`.
+- Production Stripe routes require real secrets:
+  - `STRIPE_SECRET_KEY` — checkout fails closed if missing in production.
+  - `STRIPE_WEBHOOK_SECRET` — webhooks always verify signatures in production; a missing or mock secret returns `500` instead of accepting unsigned payloads.
+
+## Stripe Webhook Verification
+
+The webhook handler in `apps/web/src/app/api/stripe/webhook/route.ts` is fail-closed:
+
+| Environment  | `STRIPE_WEBHOOK_SECRET` | Behavior                                        |
+| ------------ | ----------------------- | ----------------------------------------------- |
+| `production` | Missing / `whsec_mock`  | Reject with `500` (not configured)              |
+| `production` | Real secret             | Require `stripe-signature` and `constructEvent` |
+| Local / test | Missing or `whsec_mock` | Allow unsigned JSON for fixture testing         |
+| Local / test | Real secret             | Verify signatures the same as production        |
+
+Never deploy production (or preview treated as production) without a real webhook secret from the Stripe Dashboard.
+
+## Email HTML Escaping
+
+`@template/email` escapes user-controlled values (`escapeHtml`) before interpolating names, workspace titles, invite URLs, and feedback titles into HTML bodies. Prefer that helper whenever adding new transactional templates.
+
+## Edge Rate Limiting
+
+`apps/web/src/proxy.ts` applies `@template/kv` rate limiters to `/api/*`. Auth and Stripe paths use the stricter `authRateLimiter`; other API routes use `apiRateLimiter`. Configure `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` in deployed environments (without them, limiters no-op allow-all for local DX).
 
 ## Application Security Headers
 

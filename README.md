@@ -43,13 +43,13 @@ Sharing code across 3 separate apps is hard. LaunchStack solves this with hyper-
 - **`@template/mobile-ui`**: 📱 Mobile-optimized UI components for Expo.
 - **`@template/api`**: 🔌 Strongly-typed Supabase client factories and data fetchers.
 - **`@template/auth`**: 🔐 Shared RBAC, permission matrices, and role assertions.
-- **`@template/validation`**: ✅ Zod schemas for API payload and form validations.
+- **`@template/validation`**: ✅ Zod schemas for API payload and form validations (imports enum constants from `@template/types`).
 - **`@template/feature-flags`**: 🚩 SaaS plan entitlements and tier limits.
 - **`@template/kv`**: ⚡ Edge Redis caching and API rate-limiting (via Upstash).
-- **`@template/email`**: ✉️ Transactional email templates (via Brevo).
+- **`@template/email`**: ✉️ Transactional email templates (via Brevo) with HTML escaping for user-controlled fields.
 - **`@template/analytics`**: 📊 Event tracking schemas (via PostHog).
 - **`@template/config`**: ⚙️ Centralized ESLint, TS, and Env configurations.
-- **`@template/types`**: 🔠 Domain-level TypeScript interfaces.
+- **`@template/types`**: 🔠 Domain-level TypeScript interfaces and shared `as const` enum arrays (single source of truth for roles/statuses).
 
 ---
 
@@ -67,6 +67,8 @@ We went the extra mile so you don't have to:
 6. **🔒 Security Headers**: Hardened Next.js configs with strict Content-Security-Policy (CSP), HSTS, `X-Frame-Options`, and more to prevent XSS/Clickjacking.
 7. **⚡ Edge Rate-Limiting & Caching**: `@template/kv` package powered by Upstash Redis and `@upstash/ratelimit` protecting Next.js API endpoints.
 8. **🔎 Automated SEO**: Built-in `sitemap.ts` and `robots.ts` in the web app for instant Google indexing.
+9. **💳 Fail-Closed Billing Webhooks**: Stripe signatures are always verified in production; missing `STRIPE_WEBHOOK_SECRET` returns 500 instead of accepting forged events.
+10. **🔠 Shared Domain Enums**: Roles, feedback categories, and statuses live once in `@template/types` and are consumed by Zod in `@template/validation` — no string-literal drift.
 
 ---
 
@@ -76,7 +78,7 @@ Ready to blast off? Let's get your local environment running.
 
 ### 1️⃣ Prerequisites
 
-- **Node.js**: `v18+`
+- **Node.js**: `v22+` (matches CI)
 - **Package Manager**: pnpm `v9+` (`npm install -g pnpm`)
 - **Docker**: For running Supabase locally.
 
@@ -104,7 +106,7 @@ pnpm db:start
 cp .env.example .env
 ```
 
-_(Populate your `.env` with Stripe, Brevo, or PostHog keys if you plan to test those integrations locally)._
+_(Populate your `.env` with Stripe — including `STRIPE_WEBHOOK_SECRET` for production — Brevo, PostHog, or Upstash keys if you plan to test those integrations.)_
 
 ### 5️⃣ Ignite the Engines! 🏎️
 
