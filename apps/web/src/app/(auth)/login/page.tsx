@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Button, Card, Input } from '@template/ui';
+import { Alert, BrandMark, Button, Card, Input } from '@template/ui';
 import { createSupabaseBrowserClient } from '@template/api';
 import { loginSchema } from '@template/validation';
 
@@ -47,21 +47,19 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-paper atlas-grain p-6">
-      <Card className="w-full max-w-md p-8">
+      <Card className="w-full max-w-md p-8 animate-[rise_400ms_ease-out]">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-11 w-11 items-center justify-center rounded-sm bg-ink font-display text-lg font-bold text-paper">
-            LS
-          </div>
+          <BrandMark className="mx-auto mb-4" />
           <h1 className="font-display text-2xl font-semibold tracking-tight text-ink">
             Welcome back
           </h1>
-          <p className="mt-1 text-sm text-muted">Sign in to your LaunchStack workspace</p>
+          <p className="mt-1.5 text-sm text-muted">Sign in to your LaunchStack workspace</p>
         </div>
 
         {error && (
-          <div className="mb-6 rounded-md border border-red-200 bg-red-50 p-3 text-center text-xs text-danger">
+          <Alert className="mb-6" variant="error">
             {error}
-          </div>
+          </Alert>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
@@ -69,6 +67,7 @@ export default function LoginPage() {
             id="email"
             label="Email Address"
             type="email"
+            autoComplete="email"
             placeholder="alex@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -79,6 +78,7 @@ export default function LoginPage() {
             id="password"
             label="Password"
             type="password"
+            autoComplete="current-password"
             placeholder="••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -90,12 +90,12 @@ export default function LoginPage() {
           </Button>
         </form>
 
-        <div className="mt-8 text-center text-xs text-muted">
+        <p className="mt-8 text-center text-xs text-muted">
           Don&apos;t have an account?{' '}
           <Link href="/signup" className="font-semibold text-accent hover:text-accent-hover">
             Create an account
           </Link>
-        </div>
+        </p>
       </Card>
     </div>
   );

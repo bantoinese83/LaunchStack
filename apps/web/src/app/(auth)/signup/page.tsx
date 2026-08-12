@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Button, Card, Input } from '@template/ui';
+import { Alert, BrandMark, Button, Card, Input } from '@template/ui';
 import { createSupabaseBrowserClient } from '@template/api';
 import { signupSchema } from '@template/validation';
 import { analytics } from '@template/analytics';
@@ -46,7 +46,6 @@ export default function SignupPage() {
           { name: 'signup_completed', properties: { user_id: data.user.id, email } },
           data.user.id
         );
-        // Server route owns Brevo — client never sees BREVO_API_KEY
         void fetch('/api/email/welcome', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -64,27 +63,26 @@ export default function SignupPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-paper atlas-grain p-6">
-      <Card className="w-full max-w-md p-8">
+      <Card className="w-full max-w-md p-8 animate-[rise_400ms_ease-out]">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-11 w-11 items-center justify-center rounded-sm bg-ink font-display text-lg font-bold text-paper">
-            LS
-          </div>
+          <BrandMark className="mx-auto mb-4" />
           <h1 className="font-display text-2xl font-semibold tracking-tight text-ink">
             Create an account
           </h1>
-          <p className="mt-1 text-sm text-muted">Start building with LaunchStack</p>
+          <p className="mt-1.5 text-sm text-muted">Start building with LaunchStack</p>
         </div>
 
         {error && (
-          <div className="mb-6 rounded-lg bg-red-50 border border-red-200 p-3 text-xs text-danger text-center">
+          <Alert className="mb-6" variant="error">
             {error}
-          </div>
+          </Alert>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <Input
             id="fullName"
             label="Full Name"
+            autoComplete="name"
             placeholder="Alex Founder"
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
@@ -95,6 +93,7 @@ export default function SignupPage() {
             id="email"
             label="Email Address"
             type="email"
+            autoComplete="email"
             placeholder="alex@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -105,7 +104,9 @@ export default function SignupPage() {
             id="password"
             label="Password"
             type="password"
+            autoComplete="new-password"
             placeholder="Minimum 8 characters"
+            helperText="At least 8 characters"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
@@ -116,12 +117,12 @@ export default function SignupPage() {
           </Button>
         </form>
 
-        <div className="mt-8 text-center text-xs text-muted">
+        <p className="mt-8 text-center text-xs text-muted">
           Already have an account?{' '}
           <Link href="/login" className="font-semibold text-accent hover:text-accent-hover">
             Sign in
           </Link>
-        </div>
+        </p>
       </Card>
     </div>
   );

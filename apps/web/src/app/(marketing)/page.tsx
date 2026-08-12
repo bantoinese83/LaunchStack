@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Button, Badge } from '@template/ui';
+import { Button, Badge, BrandMark } from '@template/ui';
 import { ArrowRight, Check, ChevronDown } from 'lucide-react';
 
 export default function MarketingLandingPage() {
@@ -33,9 +33,10 @@ export default function MarketingLandingPage() {
       <header className="sticky top-0 z-50 border-b border-line bg-paper/90 backdrop-blur-sm">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
           <Link href="/" className="group flex items-center gap-3">
-            <span className="flex h-8 w-8 items-center justify-center rounded-sm bg-ink font-display text-sm font-bold text-paper transition-transform duration-200 group-hover:-rotate-3">
-              LS
-            </span>
+            <BrandMark
+              size="sm"
+              className="transition-transform duration-200 group-hover:-rotate-3"
+            />
             <span className="font-display text-lg font-semibold tracking-tight">LaunchStack</span>
           </Link>
 
@@ -61,7 +62,7 @@ export default function MarketingLandingPage() {
               </Button>
             </Link>
             <Link href="/signup">
-              <Button variant="primary" size="sm">
+              <Button variant="primary" size="sm" className="hidden sm:inline-flex">
                 Start building
               </Button>
             </Link>
@@ -286,9 +287,7 @@ export default function MarketingLandingPage() {
       <footer className="mt-auto border-t border-line bg-surface py-10 text-sm text-muted">
         <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-6 px-6 sm:flex-row sm:items-center">
           <div className="flex items-center gap-2">
-            <span className="flex h-6 w-6 items-center justify-center rounded-sm bg-ink font-display text-[10px] font-bold text-paper">
-              LS
-            </span>
+            <BrandMark size="sm" />
             <span className="font-medium text-ink">LaunchStack</span>
           </div>
           <div className="flex gap-6">

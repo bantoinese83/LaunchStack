@@ -60,7 +60,11 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .atlas-rule,
   .animate-\[rise_220ms_ease-out\],
-  .animate-\[rise_500ms_ease-out\] {
+  .animate-\[rise_350ms_ease-out\],
+  .animate-\[rise_400ms_ease-out\],
+  .animate-\[rise_500ms_ease-out\],
+  .animate-\[rise_600ms_ease-out\],
+  .animate-\[rise_700ms_ease-out\] {
     animation: none !important;
   }
 }

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button, Card, Input } from '@template/ui';
+import { Alert, BrandMark, Button, Card, Input } from '@template/ui';
 import { createSupabaseBrowserClient, DomainAPI } from '@template/api';
 import { createWorkspaceSchema } from '@template/validation';
 import { analytics } from '@template/analytics';
@@ -66,22 +66,26 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-paper p-6">
-      <Card className="w-full max-w-lg p-8 border-line">
-        <div className="text-center mb-8">
-          <span className="text-xs font-semibold uppercase tracking-wider text-accent">
-            Step 1 of 2
-          </span>
-          <h1 className="text-2xl font-semibold text-ink mt-1">Create Your Workspace</h1>
-          <p className="text-muted text-sm mt-1">
+    <div className="flex min-h-screen items-center justify-center bg-paper atlas-grain p-6">
+      <Card className="w-full max-w-lg p-8 animate-[rise_400ms_ease-out]">
+        <div className="mb-8 text-center">
+          <BrandMark className="mx-auto mb-4" />
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-accent">
+            Step 1 of 1
+          </p>
+          <div className="mx-auto mt-3 mb-4 h-[3px] w-12 bg-accent" aria-hidden />
+          <h1 className="font-display text-2xl font-semibold tracking-tight text-ink">
+            Create your workspace
+          </h1>
+          <p className="mt-1.5 text-sm leading-relaxed text-muted">
             Workspaces isolate team data, members, and billing.
           </p>
         </div>
 
         {error && (
-          <div className="mb-6 rounded-lg bg-red-50 border border-red-200 p-3 text-xs text-danger text-center">
+          <Alert className="mb-6" variant="error">
             {error}
-          </div>
+          </Alert>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
@@ -98,6 +102,7 @@ export default function OnboardingPage() {
             id="slug"
             label="Workspace URL Slug"
             placeholder="acme-corp"
+            helperText="Used in invite links and tenant URLs"
             value={slug}
             onChange={(e) => setSlug(e.target.value)}
             required

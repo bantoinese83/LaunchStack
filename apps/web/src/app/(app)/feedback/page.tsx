@@ -3,11 +3,21 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Button, Card, Badge, Modal, Input } from '@template/ui';
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  EmptyState,
+  Input,
+  Modal,
+  Toast,
+  fieldSelectClassName,
+} from '@template/ui';
 import { createSupabaseBrowserClient, DomainAPI } from '@template/api';
 import { FeedbackCategory, FeedbackPost, FEEDBACK_CATEGORIES } from '@template/types';
 import { createFeedbackSchema } from '@template/validation';
-import { ThumbsUp, Plus, ArrowLeft, Search, Check } from 'lucide-react';
+import { ThumbsUp, Plus, ArrowLeft, Search } from 'lucide-react';
 import { analytics } from '@template/analytics';
 
 const FEEDBACK_FILTERS = ['all', ...FEEDBACK_CATEGORIES] as const;
@@ -31,6 +41,7 @@ export default function FeedbackBoardPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -83,13 +94,13 @@ export default function FeedbackBoardPage() {
         prev.map((p) => (p.id === postId ? { ...p, upvotes_count: p.upvotes_count + 1 } : p))
       );
 
-      showToast('Upvote recorded!');
+      showToast('Upvote recorded');
       analytics.track(
         { name: 'feedback_upvoted', properties: { post_id: postId } },
         session.user.id
       );
     } catch {
-      showToast('You have already upvoted this item!');
+      showToast('You have already upvoted this item');
     }
   };
 
@@ -110,6 +121,7 @@ export default function FeedbackBoardPage() {
     }
 
     try {
+      setIsSubmitting(true);
       const supabase = createSupabaseBrowserClient();
       const {
         data: { session },
@@ -129,7 +141,7 @@ export default function FeedbackBoardPage() {
       setShowModal(false);
       setTitle('');
       setDescription('');
-      showToast('Feedback submitted to roadmap!');
+      showToast('Feedback submitted to roadmap');
 
       analytics.track(
         {
@@ -140,6 +152,8 @@ export default function FeedbackBoardPage() {
       );
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to submit feedback');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -152,55 +166,54 @@ export default function FeedbackBoardPage() {
   });
 
   return (
-    <div className="min-h-screen bg-paper text-ink p-8">
-      {toastMessage && (
-        <div className="fixed top-5 right-5 z-50 rounded-lg bg-accent-soft border border-accent/20 text-success px-4 py-3 text-sm shadow-xl flex items-center gap-2 animate-in slide-in-from-top-2">
-          <Check className="h-4 w-4" /> {toastMessage}
-        </div>
-      )}
+    <div className="min-h-screen bg-paper atlas-grain p-6 text-ink md:p-8">
+      {toastMessage && <Toast message={toastMessage} onDismiss={() => setToastMessage(null)} />}
 
-      <div className="mx-auto max-w-5xl">
+      <div className="mx-auto max-w-5xl animate-[rise_400ms_ease-out]">
         <Link
           href="/dashboard"
-          className="inline-flex items-center text-sm text-muted hover:text-ink mb-6"
+          className="mb-6 inline-flex items-center text-sm text-muted transition-colors hover:text-ink"
         >
-          <ArrowLeft className="h-4 w-4 mr-2" /> Back to Dashboard
+          <ArrowLeft className="mr-2 h-4 w-4" /> Back to dashboard
         </Link>
 
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-center">
           <div>
-            <h1 className="text-3xl font-semibold text-ink">Customer Feedback & Roadmap</h1>
-            <p className="text-muted text-sm mt-1">
+            <h1 className="font-display text-3xl font-semibold tracking-tight text-ink">
+              Feedback & roadmap
+            </h1>
+            <p className="mt-1.5 text-sm text-muted">
               Submit ideas, upvote features, and track status updates.
             </p>
           </div>
 
           <Button variant="primary" onClick={() => setShowModal(true)} className="gap-2">
-            <Plus className="h-4 w-4" /> Submit Idea
+            <Plus className="h-4 w-4" /> Submit idea
           </Button>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8 bg-surface p-4 rounded-md border border-line">
-          <div className="relative w-full sm:w-72">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted" />
+        <div className="mb-6 flex flex-col items-stretch justify-between gap-4 rounded-md border border-line bg-surface p-4 sm:flex-row sm:items-center">
+          <div className="relative w-full sm:max-w-xs">
+            <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-muted" />
             <input
-              type="text"
+              type="search"
               placeholder="Search feedback..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 rounded-lg bg-paper border border-line text-sm text-ink placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-accent"
+              className="h-10 w-full rounded-md border border-line bg-paper py-2 pl-9 pr-3 text-sm text-ink placeholder:text-muted/65 transition-colors focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
             />
           </div>
 
-          <div className="flex items-center space-x-2 w-full sm:w-auto overflow-x-auto">
+          <div className="flex items-center gap-1.5 overflow-x-auto">
             {FEEDBACK_FILTERS.map((cat) => (
               <button
                 key={cat}
+                type="button"
                 onClick={() => setFilterCategory(cat)}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-lg capitalize transition-colors ${
+                className={`rounded-md px-3 py-1.5 text-xs font-semibold capitalize transition-colors ${
                   filterCategory === cat
-                    ? 'bg-accent text-ink shadow-sm'
-                    : 'bg-paper text-muted border border-line hover:text-ink'
+                    ? 'bg-accent text-white'
+                    : 'border border-line bg-paper text-muted hover:text-ink'
                 }`}
               >
                 {cat}
@@ -210,33 +223,40 @@ export default function FeedbackBoardPage() {
         </div>
 
         {isLoading ? (
-          <div className="py-12 text-center text-muted">Loading roadmap items...</div>
+          <div className="py-16 text-center text-sm text-muted">Loading roadmap items…</div>
         ) : filteredPosts.length === 0 ? (
-          <Card className="text-center py-12">
-            <p className="text-muted">No feedback items match your current filter.</p>
-            <Button variant="outline" className="mt-4" onClick={() => setShowModal(true)}>
-              Be the first to submit feedback
-            </Button>
-          </Card>
+          <EmptyState
+            title="No matching feedback"
+            description="Try another filter, or be the first to submit an idea."
+            action={
+              <Button variant="outline" size="sm" onClick={() => setShowModal(true)}>
+                Submit idea
+              </Button>
+            }
+          />
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {filteredPosts.map((post) => (
               <Card
                 key={post.id}
-                className="flex items-start justify-between p-6 hover:border-accent/40 transition-colors"
+                className="flex items-start justify-between p-5 transition-colors hover:border-ink/25"
               >
-                <div className="flex items-start space-x-4">
+                <div className="flex items-start gap-4">
                   <button
+                    type="button"
                     onClick={() => handleUpvote(post.id)}
-                    className="flex flex-col items-center justify-center h-14 w-12 rounded-md bg-paper border border-line hover:border-accent text-muted hover:text-accent transition-all active:scale-95 shadow-inner"
+                    className="flex h-14 w-12 flex-col items-center justify-center rounded-md border border-line bg-paper text-muted transition-all hover:border-accent hover:text-accent active:scale-95"
+                    aria-label={`Upvote ${post.title}`}
                   >
                     <ThumbsUp className="h-4 w-4" />
-                    <span className="text-xs font-semibold mt-1">{post.upvotes_count}</span>
+                    <span className="mt-1 text-xs font-semibold">{post.upvotes_count}</span>
                   </button>
 
                   <div>
-                    <div className="flex items-center space-x-3 mb-1">
-                      <h3 className="text-lg font-semibold text-ink">{post.title}</h3>
+                    <div className="mb-1.5 flex flex-wrap items-center gap-2">
+                      <h3 className="font-display text-lg font-semibold tracking-tight text-ink">
+                        {post.title}
+                      </h3>
                       <Badge
                         variant={
                           post.status === 'completed'
@@ -246,14 +266,12 @@ export default function FeedbackBoardPage() {
                               : 'warning'
                         }
                       >
-                        {post.status.replace('_', ' ')}
+                        {post.status.replaceAll('_', ' ')}
                       </Badge>
                     </div>
-                    <p className="text-muted text-sm leading-relaxed">{post.description}</p>
-                    <div className="flex items-center space-x-4 mt-3">
-                      <Badge variant="default" className="text-[10px]">
-                        {post.category}
-                      </Badge>
+                    <p className="text-sm leading-relaxed text-muted">{post.description}</p>
+                    <div className="mt-3 flex items-center gap-3">
+                      <Badge variant="default">{post.category}</Badge>
                       <span className="text-xs text-muted">
                         {new Date(post.created_at).toLocaleDateString()}
                       </span>
@@ -267,11 +285,18 @@ export default function FeedbackBoardPage() {
 
         <Modal
           isOpen={showModal}
-          onClose={() => setShowModal(false)}
-          title="Submit New Idea or Bug"
+          onClose={() => {
+            setShowModal(false);
+            setError(null);
+          }}
+          title="Submit new idea or bug"
           description="Contribute to the public product roadmap."
         >
-          {error && <div className="mb-4 text-xs text-danger">{error}</div>}
+          {error && (
+            <Alert className="mb-4" variant="error">
+              {error}
+            </Alert>
+          )}
 
           <form onSubmit={handleCreateFeedback} className="space-y-4">
             <Input
@@ -282,12 +307,14 @@ export default function FeedbackBoardPage() {
               required
             />
 
-            <div className="space-y-1">
-              <label className="block text-xs font-semibold text-muted uppercase">Category</label>
+            <div className="space-y-1.5">
+              <label className="block text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">
+                Category
+              </label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value as FeedbackCategory)}
-                className="w-full rounded-lg border border-line bg-paper px-3 py-2 text-sm text-ink"
+                className={fieldSelectClassName}
               >
                 {FEEDBACK_CATEGORIES.map((cat) => (
                   <option key={cat} value={cat}>
@@ -297,26 +324,33 @@ export default function FeedbackBoardPage() {
               </select>
             </div>
 
-            <div className="space-y-1">
-              <label className="block text-xs font-semibold text-muted uppercase">
+            <div className="space-y-1.5">
+              <label className="block text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">
                 Description
               </label>
               <textarea
                 rows={4}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Provide context and why this feature is valuable..."
-                className="w-full rounded-lg border border-line bg-paper p-3 text-sm text-ink placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-accent"
+                placeholder="Provide context and why this is valuable…"
+                className="w-full rounded-md border border-line bg-surface p-3 text-sm text-ink placeholder:text-muted/65 transition-colors focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
                 required
               />
             </div>
 
-            <div className="flex justify-end space-x-3 pt-4">
-              <Button variant="ghost" type="button" onClick={() => setShowModal(false)}>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button
+                variant="ghost"
+                type="button"
+                onClick={() => {
+                  setShowModal(false);
+                  setError(null);
+                }}
+              >
                 Cancel
               </Button>
-              <Button variant="primary" type="submit">
-                Submit Idea
+              <Button variant="primary" type="submit" isLoading={isSubmitting}>
+                Submit idea
               </Button>
             </div>
           </form>

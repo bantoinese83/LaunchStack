@@ -1,7 +1,15 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import { useRouter } from 'expo-router';
-import { NativeButton, NativeCard, NativeInput, theme } from '@template/mobile-ui';
+import {
+  NativeAlert,
+  NativeBrandMark,
+  NativeButton,
+  NativeCard,
+  NativeInput,
+  NativeScreen,
+  theme,
+} from '@template/mobile-ui';
 import { createSupabaseBrowserClient } from '@template/api';
 import { loginSchema } from '@template/validation';
 
@@ -35,15 +43,13 @@ export default function MobileLoginScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <NativeScreen style={styles.container}>
       <NativeCard style={styles.card}>
-        <View style={styles.logoBadge}>
-          <Text style={styles.logoText}>LS</Text>
-        </View>
+        <NativeBrandMark />
         <Text style={styles.title}>LaunchStack</Text>
         <Text style={styles.subtitle}>Sign in to your workspace</Text>
 
-        {error && <Text style={styles.errorBanner}>{error}</Text>}
+        {error ? <NativeAlert message={error} /> : null}
 
         <NativeInput
           label="Email Address"
@@ -52,6 +58,8 @@ export default function MobileLoginScreen() {
           placeholder="alex@example.com"
           keyboardType="email-address"
           autoCapitalize="none"
+          autoCorrect={false}
+          textContentType="emailAddress"
         />
 
         <NativeInput
@@ -60,6 +68,7 @@ export default function MobileLoginScreen() {
           onChangeText={setPassword}
           placeholder="••••••••"
           secureTextEntry
+          textContentType="password"
         />
 
         <NativeButton
@@ -69,60 +78,33 @@ export default function MobileLoginScreen() {
           style={styles.btn}
         />
       </NativeCard>
-    </View>
+    </NativeScreen>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: theme.paper,
     justifyContent: 'center',
     padding: 20,
   },
   card: {
     alignItems: 'center',
   },
-  logoBadge: {
-    width: 44,
-    height: 44,
-    borderRadius: 4,
-    backgroundColor: theme.ink,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 14,
-  },
-  logoText: {
-    color: theme.paper,
-    fontWeight: '700',
-    fontSize: 16,
-  },
   title: {
     color: theme.ink,
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: '700',
-    letterSpacing: -0.4,
+    letterSpacing: -0.5,
+    marginTop: 14,
   },
   subtitle: {
     color: theme.muted,
     fontSize: 14,
-    marginBottom: 20,
-    marginTop: 4,
-  },
-  errorBanner: {
-    color: theme.danger,
-    backgroundColor: '#FEF3F2',
-    borderColor: '#FECDCA',
-    borderWidth: 1,
-    padding: 8,
-    borderRadius: 6,
-    marginBottom: 12,
-    width: '100%',
-    textAlign: 'center',
-    fontSize: 12,
+    marginBottom: 22,
+    marginTop: 6,
   },
   btn: {
-    marginTop: 12,
+    marginTop: 8,
     width: '100%',
   },
 });

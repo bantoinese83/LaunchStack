@@ -1,6 +1,8 @@
 import React from 'react';
 import {
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
   StyleSheet,
   Text,
   TextInput,
@@ -27,7 +29,7 @@ export const theme = {
 
 export interface NativeButtonProps extends TouchableOpacityProps {
   title: string;
-  variant?: 'primary' | 'secondary' | 'danger';
+  variant?: 'primary' | 'secondary' | 'outline' | 'danger';
   isLoading?: boolean;
 }
 
@@ -39,10 +41,12 @@ export const NativeButton: React.FC<NativeButtonProps> = ({
   style,
   ...props
 }) => {
+  const isOutline = variant === 'outline';
   const buttonStyle = [
     styles.button,
     variant === 'primary' && styles.primaryBtn,
     variant === 'secondary' && styles.secondaryBtn,
+    variant === 'outline' && styles.outlineBtn,
     variant === 'danger' && styles.dangerBtn,
     (disabled || isLoading) && styles.disabledBtn,
     style,
@@ -56,9 +60,9 @@ export const NativeButton: React.FC<NativeButtonProps> = ({
       {...props}
     >
       {isLoading ? (
-        <ActivityIndicator color="#ffffff" />
+        <ActivityIndicator color={isOutline ? theme.ink : '#ffffff'} />
       ) : (
-        <Text style={styles.buttonText}>{title}</Text>
+        <Text style={[styles.buttonText, isOutline && styles.outlineBtnText]}>{title}</Text>
       )}
     </TouchableOpacity>
   );
@@ -80,14 +84,42 @@ export const NativeInput: React.FC<NativeInputProps> = ({ label, error, style, .
     {label && <Text style={styles.label}>{label}</Text>}
     <TextInput
       style={[styles.input, error ? styles.inputError : null, style]}
-      placeholderTextColor={theme.muted}
+      placeholderTextColor={`${theme.muted}A6`}
       {...props}
     />
     {error && <Text style={styles.errorText}>{error}</Text>}
   </View>
 );
 
+export const NativeBrandMark: React.FC<{ size?: number }> = ({ size = 44 }) => (
+  <View style={[styles.logoBadge, { width: size, height: size, borderRadius: size * 0.09 }]}>
+    <Text style={[styles.logoText, { fontSize: size * 0.36 }]}>LS</Text>
+  </View>
+);
+
+export const NativeScreen: React.FC<{ children: React.ReactNode; style?: ViewProps['style'] }> = ({
+  children,
+  style,
+}) => (
+  <KeyboardAvoidingView
+    behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    style={[styles.screen, style]}
+  >
+    {children}
+  </KeyboardAvoidingView>
+);
+
+export const NativeAlert: React.FC<{ message: string }> = ({ message }) => (
+  <View style={styles.alert}>
+    <Text style={styles.alertText}>{message}</Text>
+  </View>
+);
+
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: theme.paper,
+  },
   button: {
     height: 48,
     borderRadius: 6,
@@ -101,6 +133,11 @@ const styles = StyleSheet.create({
   secondaryBtn: {
     backgroundColor: theme.ink,
   },
+  outlineBtn: {
+    backgroundColor: theme.surface,
+    borderWidth: 1,
+    borderColor: theme.line,
+  },
   dangerBtn: {
     backgroundColor: theme.danger,
   },
@@ -113,15 +150,18 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     letterSpacing: -0.2,
   },
+  outlineBtnText: {
+    color: theme.ink,
+  },
   card: {
     backgroundColor: theme.surface,
     borderRadius: 6,
-    padding: 16,
+    padding: 20,
     borderWidth: 1,
     borderColor: theme.line,
   },
   inputContainer: {
-    marginBottom: 12,
+    marginBottom: 14,
     width: '100%',
   },
   label: {
@@ -149,5 +189,30 @@ const styles = StyleSheet.create({
     color: theme.danger,
     fontSize: 12,
     marginTop: 4,
+  },
+  logoBadge: {
+    backgroundColor: theme.ink,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoText: {
+    color: theme.paper,
+    fontWeight: '700',
+  },
+  alert: {
+    width: '100%',
+    backgroundColor: '#FEF3F2',
+    borderColor: '#FECDCA',
+    borderWidth: 1,
+    borderRadius: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    marginBottom: 14,
+  },
+  alertText: {
+    color: theme.danger,
+    fontSize: 13,
+    textAlign: 'center',
+    lineHeight: 18,
   },
 });
