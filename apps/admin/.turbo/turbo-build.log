@@ -3,30 +3,19 @@
 > next build
 
 ▲ Next.js 16.3.0 (Turbopack)
-✓ Running next.config.mjs took 247ms
+✓ Running next.config.mjs took 169ms
 - Experiments (use with caution):
   · clientTraceMetadata
 
   Creating an optimized production build ...
-✓ Compiled successfully in 15.1s
+✓ Compiled successfully in 7.5s
   Running next.config.js provided runAfterProductionCompile ...
-✓ Completed runAfterProductionCompile in 578ms
+✓ Completed runAfterProductionCompile in 190ms
   Running TypeScript ...
-
-  We detected TypeScript in your project and reconfigured your tsconfig.json file for you.
-  The following suggested values were added to your tsconfig.json. These values can be changed to fit your project's needs:
-
-  	- include was updated to add '.next/dev/types/**/*.ts'
-
-  The following mandatory changes were made to your tsconfig.json:
-
-  	- moduleResolution was set to bundler (to match modern bundler resolution)
-  	- jsx was set to react-jsx (next.js uses the React automatic runtime)
-
-  Finished TypeScript in 1253ms ...
+  Finished TypeScript in 691ms ...
   Collecting page data using 4 workers ...
   Generating static pages using 4 workers (0/3) ...
-✓ Generating static pages using 4 workers (3/3) in 202ms
+✓ Generating static pages using 4 workers (3/3) in 203ms
   Finalizing page optimization ...
 
 Route (app)
