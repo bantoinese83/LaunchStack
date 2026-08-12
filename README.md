@@ -15,6 +15,14 @@
 _Stop rebuilding the same foundational boilerplate._ <br>
 _Start writing business logic on day one._
 
+<br />
+
+<img
+  src="./docs/images/landing-hero.png"
+  alt="LaunchStack marketing landing — web hero with iOS and Android sign-in"
+  width="920"
+/>
+
 </div>
 
 ---
