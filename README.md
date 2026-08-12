@@ -4,8 +4,8 @@
 
 **The Ultimate Enterprise Full-Stack Monorepo Template**
 
-[![Next.js](https://img.shields.io/badge/Next.js-14-black?logo=next.js)](https://nextjs.org/)
-[![Expo](https://img.shields.io/badge/Expo-50-white?logo=expo)](https://expo.dev/)
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org/)
+[![Expo](https://img.shields.io/badge/Expo-57-white?logo=expo)](https://expo.dev/)
 [![Supabase](https://img.shields.io/badge/Supabase-DB%20%26%20Auth-3ECF8E?logo=supabase)](https://supabase.com/)
 [![Turborepo](https://img.shields.io/badge/Turborepo-Monorepo-EF4444?logo=turborepo)](https://turbo.build/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?logo=typescript)](https://www.typescriptlang.org/)
@@ -30,9 +30,9 @@ It's designed for **principled engineers** who want enterprise-level confidence 
 
 ### 📱 Apps (The Frontiers)
 
-- **`apps/web`**: 🌐 The public-facing SaaS / Marketing platform (Next.js 14 App Router).
-- **`apps/admin`**: 🛠️ Internal Back-Office portal for your team (Next.js 14 App Router).
-- **`apps/mobile`**: 📱 iOS & Android cross-platform mobile app (Expo & React Native).
+- **`apps/web`**: 🌐 The public-facing SaaS / Marketing platform (Next.js 16 App Router).
+- **`apps/admin`**: 🛠️ Internal Back-Office portal for your team (Next.js 16 App Router).
+- **`apps/mobile`**: 📱 iOS & Android cross-platform mobile app (Expo 57 & React Native).
 
 ### 📦 Packages (The Brains & Brawn)
 
