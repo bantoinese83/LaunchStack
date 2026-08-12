@@ -1,32 +1,22 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import * as SecureStore from 'expo-secure-store';
-import { createSupabaseBrowserClient } from '@template/api';
-
-// Custom Supabase Storage adapter using Expo SecureStore for encrypted token storage
-export const ExpoSecureStoreAdapter = {
-  getItem: (key: string) => SecureStore.getItemAsync(key),
-  setItem: (key: string, value: string) => SecureStore.setItemAsync(key, value),
-  removeItem: (key: string) => SecureStore.deleteItemAsync(key),
-};
+import { theme } from '@template/mobile-ui';
 
 export default function RootLayout() {
-  useEffect(() => {
-    // Initialize Supabase Auth session with Expo SecureStore persistence
-    createSupabaseBrowserClient();
-  }, []);
-
   return (
     <>
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
       <Stack
         screenOptions={{
-          headerStyle: { backgroundColor: '#0f172a' },
-          headerTintColor: '#ffffff',
-          contentStyle: { backgroundColor: '#020617' },
+          headerStyle: { backgroundColor: theme.paper },
+          headerTintColor: theme.ink,
+          headerTitleStyle: { fontWeight: '600' },
+          contentStyle: { backgroundColor: theme.paper },
+          headerShadowVisible: false,
         }}
       >
+        <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(app)" options={{ headerShown: false }} />
       </Stack>

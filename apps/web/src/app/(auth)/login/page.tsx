@@ -18,7 +18,6 @@ export default function LoginPage() {
     e.preventDefault();
     setError(null);
 
-    // Shared Zod Validation
     const validation = loginSchema.safeParse({ email, password });
     if (!validation.success) {
       setError(validation.error.errors[0].message);
@@ -38,26 +37,29 @@ export default function LoginPage() {
       }
 
       router.push('/dashboard');
-    } catch (err: any) {
-      setError(err.message || 'Failed to sign in');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to sign in';
+      setError(message);
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-950 p-6">
-      <Card className="w-full max-w-md p-8 border-slate-800">
-        <div className="text-center mb-8">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600 font-bold text-white text-xl shadow-lg shadow-blue-500/20 mb-3">
+    <div className="flex min-h-screen items-center justify-center bg-paper atlas-grain p-6">
+      <Card className="w-full max-w-md p-8">
+        <div className="mb-8 text-center">
+          <div className="mx-auto mb-4 flex h-11 w-11 items-center justify-center rounded-sm bg-ink font-display text-lg font-bold text-paper">
             LS
           </div>
-          <h1 className="text-2xl font-bold text-white">Welcome Back</h1>
-          <p className="text-slate-400 text-sm mt-1">Sign in to your LaunchStack workspace</p>
+          <h1 className="font-display text-2xl font-semibold tracking-tight text-ink">
+            Welcome back
+          </h1>
+          <p className="mt-1 text-sm text-muted">Sign in to your LaunchStack workspace</p>
         </div>
 
         {error && (
-          <div className="mb-6 rounded-lg bg-red-950/80 border border-red-800/60 p-3 text-xs text-red-300 text-center">
+          <div className="mb-6 rounded-md border border-red-200 bg-red-50 p-3 text-center text-xs text-danger">
             {error}
           </div>
         )}
@@ -88,9 +90,9 @@ export default function LoginPage() {
           </Button>
         </form>
 
-        <div className="mt-8 text-center text-xs text-slate-400">
+        <div className="mt-8 text-center text-xs text-muted">
           Don&apos;t have an account?{' '}
-          <Link href="/signup" className="font-semibold text-blue-400 hover:underline">
+          <Link href="/signup" className="font-semibold text-accent hover:text-accent-hover">
             Create an account
           </Link>
         </div>

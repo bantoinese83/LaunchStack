@@ -124,34 +124,34 @@ export default function DashboardPage() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-950 text-white">
-        <span className="h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" />
+      <div className="flex min-h-screen items-center justify-center bg-paper text-ink">
+        <span className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent" />
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-950 text-slate-100">
+    <div className="flex min-h-screen bg-paper text-ink">
       {/* TOAST NOTIFICATION */}
       {toastMessage && (
-        <div className="fixed top-5 right-5 z-50 rounded-lg bg-emerald-950 border border-emerald-800 text-emerald-300 px-4 py-3 text-sm shadow-xl flex items-center gap-2 animate-in slide-in-from-top-2">
+        <div className="fixed top-5 right-5 z-50 rounded-lg bg-accent-soft border border-accent/20 text-success px-4 py-3 text-sm shadow-xl flex items-center gap-2 animate-in slide-in-from-top-2">
           <Check className="h-4 w-4" /> {toastMessage}
         </div>
       )}
 
       {/* SIDEBAR NAVIGATION */}
-      <aside className="w-64 border-r border-slate-800/80 bg-slate-900/60 backdrop-blur-md p-6 flex flex-col justify-between">
+      <aside className="w-64 border-r border-line bg-surface p-6 flex flex-col justify-between">
         <div>
           <div className="flex items-center space-x-3 mb-8">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 to-purple-600 font-bold text-white shadow-md">
+            <div className="flex h-9 w-9 items-center justify-center rounded-md bg-ink font-semibold text-paper">
               LS
             </div>
-            <span className="text-lg font-bold text-white">LaunchStack</span>
+            <span className="text-lg font-semibold text-ink">LaunchStack</span>
           </div>
 
           {/* WORKSPACE SELECTOR */}
           <div className="mb-6">
-            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-2">
+            <label className="text-xs font-semibold text-muted uppercase tracking-wider block mb-2">
               Workspace
             </label>
             <select
@@ -163,7 +163,7 @@ export default function DashboardPage() {
                   setWsName(ws.name);
                 }
               }}
-              className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full rounded-lg border border-line bg-paper px-3 py-2 text-sm text-ink focus:outline-none focus:ring-1 focus:ring-accent"
             >
               {workspaces.map((ws) => (
                 <option key={ws.id} value={ws.id}>
@@ -176,14 +176,14 @@ export default function DashboardPage() {
           <nav className="space-y-1">
             <Link
               href="/dashboard"
-              className="flex items-center space-x-3 px-3 py-2.5 rounded-lg bg-blue-600/10 text-blue-400 font-medium text-sm"
+              className="flex items-center space-x-3 px-3 py-2.5 rounded-lg bg-accent/10 text-accent font-medium text-sm"
             >
               <LayoutDashboard className="h-4 w-4" />
               <span>Overview</span>
             </Link>
             <Link
               href="/feedback"
-              className="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-slate-300 hover:bg-slate-800 text-sm"
+              className="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-muted hover:bg-paper text-sm"
             >
               <MessageSquare className="h-4 w-4" />
               <span>Feedback Engine</span>
@@ -193,7 +193,7 @@ export default function DashboardPage() {
                 href="http://localhost:3002"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-purple-400 hover:bg-purple-950/40 text-sm"
+                className="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-accent hover:bg-accent-soft text-sm"
               >
                 <Shield className="h-4 w-4" />
                 <span>Admin Portal</span>
@@ -203,20 +203,18 @@ export default function DashboardPage() {
         </div>
 
         <div>
-          <div className="border-t border-slate-800 pt-4 mb-4 flex items-center justify-between">
+          <div className="border-t border-line pt-4 mb-4 flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <Avatar name={profile?.full_name || profile?.email || 'User'} size="sm" />
               <div>
-                <p className="text-sm font-semibold text-white leading-none">
+                <p className="text-sm font-semibold text-ink leading-none">
                   {profile?.full_name || 'User'}
                 </p>
-                <p className="text-xs text-slate-400 truncate max-w-[120px] mt-1">
-                  {profile?.email}
-                </p>
+                <p className="text-xs text-muted truncate max-w-[120px] mt-1">{profile?.email}</p>
               </div>
             </div>
             <Button variant="ghost" size="sm" onClick={handleSignOut} title="Sign Out">
-              <LogOut className="h-4 w-4 text-slate-400" />
+              <LogOut className="h-4 w-4 text-muted" />
             </Button>
           </div>
         </div>
@@ -227,21 +225,21 @@ export default function DashboardPage() {
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-bold text-white">{selectedWorkspace?.name}</h1>
+              <h1 className="text-3xl font-semibold text-ink">{selectedWorkspace?.name}</h1>
               <Badge variant="success">Stripe Pro Active</Badge>
               <button
                 onClick={handleCopySlug}
-                className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-white bg-slate-900 px-2.5 py-1 rounded-md border border-slate-800"
+                className="inline-flex items-center gap-1 text-xs text-muted hover:text-ink bg-surface px-2.5 py-1 rounded-md border border-line"
               >
                 {copiedSlug ? (
-                  <Check className="h-3 w-3 text-emerald-400" />
+                  <Check className="h-3 w-3 text-success" />
                 ) : (
                   <Copy className="h-3 w-3" />
                 )}
                 slug: {selectedWorkspace?.slug}
               </button>
             </div>
-            <p className="text-slate-400 text-sm mt-1">
+            <p className="text-muted text-sm mt-1">
               Manage team seats, customer roadmap, and Stripe entitlements.
             </p>
           </div>
@@ -294,17 +292,17 @@ export default function DashboardPage() {
         </div>
 
         {/* TEAM MEMBERS TABLE */}
-        <Card className="border-slate-800 mb-8">
+        <Card className="border-line mb-8">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold text-white">Workspace Teammates</h2>
+            <h2 className="text-lg font-semibold text-ink">Workspace Teammates</h2>
             <Button variant="outline" size="sm" onClick={() => setShowInviteModal(true)}>
               + Invite Teammate
             </Button>
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-slate-300">
-              <thead className="border-b border-slate-800 text-xs font-semibold text-slate-400 uppercase">
+            <table className="w-full text-left text-sm text-muted">
+              <thead className="border-b border-line text-xs font-semibold text-muted uppercase">
                 <tr>
                   <th className="py-3 px-4">Member</th>
                   <th className="py-3 px-4">Workspace Role</th>
@@ -312,19 +310,19 @@ export default function DashboardPage() {
                   <th className="py-3 px-4 text-right">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60">
+              <tbody className="divide-y divide-line">
                 {members.map((mem) => (
-                  <tr key={mem.id} className="hover:bg-slate-900/40">
+                  <tr key={mem.id} className="hover:bg-surface/40">
                     <td className="py-3 px-4 flex items-center space-x-3">
                       <Avatar
                         name={mem.profile?.full_name || mem.profile?.email || 'User'}
                         size="sm"
                       />
                       <div>
-                        <p className="font-semibold text-white leading-none">
+                        <p className="font-semibold text-ink leading-none">
                           {mem.profile?.full_name || 'Member'}
                         </p>
-                        <p className="text-xs text-slate-400 mt-1">{mem.profile?.email}</p>
+                        <p className="text-xs text-muted mt-1">{mem.profile?.email}</p>
                       </div>
                     </td>
                     <td className="py-3 px-4">
@@ -332,7 +330,7 @@ export default function DashboardPage() {
                         {mem.role.replace('_', ' ')}
                       </Badge>
                     </td>
-                    <td className="py-3 px-4 text-xs font-mono text-slate-400">
+                    <td className="py-3 px-4 text-xs font-mono text-muted">
                       {new Date(mem.created_at).toLocaleDateString()}
                     </td>
                     <td className="py-3 px-4 text-right">
@@ -354,7 +352,7 @@ export default function DashboardPage() {
           title="Invite Team Member"
           description="Send an email invitation link powered by Brevo API."
         >
-          {modalError && <div className="mb-4 text-xs text-red-400">{modalError}</div>}
+          {modalError && <div className="mb-4 text-xs text-danger">{modalError}</div>}
           <form onSubmit={handleInviteMember} className="space-y-4">
             <Input
               label="Email Address"
@@ -365,11 +363,11 @@ export default function DashboardPage() {
               required
             />
             <div className="space-y-1">
-              <label className="block text-xs font-semibold text-slate-300 uppercase">Role</label>
+              <label className="block text-xs font-semibold text-muted uppercase">Role</label>
               <select
                 value={inviteRole}
                 onChange={(e) => setInviteRole(e.target.value as InvitableWorkspaceRole)}
-                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-200"
+                className="w-full rounded-lg border border-line bg-paper px-3 py-2 text-sm text-ink"
               >
                 <option value="workspace_member">Workspace Member</option>
                 <option value="workspace_admin">Workspace Admin</option>

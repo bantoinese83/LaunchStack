@@ -2,450 +2,284 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Button, Card, Badge } from '@template/ui';
-import {
-  Check,
-  ShieldCheck,
-  Smartphone,
-  CreditCard,
-  ArrowRight,
-  Star,
-  LayoutDashboard,
-  MessageSquare,
-  ChevronDown,
-  Sparkles,
-  Zap,
-  Globe,
-} from 'lucide-react';
+import { Button, Badge } from '@template/ui';
+import { ArrowRight, Check, ChevronDown } from 'lucide-react';
 
 export default function MarketingLandingPage() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'feedback' | 'mobile'>('dashboard');
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
   const faqs = [
     {
-      q: 'How does Supabase Multi-Tenancy work in this template?',
-      a: 'Every tenant table features a workspace_id foreign key. Data access is enforced directly inside PostgreSQL via Row Level Security (RLS) policies checking workspace membership.',
+      q: 'How does multi-tenancy work?',
+      a: 'Every tenant table carries a workspace_id. PostgreSQL Row Level Security checks membership on every query — zero client trust.',
     },
     {
-      q: 'Can I publish the mobile app to iOS App Store & Google Play Store?',
-      a: 'Yes! The mobile directory is built with Expo Router and React Native. You can generate native binaries using Expo EAS (`eas build`) and deploy directly to both stores.',
+      q: 'Can I ship to the App Store and Play Store?',
+      a: 'Yes. The mobile app uses Expo Router. Build with EAS and submit to both stores.',
     },
     {
-      q: 'Is Stripe Billing pre-configured for webhooks & entitlements?',
-      a: 'Absolutely. It includes server checkout session creators, customer portal redirect routes, and a verified Edge Webhook handler that syncs subscription status in real-time.',
+      q: 'Is Stripe billing production-ready?',
+      a: 'Checkout sessions, portal redirects, and fail-closed webhook signature verification are included.',
     },
     {
-      q: 'What transactional emails are supported with Brevo?',
-      a: 'Templates for Welcome Emails, Workspace Invitations, Password Resets, and Roadmap Status Notifications are pre-built in `@template/email`.',
+      q: 'What transactional email is included?',
+      a: 'Welcome, invites, password reset, and feedback status templates ship in @template/email with HTML escaping.',
     },
   ];
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-950 text-slate-100 selection:bg-blue-600 selection:text-white">
-      {/* NAVBAR */}
-      <header className="sticky top-0 z-50 glass-panel border-b border-slate-800/80">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
-          <div className="flex items-center space-x-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 to-purple-600 font-bold text-white shadow-lg shadow-blue-500/20">
+    <div className="flex min-h-screen flex-col bg-paper text-ink atlas-grain">
+      <header className="sticky top-0 z-50 border-b border-line bg-paper/90 backdrop-blur-sm">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
+          <Link href="/" className="group flex items-center gap-3">
+            <span className="flex h-8 w-8 items-center justify-center rounded-sm bg-ink font-display text-sm font-bold text-paper transition-transform duration-200 group-hover:-rotate-3">
               LS
-            </div>
-            <span className="text-lg font-bold tracking-tight text-white">LaunchStack</span>
-          </div>
+            </span>
+            <span className="font-display text-lg font-semibold tracking-tight">LaunchStack</span>
+          </Link>
 
-          <nav className="hidden md:flex items-center space-x-8 text-sm font-medium text-slate-300">
-            <a href="#features" className="transition-colors hover:text-white">
-              Features
+          <nav className="hidden items-center gap-8 text-sm text-muted md:flex">
+            <a href="#platform" className="hover:text-ink transition-colors">
+              Platform
             </a>
-            <a href="#demo" className="transition-colors hover:text-white">
-              Live Demo
-            </a>
-            <a href="#pricing" className="transition-colors hover:text-white">
+            <a href="#pricing" className="hover:text-ink transition-colors">
               Pricing
             </a>
-            <a href="#faq" className="transition-colors hover:text-white">
+            <a href="#faq" className="hover:text-ink transition-colors">
               FAQ
             </a>
-            <Link href="/privacy" className="transition-colors hover:text-white">
+            <Link href="/privacy" className="hover:text-ink transition-colors">
               Privacy
             </Link>
           </nav>
 
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center gap-2">
             <Link href="/login">
               <Button variant="ghost" size="sm">
-                Sign In
+                Sign in
               </Button>
             </Link>
             <Link href="/signup">
-              <Button variant="primary" size="sm" className="gap-1.5">
-                <Sparkles className="h-4 w-4" /> Get Started
+              <Button variant="primary" size="sm">
+                Start building
               </Button>
             </Link>
           </div>
         </div>
       </header>
 
-      {/* HERO SECTION */}
-      <section className="relative overflow-hidden pt-20 pb-16 md:pt-28 md:pb-24">
-        {/* GLOWING AMBIENT LIGHTS */}
-        <div className="absolute top-1/4 left-1/2 -z-10 h-[400px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-tr from-blue-600/20 to-purple-600/20 blur-[120px]" />
+      {/* Hero — one composition: brand, headline, support, CTA */}
+      <section className="relative overflow-hidden border-b border-line">
+        <div className="absolute inset-y-0 right-0 hidden w-[42%] bg-ink md:block" aria-hidden />
+        <div
+          className="absolute inset-y-0 right-0 hidden w-[42%] md:block"
+          style={{
+            backgroundImage:
+              'linear-gradient(135deg, transparent 0%, transparent 48%, rgba(15,110,86,0.35) 48%, rgba(15,110,86,0.35) 50%, transparent 50%)',
+          }}
+          aria-hidden
+        />
 
-        <div className="mx-auto max-w-5xl px-6 text-center">
-          <Badge
-            variant="purple"
-            className="mb-6 py-1 px-3 text-xs tracking-wider uppercase gap-1.5 inline-flex items-center"
-          >
-            <Zap className="h-3.5 w-3.5 text-purple-400" /> Production-Grade Full-Stack Template
-          </Badge>
-
-          <h1 className="text-4xl font-extrabold tracking-tight sm:text-6xl md:text-7xl leading-tight">
-            Build B2B SaaS & Native Apps <br />
-            <span className="gradient-text">10x Faster with Monorepo</span>
-          </h1>
-
-          <p className="mx-auto mt-6 max-w-2xl text-lg text-slate-400 sm:text-xl leading-relaxed">
-            Stop reinventing multi-tenancy, Supabase RLS policies, Stripe webhooks, and mobile state
-            sync. LaunchStack provides the complete production engine.
-          </p>
-
-          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link href="/signup">
-              <Button size="lg" className="w-full sm:w-auto gap-2">
-                Start Building Free <ArrowRight className="h-5 w-5" />
-              </Button>
-            </Link>
-            <a href="#demo">
-              <Button variant="outline" size="lg" className="w-full sm:w-auto">
-                View Interactive Preview
-              </Button>
-            </a>
-          </div>
-
-          {/* SOCIAL PROOF */}
-          <div className="mt-12 flex items-center justify-center space-x-2 text-sm text-slate-400">
-            <div className="flex -space-x-2">
-              <div className="h-8 w-8 rounded-full bg-blue-500 border-2 border-slate-950 flex items-center justify-center font-bold text-xs text-white">
-                A
-              </div>
-              <div className="h-8 w-8 rounded-full bg-purple-500 border-2 border-slate-950 flex items-center justify-center font-bold text-xs text-white">
-                B
-              </div>
-              <div className="h-8 w-8 rounded-full bg-emerald-500 border-2 border-slate-950 flex items-center justify-center font-bold text-xs text-white">
-                C
-              </div>
-            </div>
-            <div className="flex items-center space-x-1 pl-2">
-              {[...Array(5)].map((_, i) => (
-                <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
-              ))}
-            </div>
-            <span className="font-medium text-slate-300">Loved by 500+ Full-Stack Engineers</span>
-          </div>
-        </div>
-
-        {/* INTERACTIVE DEMO PREVIEW MOCKUP */}
-        <div id="demo" className="mt-16 mx-auto max-w-6xl px-6">
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/90 shadow-2xl p-4 md:p-6 backdrop-blur-xl">
-            {/* MOCKUP TABS */}
-            <div className="flex items-center justify-between border-b border-slate-800/80 pb-4 mb-6">
-              <div className="flex space-x-2">
-                <div className="h-3 w-3 rounded-full bg-rose-500/80" />
-                <div className="h-3 w-3 rounded-full bg-amber-500/80" />
-                <div className="h-3 w-3 rounded-full bg-emerald-500/80" />
-              </div>
-
-              <div className="flex rounded-lg bg-slate-950 p-1 border border-slate-800">
-                <button
-                  onClick={() => setActiveTab('dashboard')}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${
-                    activeTab === 'dashboard'
-                      ? 'bg-blue-600 text-white shadow-sm'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  Web Dashboard
-                </button>
-                <button
-                  onClick={() => setActiveTab('feedback')}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${
-                    activeTab === 'feedback'
-                      ? 'bg-blue-600 text-white shadow-sm'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  Feedback Roadmap
-                </button>
-                <button
-                  onClick={() => setActiveTab('mobile')}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${
-                    activeTab === 'mobile'
-                      ? 'bg-blue-600 text-white shadow-sm'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  Mobile App
-                </button>
-              </div>
-            </div>
-
-            {/* TAB PREVIEW SCREENSHOT MOCKUPS */}
-            {activeTab === 'dashboard' && (
-              <div className="rounded-xl border border-slate-800 bg-slate-950 p-6 space-y-6">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h3 className="text-xl font-bold text-white">Acme Corp Dashboard</h3>
-                    <p className="text-xs text-slate-400 mt-1">
-                      Workspace ID: 11111111-1111-1111-1111-111111111111
-                    </p>
-                  </div>
-                  <Badge variant="success">Stripe Pro Active</Badge>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="p-4 rounded-lg bg-slate-900 border border-slate-800">
-                    <p className="text-xs text-slate-400 uppercase font-semibold">Active Seats</p>
-                    <p className="text-2xl font-extrabold text-white mt-1">4 / 20</p>
-                  </div>
-                  <div className="p-4 rounded-lg bg-slate-900 border border-slate-800">
-                    <p className="text-xs text-slate-400 uppercase font-semibold">
-                      Roadmap Upvotes
-                    </p>
-                    <p className="text-2xl font-extrabold text-white mt-1">128</p>
-                  </div>
-                  <div className="p-4 rounded-lg bg-slate-900 border border-slate-800">
-                    <p className="text-xs text-slate-400 uppercase font-semibold">RLS Status</p>
-                    <p className="text-2xl font-extrabold text-emerald-400 mt-1">Enforced</p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'feedback' && (
-              <div className="rounded-xl border border-slate-800 bg-slate-950 p-6 space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-bold text-white">Customer Feedback Board</h3>
-                  <Button variant="primary" size="sm">
-                    + Submit Idea
-                  </Button>
-                </div>
-                <div className="p-4 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-between">
-                  <div>
-                    <div className="flex items-center space-x-2">
-                      <h4 className="font-bold text-white text-sm">
-                        Dark Mode Support in Expo Mobile App
-                      </h4>
-                      <Badge variant="info">Planned</Badge>
-                    </div>
-                    <p className="text-xs text-slate-400 mt-1">
-                      Automatically toggle dark mode themes based on device system preference.
-                    </p>
-                  </div>
-                  <div className="flex flex-col items-center bg-slate-950 px-3 py-1.5 rounded border border-slate-800">
-                    <span className="text-xs text-slate-400">👍</span>
-                    <span className="text-xs font-bold text-white">24</span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'mobile' && (
-              <div className="mx-auto max-w-sm rounded-3xl border-4 border-slate-800 bg-slate-950 p-6 shadow-2xl space-y-4">
-                <div className="flex justify-between items-center pb-2 border-b border-slate-800">
-                  <span className="font-bold text-white text-sm">LaunchStack Expo App</span>
-                  <Badge variant="purple">iOS / Android</Badge>
-                </div>
-                <div className="p-4 rounded-xl bg-slate-900 border border-slate-800">
-                  <p className="text-xs text-slate-400 uppercase">Session Token</p>
-                  <p className="text-xs font-mono text-blue-400 mt-1">Expo SecureStore Encrypted</p>
-                </div>
-                <Button variant="primary" className="w-full">
-                  Submit Native Feedback
+        <div className="relative mx-auto grid max-w-6xl gap-12 px-6 py-20 md:grid-cols-[1.15fr_0.85fr] md:py-28">
+          <div className="animate-[rise_500ms_ease-out]">
+            <p className="font-display text-sm font-semibold uppercase tracking-[0.22em] text-accent">
+              LaunchStack
+            </p>
+            <div className="atlas-rule mt-5 mb-7 w-16 bg-accent" style={{ height: 3 }} />
+            <h1 className="font-display text-4xl font-semibold leading-[1.05] tracking-tight text-ink sm:text-5xl md:text-[3.5rem] text-balance">
+              Ship the product.
+              <br />
+              Not the scaffolding.
+            </h1>
+            <p className="mt-6 max-w-md text-base leading-relaxed text-muted sm:text-lg">
+              A typed monorepo for B2B SaaS and native apps — shared auth, billing, and RLS from day
+              one.
+            </p>
+            <div className="mt-9 flex flex-wrap items-center gap-3">
+              <Link href="/signup">
+                <Button size="lg" className="gap-2">
+                  Open the template <ArrowRight className="h-4 w-4" />
                 </Button>
-              </div>
-            )}
+              </Link>
+              <a href="#platform">
+                <Button variant="outline" size="lg">
+                  See the stack
+                </Button>
+              </a>
+            </div>
           </div>
+
+          <aside className="relative flex flex-col justify-end text-paper md:min-h-[320px] md:pl-10 md:py-4">
+            <div className="rounded-md border border-white/15 bg-ink p-6 md:border-0 md:bg-transparent md:p-0">
+              <p className="font-display text-2xl font-semibold leading-snug tracking-tight md:text-3xl">
+                Web. Admin. Mobile.
+                <span className="mt-2 block text-accent">One package graph.</span>
+              </p>
+              <dl className="mt-8 space-y-4 border-t border-white/15 pt-6 text-sm">
+                <div className="flex justify-between gap-4">
+                  <dt className="text-white/55">Runtime</dt>
+                  <dd className="font-medium">Next.js 16 · Expo 57</dd>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <dt className="text-white/55">Data</dt>
+                  <dd className="font-medium">Supabase + RLS</dd>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <dt className="text-white/55">Revenue</dt>
+                  <dd className="font-medium">Stripe fail-closed</dd>
+                </div>
+              </dl>
+            </div>
+          </aside>
         </div>
       </section>
 
-      {/* FEATURES GRID */}
-      <section id="features" className="py-20 border-t border-slate-800/60 bg-slate-950/60">
-        <div className="mx-auto max-w-7xl px-6">
-          <div className="text-center max-w-3xl mx-auto">
-            <Badge variant="info" className="mb-4">
-              Features Engine
-            </Badge>
-            <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
-              Production Architecture Out Of The Box
+      <section id="platform" className="border-b border-line py-20">
+        <div className="mx-auto max-w-6xl px-6">
+          <div className="max-w-xl">
+            <h2 className="font-display text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
+              Architecture that survives first customers
             </h2>
-            <p className="mt-4 text-slate-400">
-              No generic utilities or placeholder code. Every feature is fully implemented with
-              type-safety and server-enforced business logic.
+            <p className="mt-4 text-muted leading-relaxed">
+              Not a feature grid of promises — the seams teams actually hit when shipping
+              multi-tenant software.
             </p>
           </div>
 
-          <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
-            <Card className="hover:border-blue-500/50 transition-colors">
-              <ShieldCheck className="h-10 w-10 text-blue-400 mb-4" />
-              <h3 className="text-xl font-bold text-white mb-2">Supabase Strict RLS</h3>
-              <p className="text-slate-400 text-sm leading-relaxed">
-                Zero client-trust multi-tenancy. Automated PostgreSQL Row Level Security policies
-                isolate workspace data directly at the query level.
-              </p>
-            </Card>
-
-            <Card className="hover:border-purple-500/50 transition-colors">
-              <Smartphone className="h-10 w-10 text-purple-400 mb-4" />
-              <h3 className="text-xl font-bold text-white mb-2">Expo React Native</h3>
-              <p className="text-slate-400 text-sm leading-relaxed">
-                Expo Router native mobile app for iOS & Android with secure session storage (`Expo
-                SecureStore`) and deep linking architecture.
-              </p>
-            </Card>
-
-            <Card className="hover:border-emerald-500/50 transition-colors">
-              <CreditCard className="h-10 w-10 text-emerald-400 mb-4" />
-              <h3 className="text-xl font-bold text-white mb-2">Stripe Billing Engine</h3>
-              <p className="text-slate-400 text-sm leading-relaxed">
-                Server-verified Stripe checkout, billing portal redirects, Edge Webhook signature
-                processing, and plan entitlement guards.
-              </p>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* PRICING */}
-      <section id="pricing" className="py-20 border-t border-slate-800/60">
-        <div className="mx-auto max-w-7xl px-6">
-          <div className="text-center">
-            <Badge variant="warning" className="mb-4">
-              Transparent Pricing
-            </Badge>
-            <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
-              Choose Your Plan
-            </h2>
-            <p className="mt-4 text-slate-400 max-w-2xl mx-auto">
-              Scale seamlessly from single developer to enterprise organization.
-            </p>
-          </div>
-
-          <div className="mt-16 grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            {/* FREE PLAN */}
-            <Card className="border-slate-800 flex flex-col justify-between">
-              <div>
-                <h3 className="text-2xl font-bold text-white">Developer Starter</h3>
-                <p className="text-slate-400 text-sm mt-1">Ideal for evaluating LaunchStack.</p>
-                <div className="mt-6 text-4xl font-extrabold text-white">
-                  $0 <span className="text-base font-normal text-slate-400">/mo</span>
-                </div>
-                <ul className="mt-8 space-y-4 text-sm text-slate-300">
-                  <li className="flex items-center gap-3">
-                    <Check className="h-5 w-5 text-emerald-400" /> Up to 3 Workspace Members
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <Check className="h-5 w-5 text-emerald-400" /> Web & Mobile Application Access
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <Check className="h-5 w-5 text-emerald-400" /> Public Feedback Board
-                  </li>
-                </ul>
-              </div>
-              <Link href="/signup" className="mt-8">
-                <Button variant="outline" className="w-full">
-                  Get Started Free
-                </Button>
-              </Link>
-            </Card>
-
-            {/* PRO PLAN */}
-            <Card className="border-blue-600 bg-gradient-to-b from-slate-900 to-slate-950 flex flex-col justify-between relative overflow-hidden">
-              <div className="absolute top-0 right-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider">
-                Recommended
-              </div>
-              <div>
-                <h3 className="text-2xl font-bold text-white">Pro Team</h3>
-                <p className="text-slate-400 text-sm mt-1">
-                  For growing teams building commercial SaaS apps.
-                </p>
-                <div className="mt-6 text-4xl font-extrabold text-white">
-                  $49 <span className="text-base font-normal text-slate-400">/mo</span>
-                </div>
-                <ul className="mt-8 space-y-4 text-sm text-slate-300">
-                  <li className="flex items-center gap-3">
-                    <Check className="h-5 w-5 text-blue-400" /> Up to 20 Workspace Members
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <Check className="h-5 w-5 text-blue-400" /> Stripe Verified Subscription Sync
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <Check className="h-5 w-5 text-blue-400" /> Unlimited Feedback Items & Upvoting
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <Check className="h-5 w-5 text-blue-400" /> Brevo Transactional Email Triggers
-                  </li>
-                </ul>
-              </div>
-              <Link href="/signup" className="mt-8">
-                <Button variant="primary" className="w-full">
-                  Start 14-Day Free Trial
-                </Button>
-              </Link>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* FAQ SECTION */}
-      <section id="faq" className="py-20 border-t border-slate-800/60 bg-slate-950/60">
-        <div className="mx-auto max-w-4xl px-6">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-white sm:text-4xl">
-              Frequently Asked Questions
-            </h2>
-          </div>
-
-          <div className="space-y-4">
-            {faqs.map((faq, idx) => (
-              <Card
-                key={idx}
-                className="cursor-pointer p-6"
-                onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
-              >
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-bold text-white">{faq.q}</h3>
-                  <ChevronDown
-                    className={`h-5 w-5 text-slate-400 transition-transform ${openFaq === idx ? 'rotate-180' : ''}`}
-                  />
-                </div>
-                {openFaq === idx && (
-                  <p className="mt-4 text-slate-400 text-sm leading-relaxed border-t border-slate-800 pt-4">
-                    {faq.a}
-                  </p>
-                )}
-              </Card>
+          <div className="mt-14 grid gap-px bg-line md:grid-cols-2">
+            {[
+              {
+                title: 'Workspace isolation',
+                body: 'PostgreSQL RLS on every tenant table. Membership checks live in the database, not in hopeful client filters.',
+              },
+              {
+                title: 'Shared domain packages',
+                body: 'Roles, validation enums, and API helpers live once in packages/ — web, admin, and mobile import the same contracts.',
+              },
+              {
+                title: 'Billing that fails closed',
+                body: 'Stripe webhooks verify signatures in production. Missing secrets return 500 instead of accepting forged events.',
+              },
+              {
+                title: 'Native sessions',
+                body: 'Expo SecureStore for tokens, Expo Router for navigation, and the same Zod schemas as the web app.',
+              },
+            ].map((item) => (
+              <article key={item.title} className="bg-paper p-8 md:p-10">
+                <h3 className="font-display text-xl font-semibold tracking-tight text-ink">
+                  {item.title}
+                </h3>
+                <p className="mt-3 max-w-md text-sm leading-relaxed text-muted">{item.body}</p>
+              </article>
             ))}
           </div>
         </div>
       </section>
 
-      {/* FOOTER */}
-      <footer className="mt-auto border-t border-slate-800 bg-slate-950 py-12 text-sm text-slate-500">
-        <div className="mx-auto max-w-7xl px-6 flex flex-col sm:flex-row items-center justify-between gap-6">
-          <div className="flex items-center space-x-2">
-            <div className="h-6 w-6 rounded-lg bg-blue-600 text-white text-xs font-bold flex items-center justify-center">
-              LS
+      <section id="pricing" className="border-b border-line py-20">
+        <div className="mx-auto max-w-6xl px-6">
+          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div>
+              <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">
+                Pricing
+              </h2>
+              <p className="mt-3 text-muted">Start free. Upgrade when the workspace grows.</p>
             </div>
-            <span className="font-semibold text-slate-300">LaunchStack Monorepo</span>
           </div>
-          <div className="flex space-x-6">
-            <Link href="/privacy" className="hover:text-slate-300">
-              Privacy Policy
+
+          <div className="mt-12 grid gap-6 md:grid-cols-[1fr_1.1fr]">
+            <div className="rounded-md border border-line bg-surface p-8">
+              <h3 className="font-display text-2xl font-semibold">Starter</h3>
+              <p className="mt-1 text-sm text-muted">Evaluate the template locally.</p>
+              <p className="mt-8 font-display text-4xl font-semibold tracking-tight">
+                $0<span className="text-base font-sans font-normal text-muted"> / mo</span>
+              </p>
+              <ul className="mt-8 space-y-3 text-sm text-ink">
+                {['3 workspace members', 'Web + mobile apps', 'Public feedback board'].map((t) => (
+                  <li key={t} className="flex items-start gap-2">
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-accent" /> {t}
+                  </li>
+                ))}
+              </ul>
+              <Link href="/signup" className="mt-8 block">
+                <Button variant="outline" className="w-full">
+                  Get started
+                </Button>
+              </Link>
+            </div>
+
+            <div className="rounded-md border border-ink bg-ink p-8 text-paper">
+              <div className="flex items-center justify-between gap-3">
+                <h3 className="font-display text-2xl font-semibold">Pro Team</h3>
+                <Badge className="border-white/20 bg-white/10 text-paper">Recommended</Badge>
+              </div>
+              <p className="mt-1 text-sm text-white/60">For commercial SaaS workspaces.</p>
+              <p className="mt-8 font-display text-4xl font-semibold tracking-tight">
+                $49<span className="text-base font-sans font-normal text-white/55"> / mo</span>
+              </p>
+              <ul className="mt-8 space-y-3 text-sm">
+                {[
+                  '20 workspace members',
+                  'Stripe subscription sync',
+                  'Unlimited feedback + votes',
+                  'Transactional email triggers',
+                ].map((t) => (
+                  <li key={t} className="flex items-start gap-2">
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-accent" /> {t}
+                  </li>
+                ))}
+              </ul>
+              <Link href="/signup" className="mt-8 block">
+                <Button className="w-full bg-accent hover:bg-accent-hover">Start trial</Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="faq" className="py-20">
+        <div className="mx-auto max-w-3xl px-6">
+          <h2 className="font-display text-3xl font-semibold tracking-tight">Questions</h2>
+          <div className="mt-10 divide-y divide-line border-y border-line">
+            {faqs.map((faq, idx) => (
+              <button
+                key={faq.q}
+                type="button"
+                className="flex w-full flex-col py-5 text-left"
+                onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
+              >
+                <span className="flex items-center justify-between gap-4">
+                  <span className="font-display text-lg font-semibold tracking-tight">{faq.q}</span>
+                  <ChevronDown
+                    className={`h-4 w-4 shrink-0 text-muted transition-transform duration-200 ${openFaq === idx ? 'rotate-180' : ''}`}
+                  />
+                </span>
+                {openFaq === idx && (
+                  <span className="mt-3 pr-8 text-sm leading-relaxed text-muted">{faq.a}</span>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <footer className="mt-auto border-t border-line bg-surface py-10 text-sm text-muted">
+        <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-6 px-6 sm:flex-row sm:items-center">
+          <div className="flex items-center gap-2">
+            <span className="flex h-6 w-6 items-center justify-center rounded-sm bg-ink font-display text-[10px] font-bold text-paper">
+              LS
+            </span>
+            <span className="font-medium text-ink">LaunchStack</span>
+          </div>
+          <div className="flex gap-6">
+            <Link href="/privacy" className="hover:text-ink">
+              Privacy
             </Link>
-            <Link href="/terms" className="hover:text-slate-300">
-              Terms of Service
+            <Link href="/terms" className="hover:text-ink">
+              Terms
             </Link>
           </div>
-          <p>© 2026 LaunchStack Inc. All rights reserved.</p>
+          <p>© 2026 LaunchStack</p>
         </div>
       </footer>
     </div>

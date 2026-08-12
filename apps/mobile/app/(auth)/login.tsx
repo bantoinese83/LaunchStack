@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { NativeButton, NativeCard, NativeInput } from '@template/mobile-ui';
+import { NativeButton, NativeCard, NativeInput, theme } from '@template/mobile-ui';
 import { createSupabaseBrowserClient } from '@template/api';
 import { loginSchema } from '@template/validation';
 
@@ -40,8 +40,8 @@ export default function MobileLoginScreen() {
         <View style={styles.logoBadge}>
           <Text style={styles.logoText}>LS</Text>
         </View>
-        <Text style={styles.title}>LaunchStack Mobile</Text>
-        <Text style={styles.subtitle}>Sign in to access your workspace</Text>
+        <Text style={styles.title}>LaunchStack</Text>
+        <Text style={styles.subtitle}>Sign in to your workspace</Text>
 
         {error && <Text style={styles.errorBanner}>{error}</Text>}
 
@@ -76,7 +76,7 @@ export default function MobileLoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#020617',
+    backgroundColor: theme.paper,
     justifyContent: 'center',
     padding: 20,
   },
@@ -84,32 +84,36 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logoBadge: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    backgroundColor: '#2563eb',
+    width: 44,
+    height: 44,
+    borderRadius: 4,
+    backgroundColor: theme.ink,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
+    marginBottom: 14,
   },
   logoText: {
-    color: '#ffffff',
-    fontWeight: 'bold',
-    fontSize: 20,
+    color: theme.paper,
+    fontWeight: '700',
+    fontSize: 16,
   },
   title: {
-    color: '#f8fafc',
-    fontSize: 22,
-    fontWeight: 'bold',
+    color: theme.ink,
+    fontSize: 24,
+    fontWeight: '700',
+    letterSpacing: -0.4,
   },
   subtitle: {
-    color: '#94a3b8',
+    color: theme.muted,
     fontSize: 14,
     marginBottom: 20,
+    marginTop: 4,
   },
   errorBanner: {
-    color: '#f87171',
-    backgroundColor: '#450a0a',
+    color: theme.danger,
+    backgroundColor: '#FEF3F2',
+    borderColor: '#FECDCA',
+    borderWidth: 1,
     padding: 8,
     borderRadius: 6,
     marginBottom: 12,

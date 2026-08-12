@@ -10,7 +10,11 @@
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#020617"
+      "backgroundColor": "#F3F4F1"
+    },
+    "updates": {
+      "enabled": false,
+      "fallbackToCacheTimeout": 0
     },
     "ios": {
       "supportsTablet": true,
@@ -19,7 +23,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#020617"
+        "backgroundColor": "#F3F4F1"
       },
       "package": "com.launchstack.app"
     },

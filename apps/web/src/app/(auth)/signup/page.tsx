@@ -61,18 +61,20 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-950 p-6">
-      <Card className="w-full max-w-md p-8 border-slate-800">
-        <div className="text-center mb-8">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600 font-bold text-white text-xl shadow-lg shadow-blue-500/20 mb-3">
+    <div className="flex min-h-screen items-center justify-center bg-paper atlas-grain p-6">
+      <Card className="w-full max-w-md p-8">
+        <div className="mb-8 text-center">
+          <div className="mx-auto mb-4 flex h-11 w-11 items-center justify-center rounded-sm bg-ink font-display text-lg font-bold text-paper">
             LS
           </div>
-          <h1 className="text-2xl font-bold text-white">Create an Account</h1>
-          <p className="text-slate-400 text-sm mt-1">Start building with LaunchStack monorepo</p>
+          <h1 className="font-display text-2xl font-semibold tracking-tight text-ink">
+            Create an account
+          </h1>
+          <p className="mt-1 text-sm text-muted">Start building with LaunchStack</p>
         </div>
 
         {error && (
-          <div className="mb-6 rounded-lg bg-red-950/80 border border-red-800/60 p-3 text-xs text-red-300 text-center">
+          <div className="mb-6 rounded-lg bg-red-50 border border-red-200 p-3 text-xs text-danger text-center">
             {error}
           </div>
         )}
@@ -112,9 +114,9 @@ export default function SignupPage() {
           </Button>
         </form>
 
-        <div className="mt-8 text-center text-xs text-slate-400">
+        <div className="mt-8 text-center text-xs text-muted">
           Already have an account?{' '}
-          <Link href="/login" className="font-semibold text-blue-400 hover:underline">
+          <Link href="/login" className="font-semibold text-accent hover:text-accent-hover">
             Sign in
           </Link>
         </div>

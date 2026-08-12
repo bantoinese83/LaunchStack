@@ -66,20 +66,20 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-950 p-6">
-      <Card className="w-full max-w-lg p-8 border-slate-800">
+    <div className="flex min-h-screen items-center justify-center bg-paper p-6">
+      <Card className="w-full max-w-lg p-8 border-line">
         <div className="text-center mb-8">
-          <span className="text-xs font-semibold uppercase tracking-wider text-blue-400">
+          <span className="text-xs font-semibold uppercase tracking-wider text-accent">
             Step 1 of 2
           </span>
-          <h1 className="text-2xl font-bold text-white mt-1">Create Your Workspace</h1>
-          <p className="text-slate-400 text-sm mt-1">
+          <h1 className="text-2xl font-semibold text-ink mt-1">Create Your Workspace</h1>
+          <p className="text-muted text-sm mt-1">
             Workspaces isolate team data, members, and billing.
           </p>
         </div>
 
         {error && (
-          <div className="mb-6 rounded-lg bg-red-950/80 border border-red-800/60 p-3 text-xs text-red-300 text-center">
+          <div className="mb-6 rounded-lg bg-red-50 border border-red-200 p-3 text-xs text-danger text-center">
             {error}
           </div>
         )}

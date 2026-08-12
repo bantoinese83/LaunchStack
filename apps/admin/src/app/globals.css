@@ -2,11 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --paper: #f3f4f1;
+  --ink: #141714;
+  --accent: #0f6e56;
+}
+
 body {
-  background-color: #020617;
-  color: #f8fafc;
-  font-family:
-    system-ui,
-    -apple-system,
-    sans-serif;
+  background-color: var(--paper);
+  color: var(--ink);
+}
+
+.atlas-grain {
+  background-image: radial-gradient(rgba(20, 23, 20, 0.035) 0.6px, transparent 0.6px);
+  background-size: 3px 3px;
 }
