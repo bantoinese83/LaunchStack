@@ -1,24 +1,7 @@
 import { NextResponse } from 'next/server';
-import Stripe from 'stripe';
+import type Stripe from 'stripe';
 import { createSupabaseAdminClient } from '@template/api';
-
-const STRIPE_API_VERSION = '2024-04-10' as const;
-
-function getStripeClient(): Stripe {
-  const secret = process.env.STRIPE_SECRET_KEY;
-  if (!secret) {
-    throw new Error('STRIPE_SECRET_KEY is not configured');
-  }
-  return new Stripe(secret, { apiVersion: STRIPE_API_VERSION });
-}
-
-/**
- * Production always verifies. Local/test may skip only when no real webhook secret is configured.
- */
-function mustVerifySignature(webhookSecret: string | undefined): boolean {
-  if (process.env.NODE_ENV === 'production') return true;
-  return Boolean(webhookSecret && webhookSecret !== 'whsec_mock');
-}
+import { getStripeClient, mustVerifyStripeWebhookSignature } from '@/lib/stripe';
 
 export async function POST(req: Request) {
   const body = await req.text();
@@ -27,7 +10,7 @@ export async function POST(req: Request) {
 
   let event: Stripe.Event;
   try {
-    if (mustVerifySignature(webhookSecret)) {
+    if (mustVerifyStripeWebhookSignature(webhookSecret)) {
       if (!webhookSecret || webhookSecret === 'whsec_mock') {
         console.error('[Webhook] STRIPE_WEBHOOK_SECRET is required in production');
         return NextResponse.json({ error: 'Webhook not configured' }, { status: 500 });
@@ -46,6 +29,7 @@ export async function POST(req: Request) {
   }
 
   const supabaseAdmin = createSupabaseAdminClient();
+  const stripe = getStripeClient();
 
   switch (event.type) {
     case 'checkout.session.completed': {
@@ -54,7 +38,7 @@ export async function POST(req: Request) {
       const subscriptionId = session.subscription as string;
 
       if (workspaceId && subscriptionId) {
-        const subscription = await getStripeClient().subscriptions.retrieve(subscriptionId);
+        const subscription = await stripe.subscriptions.retrieve(subscriptionId);
         await supabaseAdmin.from('subscriptions').upsert({
           workspace_id: workspaceId,
           stripe_subscription_id: subscriptionId,

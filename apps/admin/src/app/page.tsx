@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Button, Card, Badge } from '@template/ui';
-import { Shield, Users, Building, Activity, FileText, ToggleLeft } from 'lucide-react';
+import { Shield, Users, Building, Activity, FileText } from 'lucide-react';
 
 export default function InternalAdminDashboard() {
   const [activeTab, setActiveTab] = useState<'overview' | 'workspaces' | 'users' | 'moderation'>(

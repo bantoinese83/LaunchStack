@@ -5,9 +5,16 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button, Card, Badge, Modal, Input, StatsCard, Avatar } from '@template/ui';
 import { createSupabaseBrowserClient, DomainAPI } from '@template/api';
-import { Workspace, Profile, WorkspaceMember, InvitableWorkspaceRole } from '@template/types';
+import {
+  Workspace,
+  Profile,
+  WorkspaceMember,
+  InvitableWorkspaceRole,
+  INVITABLE_WORKSPACE_ROLES,
+} from '@template/types';
 import { inviteMemberSchema } from '@template/validation';
-import { BrevoEmailService } from '@template/email';
+import { isSuperAdmin, isWorkspaceOwner } from '@template/auth';
+import { getPlanLimits } from '@template/feature-flags';
 import {
   LayoutDashboard,
   MessageSquare,
@@ -19,6 +26,12 @@ import {
   UserPlus,
 } from 'lucide-react';
 
+const ADMIN_PORTAL_URL = process.env.NEXT_PUBLIC_ADMIN_URL || 'http://localhost:3002';
+const INVITE_ROLE_LABELS: Record<InvitableWorkspaceRole, string> = {
+  workspace_member: 'Workspace Member',
+  workspace_admin: 'Workspace Admin',
+};
+
 export default function DashboardPage() {
   const router = useRouter();
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -27,7 +40,6 @@ export default function DashboardPage() {
   const [members, setMembers] = useState<WorkspaceMember[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Modals & Interactivity
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
@@ -75,6 +87,13 @@ export default function DashboardPage() {
     loadData();
   }, [router]);
 
+  const planLimits = getPlanLimits('active');
+  const seatCount = members.length || 1;
+  const seatsRemainingPct = Math.max(
+    0,
+    Math.round(((planLimits.maxMembers - seatCount) / planLimits.maxMembers) * 100)
+  );
+
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
@@ -100,19 +119,30 @@ export default function DashboardPage() {
 
     try {
       if (!selectedWorkspace || !profile) return;
-      const emailService = new BrevoEmailService();
-      await emailService.sendWorkspaceInvite(
-        inviteEmail,
-        profile.full_name || profile.email,
-        selectedWorkspace.name,
-        `https://launchstack.com/login?invite=${selectedWorkspace.id}`
-      );
+
+      const origin = typeof window !== 'undefined' ? window.location.origin : '';
+      const inviteUrl = `${origin}/login?invite=${selectedWorkspace.id}`;
+      const response = await fetch('/api/email/invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: inviteEmail,
+          inviterName: profile.full_name || profile.email,
+          workspaceName: selectedWorkspace.name,
+          inviteUrl,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = (await response.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(data?.error || 'Failed to send invite');
+      }
 
       setShowInviteModal(false);
       setInviteEmail('');
       showToast(`Invitation sent to ${inviteEmail}`);
-    } catch (err: any) {
-      setModalError(err.message || 'Failed to send invite');
+    } catch (err: unknown) {
+      setModalError(err instanceof Error ? err.message : 'Failed to send invite');
     }
   };
 
@@ -132,14 +162,12 @@ export default function DashboardPage() {
 
   return (
     <div className="flex min-h-screen bg-paper text-ink">
-      {/* TOAST NOTIFICATION */}
       {toastMessage && (
         <div className="fixed top-5 right-5 z-50 rounded-lg bg-accent-soft border border-accent/20 text-success px-4 py-3 text-sm shadow-xl flex items-center gap-2 animate-in slide-in-from-top-2">
           <Check className="h-4 w-4" /> {toastMessage}
         </div>
       )}
 
-      {/* SIDEBAR NAVIGATION */}
       <aside className="w-64 border-r border-line bg-surface p-6 flex flex-col justify-between">
         <div>
           <div className="flex items-center space-x-3 mb-8">
@@ -149,7 +177,6 @@ export default function DashboardPage() {
             <span className="text-lg font-semibold text-ink">LaunchStack</span>
           </div>
 
-          {/* WORKSPACE SELECTOR */}
           <div className="mb-6">
             <label className="text-xs font-semibold text-muted uppercase tracking-wider block mb-2">
               Workspace
@@ -188,9 +215,9 @@ export default function DashboardPage() {
               <MessageSquare className="h-4 w-4" />
               <span>Feedback Engine</span>
             </Link>
-            {profile?.system_role === 'super_admin' && (
+            {isSuperAdmin(profile?.system_role) && (
               <a
-                href="http://localhost:3002"
+                href={ADMIN_PORTAL_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center space-x-3 px-3 py-2.5 rounded-lg text-accent hover:bg-accent-soft text-sm"
@@ -220,7 +247,6 @@ export default function DashboardPage() {
         </div>
       </aside>
 
-      {/* MAIN CONTENT */}
       <main className="flex-1 p-8 overflow-y-auto">
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div>
@@ -264,14 +290,13 @@ export default function DashboardPage() {
           </div>
         </header>
 
-        {/* METRICS STATS CARDS */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <StatsCard
             title="Team Seat Usage"
-            value={`${members.length || 1} / 20`}
-            change="80% Available"
+            value={`${seatCount} / ${planLimits.maxMembers}`}
+            change={`${seatsRemainingPct}% Available`}
             isPositive={true}
-            subtext="Pro tier allows up to 20 seats"
+            subtext={`Pro tier allows up to ${planLimits.maxMembers} seats`}
           />
 
           <StatsCard
@@ -291,7 +316,6 @@ export default function DashboardPage() {
           />
         </div>
 
-        {/* TEAM MEMBERS TABLE */}
         <Card className="border-line mb-8">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-ink">Workspace Teammates</h2>
@@ -326,7 +350,7 @@ export default function DashboardPage() {
                       </div>
                     </td>
                     <td className="py-3 px-4">
-                      <Badge variant={mem.role === 'workspace_owner' ? 'purple' : 'info'}>
+                      <Badge variant={isWorkspaceOwner(mem.role) ? 'purple' : 'info'}>
                         {mem.role.replace('_', ' ')}
                       </Badge>
                     </td>
@@ -345,7 +369,6 @@ export default function DashboardPage() {
           </div>
         </Card>
 
-        {/* MODAL: INVITE TEAMMATE */}
         <Modal
           isOpen={showInviteModal}
           onClose={() => setShowInviteModal(false)}
@@ -369,8 +392,11 @@ export default function DashboardPage() {
                 onChange={(e) => setInviteRole(e.target.value as InvitableWorkspaceRole)}
                 className="w-full rounded-lg border border-line bg-paper px-3 py-2 text-sm text-ink"
               >
-                <option value="workspace_member">Workspace Member</option>
-                <option value="workspace_admin">Workspace Admin</option>
+                {INVITABLE_WORKSPACE_ROLES.map((role) => (
+                  <option key={role} value={role}>
+                    {INVITE_ROLE_LABELS[role]}
+                  </option>
+                ))}
               </select>
             </div>
             <div className="flex justify-end space-x-3 pt-4">
@@ -384,7 +410,6 @@ export default function DashboardPage() {
           </form>
         </Modal>
 
-        {/* MODAL: WORKSPACE SETTINGS */}
         <Modal
           isOpen={showSettingsModal}
           onClose={() => setShowSettingsModal(false)}

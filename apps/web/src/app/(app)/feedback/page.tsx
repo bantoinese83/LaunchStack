@@ -3,23 +3,31 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Button, Card, Badge, Modal, Input, Avatar } from '@template/ui';
+import { Button, Card, Badge, Modal, Input } from '@template/ui';
 import { createSupabaseBrowserClient, DomainAPI } from '@template/api';
-import { FeedbackCategory, FeedbackPost, Workspace } from '@template/types';
+import { FeedbackCategory, FeedbackPost, FEEDBACK_CATEGORIES } from '@template/types';
 import { createFeedbackSchema } from '@template/validation';
 import { ThumbsUp, Plus, ArrowLeft, Search, Check } from 'lucide-react';
 import { analytics } from '@template/analytics';
 
+const FEEDBACK_FILTERS = ['all', ...FEEDBACK_CATEGORIES] as const;
+type FeedbackFilter = (typeof FEEDBACK_FILTERS)[number];
+
+const CATEGORY_LABELS: Record<FeedbackCategory, string> = {
+  feature: 'Feature Request',
+  improvement: 'Improvement',
+  bug: 'Bug Report',
+};
+
 export default function FeedbackBoardPage() {
   const router = useRouter();
   const [posts, setPosts] = useState<FeedbackPost[]>([]);
-  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string>('');
   const [showModal, setShowModal] = useState(false);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState<FeedbackCategory>('feature');
-  const [filterCategory, setFilterCategory] = useState<string>('all');
+  const [filterCategory, setFilterCategory] = useState<FeedbackFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -39,7 +47,6 @@ export default function FeedbackBoardPage() {
 
         const api = new DomainAPI(supabase);
         const userWorkspaces = await api.getUserWorkspaces(session.user.id);
-        setWorkspaces(userWorkspaces);
 
         if (userWorkspaces.length > 0) {
           const wsId = userWorkspaces[0].id;
@@ -81,7 +88,7 @@ export default function FeedbackBoardPage() {
         { name: 'feedback_upvoted', properties: { post_id: postId } },
         session.user.id
       );
-    } catch (err: any) {
+    } catch {
       showToast('You have already upvoted this item!');
     }
   };
@@ -131,8 +138,8 @@ export default function FeedbackBoardPage() {
         },
         session.user.id
       );
-    } catch (err: any) {
-      setError(err.message || 'Failed to submit feedback');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to submit feedback');
     }
   };
 
@@ -146,7 +153,6 @@ export default function FeedbackBoardPage() {
 
   return (
     <div className="min-h-screen bg-paper text-ink p-8">
-      {/* TOAST NOTIFICATION */}
       {toastMessage && (
         <div className="fixed top-5 right-5 z-50 rounded-lg bg-accent-soft border border-accent/20 text-success px-4 py-3 text-sm shadow-xl flex items-center gap-2 animate-in slide-in-from-top-2">
           <Check className="h-4 w-4" /> {toastMessage}
@@ -174,7 +180,6 @@ export default function FeedbackBoardPage() {
           </Button>
         </div>
 
-        {/* SEARCH AND CATEGORY FILTER BAR */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8 bg-surface p-4 rounded-md border border-line">
           <div className="relative w-full sm:w-72">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted" />
@@ -188,7 +193,7 @@ export default function FeedbackBoardPage() {
           </div>
 
           <div className="flex items-center space-x-2 w-full sm:w-auto overflow-x-auto">
-            {['all', 'feature', 'improvement', 'bug'].map((cat) => (
+            {FEEDBACK_FILTERS.map((cat) => (
               <button
                 key={cat}
                 onClick={() => setFilterCategory(cat)}
@@ -204,7 +209,6 @@ export default function FeedbackBoardPage() {
           </div>
         </div>
 
-        {/* FEEDBACK POSTS LIST */}
         {isLoading ? (
           <div className="py-12 text-center text-muted">Loading roadmap items...</div>
         ) : filteredPosts.length === 0 ? (
@@ -261,7 +265,6 @@ export default function FeedbackBoardPage() {
           </div>
         )}
 
-        {/* MODAL FOR NEW FEEDBACK */}
         <Modal
           isOpen={showModal}
           onClose={() => setShowModal(false)}
@@ -286,9 +289,11 @@ export default function FeedbackBoardPage() {
                 onChange={(e) => setCategory(e.target.value as FeedbackCategory)}
                 className="w-full rounded-lg border border-line bg-paper px-3 py-2 text-sm text-ink"
               >
-                <option value="feature">Feature Request</option>
-                <option value="improvement">Improvement</option>
-                <option value="bug">Bug Report</option>
+                {FEEDBACK_CATEGORIES.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {CATEGORY_LABELS[cat]}
+                  </option>
+                ))}
               </select>
             </div>
 

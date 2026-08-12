@@ -1,21 +1,7 @@
 import { NextResponse } from 'next/server';
-import Stripe from 'stripe';
 import { createCheckoutSchema } from '@template/validation';
 import { createSupabaseAdminClient } from '@template/api';
-
-const STRIPE_API_VERSION = '2024-04-10' as const;
-
-function getStripeClient(): Stripe {
-  const secret = process.env.STRIPE_SECRET_KEY;
-  if (!secret) {
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error('STRIPE_SECRET_KEY is not configured');
-    }
-    // Local/dev fallback so the route can still be exercised without live Stripe keys
-    return new Stripe('sk_test_mock', { apiVersion: STRIPE_API_VERSION });
-  }
-  return new Stripe(secret, { apiVersion: STRIPE_API_VERSION });
-}
+import { getStripeClient } from '@/lib/stripe';
 
 export async function POST(req: Request) {
   try {
@@ -28,7 +14,7 @@ export async function POST(req: Request) {
 
     const { workspaceId, priceId } = validation.data;
     const adminSupabase = createSupabaseAdminClient();
-    const stripe = getStripeClient();
+    const stripe = getStripeClient({ allowDevMock: true });
 
     const { data: workspace, error: wsError } = await adminSupabase
       .from('workspaces')

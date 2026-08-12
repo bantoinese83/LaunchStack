@@ -58,8 +58,8 @@ export default function OnboardingPage() {
       );
 
       router.push('/dashboard');
-    } catch (err: any) {
-      setError(err.message || 'Failed to create workspace');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to create workspace');
     } finally {
       setIsLoading(false);
     }

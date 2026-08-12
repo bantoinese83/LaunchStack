@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import { Button, Card, Input } from '@template/ui';
 import { createSupabaseBrowserClient } from '@template/api';
 import { signupSchema } from '@template/validation';
-import { BrevoEmailService } from '@template/email';
 import { analytics } from '@template/analytics';
 
 export default function SignupPage() {
@@ -42,19 +41,22 @@ export default function SignupPage() {
         throw new Error(authError.message);
       }
 
-      // Track analytics & send Brevo welcome email
       if (data.user) {
         analytics.track(
           { name: 'signup_completed', properties: { user_id: data.user.id, email } },
           data.user.id
         );
-        const emailService = new BrevoEmailService();
-        await emailService.sendWelcomeEmail(email, fullName);
+        // Server route owns Brevo — client never sees BREVO_API_KEY
+        void fetch('/api/email/welcome', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ to: email, name: fullName }),
+        }).catch((err) => console.error('[welcome email]', err));
       }
 
       router.push('/onboarding');
-    } catch (err: any) {
-      setError(err.message || 'Failed to sign up');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to sign up');
     } finally {
       setIsLoading(false);
     }
