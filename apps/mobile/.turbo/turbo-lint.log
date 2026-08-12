@@ -1,0 +1,4 @@
+
+> @template/mobile@1.0.0 lint /Users/monarchlabsinc./Desktop/enterprise-app-template/apps/mobile
+> eslint . --ext .ts,.tsx
+

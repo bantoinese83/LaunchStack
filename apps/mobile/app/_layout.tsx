@@ -5,7 +5,7 @@ import * as SecureStore from 'expo-secure-store';
 import { createSupabaseBrowserClient } from '@template/api';
 
 // Custom Supabase Storage adapter using Expo SecureStore for encrypted token storage
-const ExpoSecureStoreAdapter = {
+export const ExpoSecureStoreAdapter = {
   getItem: (key: string) => SecureStore.getItemAsync(key),
   setItem: (key: string, value: string) => SecureStore.setItemAsync(key, value),
   removeItem: (key: string) => SecureStore.deleteItemAsync(key),
@@ -14,7 +14,7 @@ const ExpoSecureStoreAdapter = {
 export default function RootLayout() {
   useEffect(() => {
     // Initialize Supabase Auth session with Expo SecureStore persistence
-    const supabase = createSupabaseBrowserClient();
+    createSupabaseBrowserClient();
   }, []);
 
   return (

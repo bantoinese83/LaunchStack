@@ -26,8 +26,9 @@ export default function MobileLoginScreen() {
       const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
       if (authError) throw new Error(authError.message);
       router.replace('/(app)/(tabs)/home');
-    } catch (err: any) {
-      setError(err.message || 'Login failed');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Login failed';
+      setError(message);
     } finally {
       setIsLoading(false);
     }
