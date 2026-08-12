@@ -1,0 +1,16 @@
+{
+  "name": "@template/analytics",
+  "version": "1.0.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.12",
+    "@template/config": "workspace:*",
+    "typescript": "^5.4.5"
+  }
+}

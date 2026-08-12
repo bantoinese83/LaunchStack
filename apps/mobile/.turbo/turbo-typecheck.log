@@ -1,0 +1,4 @@
+
+> @template/mobile@1.0.0 typecheck /Users/monarchlabsinc./.gemini/antigravity-ide/scratch/enterprise-app-template/apps/mobile
+> tsc --noEmit
+

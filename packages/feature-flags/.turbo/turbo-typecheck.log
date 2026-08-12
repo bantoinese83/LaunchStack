@@ -1,0 +1,4 @@
+
+> @template/feature-flags@1.0.0 typecheck /Users/monarchlabsinc./.gemini/antigravity-ide/scratch/enterprise-app-template/packages/feature-flags
+> tsc --noEmit
+

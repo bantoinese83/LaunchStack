@@ -1,0 +1,10 @@
+{
+  "recommendations": [
+    "esbenp.prettier-vscode",
+    "dbaeumer.vscode-eslint",
+    "bradlc.vscode-tailwindcss",
+    "supabase.supabase-vscode",
+    "expo.vscode-expo-tools",
+    "eamodio.gitlens"
+  ]
+}

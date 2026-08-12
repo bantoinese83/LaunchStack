@@ -1,0 +1,43 @@
+name: Supabase CI
+
+on:
+  pull_request:
+    paths:
+      - 'supabase/migrations/**'
+      - 'supabase/seed.sql'
+      - 'supabase/config.toml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'supabase/migrations/**'
+      - 'supabase/seed.sql'
+      - 'supabase/config.toml'
+
+jobs:
+  test-migrations:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Start Supabase local development
+        run: supabase start
+
+      - name: Verify Types
+        run: |
+          supabase gen types typescript --local > types.ts
+          if [ -s types.ts ]; then
+            echo "Types generated successfully"
+          else
+            echo "Failed to generate types"
+            exit 1
+          fi
+
+      - name: Stop Supabase
+        run: supabase stop
