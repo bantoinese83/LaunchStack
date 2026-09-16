@@ -3,13 +3,13 @@ import { FEEDBACK_CATEGORIES, FEEDBACK_STATUSES, INVITABLE_WORKSPACE_ROLES } fro
 
 // AUTH SCHEMAS
 export const loginSchema = z.object({
-  email: z.string().email('Please enter a valid email address'),
+  email: z.email('Please enter a valid email address'),
   password: z.string().min(8, 'Password must be at least 8 characters long'),
 });
 
 export const signupSchema = z.object({
   fullName: z.string().min(2, 'Full name must be at least 2 characters'),
-  email: z.string().email('Please enter a valid email address'),
+  email: z.email('Please enter a valid email address'),
   password: z.string().min(8, 'Password must be at least 8 characters long'),
 });
 
@@ -42,17 +42,17 @@ export const updateWorkspaceSchema = z.object({
     .min(2, 'Workspace name must be at least 2 characters')
     .max(50, 'Workspace name too long')
     .optional(),
-  logoUrl: z.string().url('Invalid image URL').nullable().optional(),
+  logoUrl: z.url('Invalid image URL').nullable().optional(),
 });
 
 export const inviteMemberSchema = z.object({
-  email: z.string().email('Please enter a valid email address'),
+  email: z.email('Please enter a valid email address'),
   role: z.enum(INVITABLE_WORKSPACE_ROLES),
 });
 
 // FEEDBACK SCHEMAS
 export const createFeedbackSchema = z.object({
-  workspaceId: z.string().uuid('Invalid workspace ID'),
+  workspaceId: z.uuid('Invalid workspace ID'),
   title: z
     .string()
     .min(5, 'Title must be at least 5 characters')
@@ -65,13 +65,13 @@ export const createFeedbackSchema = z.object({
 });
 
 export const updateFeedbackStatusSchema = z.object({
-  postId: z.string().uuid('Invalid post ID'),
+  postId: z.uuid('Invalid post ID'),
   status: z.enum(FEEDBACK_STATUSES),
 });
 
 // BILLING SCHEMAS
 export const createCheckoutSchema = z.object({
-  workspaceId: z.string().uuid('Invalid workspace ID'),
+  workspaceId: z.uuid('Invalid workspace ID'),
   priceId: z.string().min(1, 'Price ID is required'),
 });
 

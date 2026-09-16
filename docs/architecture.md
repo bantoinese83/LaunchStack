@@ -28,6 +28,7 @@ pnpm Workspaces
 3. **Multi-Tenant Isolation**: Every tenant record references a `workspace_id`. Cross-workspace data queries are rejected by PostgreSQL RLS.
 4. **Single Source of Truth for Domain Enums**: Role, feedback category/status, and subscription status values are defined once as `as const` arrays in `@template/types`. `@template/validation` Zod schemas import those arrays (`z.enum(...)`) so TypeScript unions and runtime validation cannot drift.
 5. **Capability Helpers Compose Role Checks**: Billing/member/moderation helpers in `@template/auth` call shared predicates (`isWorkspaceOwner`, `isWorkspaceAdmin`, `isSuperAdmin`) instead of re-implementing role comparisons.
+6. **Strict Package Modularity**: We avoid monolithic "blob" files (e.g., massive `index.ts` files). All package logic is split by domain or component responsibility and aggregated using cleanly structured barrel exports (`export * from ...`).
 
 ## Testing & Quality Strategy
 

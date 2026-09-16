@@ -1,4 +1,4 @@
 
-> @template/analytics@1.0.0 typecheck /Users/monarchlabsinc./Desktop/enterprise-app-template/packages/analytics
+> @template/analytics@1.0.0 typecheck /Users/monarchlabsinc./Desktop/LaunchStack/packages/analytics
 > tsc --noEmit
 

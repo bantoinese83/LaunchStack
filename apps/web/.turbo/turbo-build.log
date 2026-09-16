@@ -1,29 +1,25 @@
 
-> @template/web@1.0.0 build /Users/monarchlabsinc./Desktop/enterprise-app-template/apps/web
+> @template/web@1.0.0 build /Users/monarchlabsinc./Desktop/LaunchStack/apps/web
 > next build
 
-▲ Next.js 16.3.0 (Turbopack)
-✓ Running next.config.mjs took 163ms
+▲ Next.js 16.3.5 (Turbopack)
+✓ Running next.config.mjs took 308ms
 - Experiments (use with caution):
   · clientTraceMetadata
 
   Creating an optimized production build ...
-✓ Compiled successfully in 8.5s
-  Running next.config.js provided runAfterProductionCompile ...
-✓ Completed runAfterProductionCompile in 188ms
-  Running TypeScript ...
-  Finished TypeScript in 1046ms ...
-  Collecting page data using 11 workers ...
-  Generating static pages using 11 workers (0/14) ...
-  Generating static pages using 11 workers (3/14) 
-  Generating static pages using 11 workers (6/14) 
-  Generating static pages using 11 workers (10/14) 
-✓ Generating static pages using 11 workers (14/14) in 166ms
-  Finalizing page optimization ...
+✓ Compiled successfully in 1452ms
+✓ Completed runAfterProductionCompile in 272ms
+  Finished TypeScript in 1257ms    ✓ Finished TypeScript in 1257ms 
+  Collecting page data using 11 workers in 590ms    ✓ Collecting page data using 11 workers in 590ms 
+✓ Generating static pages using 11 workers (16/16) in 225ms
+  Finalizing page optimization in 262ms    ✓ Finalizing page optimization in 262ms 
 
 Route (app)
 ┌ ○ /
 ├ ○ /_not-found
+├ ƒ /api/email/invite
+├ ƒ /api/email/welcome
 ├ ƒ /api/stripe/checkout
 ├ ƒ /api/stripe/webhook
 ├ ○ /dashboard

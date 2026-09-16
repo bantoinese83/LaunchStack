@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { StyleSheet, Text } from 'react-native';
-import { useRouter } from 'expo-router';
 import {
   NativeAlert,
   NativeBrandMark,
@@ -10,37 +9,10 @@ import {
   NativeScreen,
   theme,
 } from '@template/mobile-ui';
-import { createSupabaseBrowserClient } from '@template/api';
-import { loginSchema } from '@template/validation';
+import { useLogin } from './useLogin';
 
 export default function MobileLoginScreen() {
-  const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleLogin = async () => {
-    setError(null);
-    const validation = loginSchema.safeParse({ email, password });
-    if (!validation.success) {
-      setError(validation.error.errors[0].message);
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const supabase = createSupabaseBrowserClient();
-      const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
-      if (authError) throw new Error(authError.message);
-      router.replace('/(app)/(tabs)/home');
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Login failed';
-      setError(message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const { email, setEmail, password, setPassword, error, isLoading, handleLogin } = useLogin();
 
   return (
     <NativeScreen style={styles.container}>

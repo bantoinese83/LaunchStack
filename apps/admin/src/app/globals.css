@@ -1,6 +1,29 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+
+@source "../../../../packages/ui/src";
+
+@theme {
+  --color-paper: #f3f4f1;
+  --color-surface: #ffffff;
+  --color-ink: #141714;
+  --color-muted: #5a635c;
+  --color-line: #c9cec6;
+  --color-accent: #0f6e56;
+  --color-accent-hover: #0b5844;
+  --color-accent-soft: #e3f0eb;
+  --color-danger: #b42318;
+  --color-success: #027a48;
+
+  --radius-sm: 4px;
+  --radius-md: 6px;
+}
+
+/* next/font sets these runtime variables on <html>; `@theme inline`
+   keeps Tailwind utilities in sync without redefining them. */
+@theme inline {
+  --font-display: var(--font-display);
+  --font-sans: var(--font-sans);
+}
 
 :root {
   --paper: #f3f4f1;

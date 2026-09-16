@@ -1,0 +1,43 @@
+{
+  "files": {
+    "packages/analytics/dist/index.d.ts.map": {
+      "size": 1582,
+      "mtime_nanos": 1789598354024784345,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/analytics/dist/index.js.map": {
+      "size": 1290,
+      "mtime_nanos": 1789598354020801929,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/analytics/.turbo/turbo-build.log": {
+      "size": 104,
+      "mtime_nanos": 1789598354083577497,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/analytics/dist/index.d.ts": {
+      "size": 1542,
+      "mtime_nanos": 1789598354024863762,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/analytics/dist/index.js": {
+      "size": 1349,
+      "mtime_nanos": 1789598354020913763,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/analytics/dist": { "size": 0, "mtime_nanos": 0, "mode": 0, "is_dir": true }
+  },
+  "order": [
+    "packages/analytics/.turbo/turbo-build.log",
+    "packages/analytics/dist",
+    "packages/analytics/dist/index.d.ts",
+    "packages/analytics/dist/index.d.ts.map",
+    "packages/analytics/dist/index.js",
+    "packages/analytics/dist/index.js.map"
+  ]
+}

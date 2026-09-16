@@ -45,19 +45,19 @@ It's designed for **principled engineers** who want enterprise-level confidence 
 
 ### 📦 Packages (The Brains & Brawn)
 
-Sharing code across 3 separate apps is hard. LaunchStack solves this with hyper-focused packages:
+Sharing code across 3 separate apps is hard. LaunchStack solves this with hyper-focused, internally modular packages (strictly enforcing the Single Responsibility Principle without monolithic `index.ts` blobs):
 
 - **`@template/ui`**: 🎨 Web styling with Tailwind CSS & Radix primitives (glassmorphism ready!).
-- **`@template/mobile-ui`**: 📱 Mobile-optimized UI components for Expo.
+- **`@template/mobile-ui`**: 📱 Mobile-optimized UI components for Expo, cleanly split by component.
 - **`@template/api`**: 🔌 Strongly-typed Supabase client factories and data fetchers.
 - **`@template/auth`**: 🔐 Shared RBAC, permission matrices, and role assertions.
 - **`@template/validation`**: ✅ Zod schemas for API payload and form validations (imports enum constants from `@template/types`).
 - **`@template/feature-flags`**: 🚩 SaaS plan entitlements and tier limits.
 - **`@template/kv`**: ⚡ Edge Redis caching and API rate-limiting (via Upstash).
-- **`@template/email`**: ✉️ Transactional email templates (via Brevo) with HTML escaping for user-controlled fields.
+- **`@template/email`**: ✉️ Transactional email templates and services (via Brevo), modularized by domain.
 - **`@template/analytics`**: 📊 Event tracking schemas (via PostHog).
 - **`@template/config`**: ⚙️ Centralized ESLint, TS, and Env configurations.
-- **`@template/types`**: 🔠 Domain-level TypeScript interfaces and shared `as const` enum arrays (single source of truth for roles/statuses).
+- **`@template/types`**: 🔠 Domain-level TypeScript interfaces split logically (`user`, `workspace`, etc.) behind a clean barrel export.
 
 ---
 

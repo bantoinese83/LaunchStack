@@ -1,0 +1,43 @@
+{
+  "files": {
+    "packages/mobile-ui/dist/index.d.ts": {
+      "size": 1278,
+      "mtime_nanos": 1789598354333694184,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/mobile-ui/dist": { "size": 0, "mtime_nanos": 0, "mode": 0, "is_dir": true },
+    "packages/mobile-ui/dist/index.d.ts.map": {
+      "size": 1014,
+      "mtime_nanos": 1789598354333541393,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/mobile-ui/dist/index.js": {
+      "size": 4718,
+      "mtime_nanos": 1789598354328719269,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/mobile-ui/.turbo/turbo-build.log": {
+      "size": 104,
+      "mtime_nanos": 1789598354364576927,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/mobile-ui/dist/index.js.map": {
+      "size": 4653,
+      "mtime_nanos": 1789598354328449602,
+      "mode": 420,
+      "is_dir": false
+    }
+  },
+  "order": [
+    "packages/mobile-ui/.turbo/turbo-build.log",
+    "packages/mobile-ui/dist",
+    "packages/mobile-ui/dist/index.d.ts",
+    "packages/mobile-ui/dist/index.d.ts.map",
+    "packages/mobile-ui/dist/index.js",
+    "packages/mobile-ui/dist/index.js.map"
+  ]
+}

@@ -1,6 +1,6 @@
 import Stripe from 'stripe';
 
-export const STRIPE_API_VERSION = '2024-04-10' as const;
+export const STRIPE_API_VERSION = '2026-08-26.dahlia' as const;
 
 type StripeClientOptions = {
   /** Local checkout can exercise the route without live keys; webhooks never allow this. */

@@ -1,0 +1,71 @@
+{
+  "files": {
+    "packages/auth/dist/index.d.ts": {
+      "size": 968,
+      "mtime_nanos": 1789597238067285877,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/auth/dist/index.js.map": {
+      "size": 1170,
+      "mtime_nanos": 1789597238062084022,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/auth/dist/permissions.test.d.ts.map": {
+      "size": 126,
+      "mtime_nanos": 1789597238068861530,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/auth/dist/permissions.test.js": {
+      "size": 2191,
+      "mtime_nanos": 1789597238068603697,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/auth/dist": { "size": 0, "mtime_nanos": 0, "mode": 0, "is_dir": true },
+    "packages/auth/dist/permissions.test.js.map": {
+      "size": 2507,
+      "mtime_nanos": 1789597238068524485,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/auth/dist/index.js": {
+      "size": 1037,
+      "mtime_nanos": 1789597238062323406,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/auth/dist/permissions.test.d.ts": {
+      "size": 57,
+      "mtime_nanos": 1789597238069112867,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/auth/.turbo/turbo-build.log": {
+      "size": 94,
+      "mtime_nanos": 1789597238083091011,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/auth/dist/index.d.ts.map": {
+      "size": 824,
+      "mtime_nanos": 1789597238067193796,
+      "mode": 420,
+      "is_dir": false
+    }
+  },
+  "order": [
+    "packages/auth/.turbo/turbo-build.log",
+    "packages/auth/dist",
+    "packages/auth/dist/index.d.ts",
+    "packages/auth/dist/index.d.ts.map",
+    "packages/auth/dist/index.js",
+    "packages/auth/dist/index.js.map",
+    "packages/auth/dist/permissions.test.d.ts",
+    "packages/auth/dist/permissions.test.d.ts.map",
+    "packages/auth/dist/permissions.test.js",
+    "packages/auth/dist/permissions.test.js.map"
+  ]
+}

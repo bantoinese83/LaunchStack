@@ -1,0 +1,43 @@
+{
+  "files": {
+    "packages/kv/dist/index.d.ts": {
+      "size": 1613,
+      "mtime_nanos": 1789597237757952424,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/kv/dist/index.d.ts.map": {
+      "size": 850,
+      "mtime_nanos": 1789597237757765431,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/kv/dist/index.js.map": {
+      "size": 2246,
+      "mtime_nanos": 1789597237747736832,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/kv/dist/index.js": {
+      "size": 2433,
+      "mtime_nanos": 1789597237747907041,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/kv/dist": { "size": 0, "mtime_nanos": 0, "mode": 0, "is_dir": true },
+    "packages/kv/.turbo/turbo-build.log": {
+      "size": 90,
+      "mtime_nanos": 1789597237775514164,
+      "mode": 420,
+      "is_dir": false
+    }
+  },
+  "order": [
+    "packages/kv/.turbo/turbo-build.log",
+    "packages/kv/dist",
+    "packages/kv/dist/index.d.ts",
+    "packages/kv/dist/index.d.ts.map",
+    "packages/kv/dist/index.js",
+    "packages/kv/dist/index.js.map"
+  ]
+}

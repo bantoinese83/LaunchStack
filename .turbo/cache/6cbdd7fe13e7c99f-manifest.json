@@ -1,0 +1,11 @@
+{
+  "files": {
+    "apps/mobile/.turbo/turbo-build.log": {
+      "size": 103,
+      "mtime_nanos": 1789597459516838801,
+      "mode": 420,
+      "is_dir": false
+    }
+  },
+  "order": ["apps/mobile/.turbo/turbo-build.log"]
+}

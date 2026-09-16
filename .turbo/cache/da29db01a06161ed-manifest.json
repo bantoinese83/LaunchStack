@@ -1,0 +1,185 @@
+{
+  "files": {
+    "packages/api/dist/services/AuditService.js.map": {
+      "size": 502,
+      "mtime_nanos": 1789599269556007773,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/api/dist/services/FeedbackService.d.ts.map": {
+      "size": 669,
+      "mtime_nanos": 1789599269554333933,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/api/dist/services/FeedbackService.js.map": {
+      "size": 1582,
+      "mtime_nanos": 1789599269553848473,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/api/dist/services/SubscriptionService.d.ts.map": {
+      "size": 363,
+      "mtime_nanos": 1789599269555350437,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/api/.turbo/turbo-build.log": {
+      "size": 96,
+      "mtime_nanos": 1789599269579956032,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/api/dist/services/SubscriptionService.js.map": {
+      "size": 499,
+      "mtime_nanos": 1789599269554778893,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/api/dist/services/WorkspaceService.d.ts.map": {
+      "size": 589,
+      "mtime_nanos": 1789599269552868844,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/api/dist/services/AuditService.js": {
+      "size": 491,
+      "mtime_nanos": 1789599269556079232,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/api/dist/services/ProfileService.d.ts.map": {
+      "size": 439,
+      "mtime_nanos": 1789599269550539419,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/api/dist/index.d.ts": {
+      "size": 632,
+      "mtime_nanos": 1789599269560335873,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/api/dist/index.js": {
+      "size": 1537,
+      "mtime_nanos": 1789599269558023448,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/api/dist/services/WorkspaceService.d.ts": {
+      "size": 552,
+      "mtime_nanos": 1789599269552929928,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/api/dist/services/WorkspaceService.js.map": {
+      "size": 1824,
+      "mtime_nanos": 1789599269552225675,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/api/dist/index.d.ts.map": {
+      "size": 509,
+      "mtime_nanos": 1789599269560245165,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/api/dist/services/FeedbackService.js": {
+      "size": 1607,
+      "mtime_nanos": 1789599269553936724,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/api/dist/services/AuditService.d.ts": {
+      "size": 366,
+      "mtime_nanos": 1789599269556569109,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/api/dist/services/ProfileService.js": {
+      "size": 725,
+      "mtime_nanos": 1789599269548385952,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/api/dist/services/SubscriptionService.d.ts": {
+      "size": 340,
+      "mtime_nanos": 1789599269555465355,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/api/dist/services/SubscriptionService.js": {
+      "size": 457,
+      "mtime_nanos": 1789599269554833560,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/api/dist/services/WorkspaceService.js": {
+      "size": 1767,
+      "mtime_nanos": 1789599269552305342,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/api/dist/services/FeedbackService.d.ts": {
+      "size": 663,
+      "mtime_nanos": 1789599269554420392,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/api/dist": { "size": 0, "mtime_nanos": 0, "mode": 0, "is_dir": true },
+    "packages/api/dist/index.js.map": {
+      "size": 1308,
+      "mtime_nanos": 1789599269557891864,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/api/dist/services": { "size": 0, "mtime_nanos": 0, "mode": 0, "is_dir": true },
+    "packages/api/dist/services/ProfileService.d.ts": {
+      "size": 381,
+      "mtime_nanos": 1789599269550618586,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/api/dist/services/ProfileService.js.map": {
+      "size": 805,
+      "mtime_nanos": 1789599269548268160,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/api/dist/services/AuditService.d.ts.map": {
+      "size": 431,
+      "mtime_nanos": 1789599269556481358,
+      "mode": 420,
+      "is_dir": false
+    }
+  },
+  "order": [
+    "packages/api/.turbo/turbo-build.log",
+    "packages/api/dist",
+    "packages/api/dist/index.d.ts",
+    "packages/api/dist/index.d.ts.map",
+    "packages/api/dist/index.js",
+    "packages/api/dist/index.js.map",
+    "packages/api/dist/services",
+    "packages/api/dist/services/AuditService.d.ts",
+    "packages/api/dist/services/AuditService.d.ts.map",
+    "packages/api/dist/services/AuditService.js",
+    "packages/api/dist/services/AuditService.js.map",
+    "packages/api/dist/services/FeedbackService.d.ts",
+    "packages/api/dist/services/FeedbackService.d.ts.map",
+    "packages/api/dist/services/FeedbackService.js",
+    "packages/api/dist/services/FeedbackService.js.map",
+    "packages/api/dist/services/ProfileService.d.ts",
+    "packages/api/dist/services/ProfileService.d.ts.map",
+    "packages/api/dist/services/ProfileService.js",
+    "packages/api/dist/services/ProfileService.js.map",
+    "packages/api/dist/services/SubscriptionService.d.ts",
+    "packages/api/dist/services/SubscriptionService.d.ts.map",
+    "packages/api/dist/services/SubscriptionService.js",
+    "packages/api/dist/services/SubscriptionService.js.map",
+    "packages/api/dist/services/WorkspaceService.d.ts",
+    "packages/api/dist/services/WorkspaceService.d.ts.map",
+    "packages/api/dist/services/WorkspaceService.js",
+    "packages/api/dist/services/WorkspaceService.js.map"
+  ]
+}

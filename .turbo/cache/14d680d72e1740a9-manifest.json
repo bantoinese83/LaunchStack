@@ -1,0 +1,127 @@
+{
+  "files": {
+    "packages/email/dist/types.js.map": {
+      "size": 102,
+      "mtime_nanos": 1789600292875120627,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/email/dist": { "size": 0, "mtime_nanos": 0, "mode": 0, "is_dir": true },
+    "packages/email/dist/types.js": {
+      "size": 44,
+      "mtime_nanos": 1789600292875312836,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/email/dist/BrevoEmailService.d.ts.map": {
+      "size": 1052,
+      "mtime_nanos": 1789600292898907177,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/email/dist/index.js": {
+      "size": 120,
+      "mtime_nanos": 1789600292900966810,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/email/dist/utils.d.ts.map": {
+      "size": 169,
+      "mtime_nanos": 1789600292891921442,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/email/dist/BrevoEmailService.js.map": {
+      "size": 2802,
+      "mtime_nanos": 1789600292896592793,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/email/.turbo/turbo-build.log": {
+      "size": 100,
+      "mtime_nanos": 1789600292922287476,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/email/dist/types.d.ts": {
+      "size": 182,
+      "mtime_nanos": 1789600292889554183,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/email/dist/utils.js": {
+      "size": 330,
+      "mtime_nanos": 1789600292891191772,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/email/dist/types.d.ts.map": {
+      "size": 270,
+      "mtime_nanos": 1789600292889353932,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/email/dist/BrevoEmailService.js": {
+      "size": 4746,
+      "mtime_nanos": 1789600292896827502,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/email/dist/index.js.map": {
+      "size": 165,
+      "mtime_nanos": 1789600292900028265,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/email/dist/BrevoEmailService.d.ts": {
+      "size": 934,
+      "mtime_nanos": 1789600292899168761,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/email/dist/utils.d.ts": {
+      "size": 176,
+      "mtime_nanos": 1789600292892140859,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/email/dist/index.d.ts.map": {
+      "size": 167,
+      "mtime_nanos": 1789600292901310645,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/email/dist/utils.js.map": {
+      "size": 355,
+      "mtime_nanos": 1789600292891090647,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/email/dist/index.d.ts": {
+      "size": 122,
+      "mtime_nanos": 1789600292901387603,
+      "mode": 420,
+      "is_dir": false
+    }
+  },
+  "order": [
+    "packages/email/.turbo/turbo-build.log",
+    "packages/email/dist",
+    "packages/email/dist/BrevoEmailService.d.ts",
+    "packages/email/dist/BrevoEmailService.d.ts.map",
+    "packages/email/dist/BrevoEmailService.js",
+    "packages/email/dist/BrevoEmailService.js.map",
+    "packages/email/dist/index.d.ts",
+    "packages/email/dist/index.d.ts.map",
+    "packages/email/dist/index.js",
+    "packages/email/dist/index.js.map",
+    "packages/email/dist/types.d.ts",
+    "packages/email/dist/types.d.ts.map",
+    "packages/email/dist/types.js",
+    "packages/email/dist/types.js.map",
+    "packages/email/dist/utils.d.ts",
+    "packages/email/dist/utils.d.ts.map",
+    "packages/email/dist/utils.js",
+    "packages/email/dist/utils.js.map"
+  ]
+}

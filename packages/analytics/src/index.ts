@@ -20,7 +20,9 @@ export type AnalyticsEvent =
       name: 'feedback_submitted';
       properties: { workspace_id: string; post_id: string; category: string };
     }
-  | { name: 'feedback_upvoted'; properties: { post_id: string } };
+  | { name: 'feedback_upvoted'; properties: { post_id: string } }
+  | { name: 'page_error'; properties: { message: string } }
+  | { name: 'app_error'; properties: { message: string } };
 
 export class AnalyticsTracker {
   private apiKey: string;

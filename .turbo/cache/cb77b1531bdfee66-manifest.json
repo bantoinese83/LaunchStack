@@ -1,0 +1,43 @@
+{
+  "files": {
+    "packages/validation/dist/index.js": {
+      "size": 2602,
+      "mtime_nanos": 1789600296912965158,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/validation/.turbo/turbo-build.log": {
+      "size": 110,
+      "mtime_nanos": 1789600296933821197,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/validation/dist": { "size": 0, "mtime_nanos": 0, "mode": 0, "is_dir": true },
+    "packages/validation/dist/index.d.ts": {
+      "size": 2297,
+      "mtime_nanos": 1789600296919249266,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/validation/dist/index.d.ts.map": {
+      "size": 1101,
+      "mtime_nanos": 1789600296919162849,
+      "mode": 420,
+      "is_dir": false
+    },
+    "packages/validation/dist/index.js.map": {
+      "size": 2571,
+      "mtime_nanos": 1789600296912862283,
+      "mode": 420,
+      "is_dir": false
+    }
+  },
+  "order": [
+    "packages/validation/.turbo/turbo-build.log",
+    "packages/validation/dist",
+    "packages/validation/dist/index.d.ts",
+    "packages/validation/dist/index.d.ts.map",
+    "packages/validation/dist/index.js",
+    "packages/validation/dist/index.js.map"
+  ]
+}
