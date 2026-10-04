@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Button } from '@template/ui';
+import { BrandMark, Button } from '@template/ui';
 import { ArrowRight } from 'lucide-react';
 import AnimatedGradientBackground from '@/components/ui/animated-gradient-background';
 import { LAUNCHSTACK_HERO_GRADIENT } from '../lib/stackGradient';
@@ -25,6 +25,7 @@ export const CtaSection = () => (
           aria-hidden
         />
         <div className="relative z-10 max-w-xl">
+          <BrandMark size="lg" tone="paper" animated className="mb-4" />
           <p className="type-eyebrow text-accent">LaunchStack</p>
           <h2 className="mt-4 font-display text-3xl font-medium tracking-tight sm:text-4xl text-balance">
             Stop rebuilding the foundation.
@@ -36,7 +37,7 @@ export const CtaSection = () => (
           <div className="mt-8 flex flex-wrap gap-3">
             <Link href="/signup">
               <Button size="lg" className="gap-2">
-                Open the template <ArrowRight className="h-4 w-4" />
+                Start building <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
             <Link href="/login">

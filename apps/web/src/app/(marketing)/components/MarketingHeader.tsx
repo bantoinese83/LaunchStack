@@ -17,7 +17,10 @@ export const MarketingHeader = () => (
 
       <nav className="hidden items-center gap-7 font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted md:flex">
         <a href="#platform" className="transition-colors hover:text-accent">
-          Platform
+          Architecture
+        </a>
+        <a href="#stack" className="transition-colors hover:text-accent">
+          Stack
         </a>
         <a href="#surfaces" className="transition-colors hover:text-accent">
           Surfaces
