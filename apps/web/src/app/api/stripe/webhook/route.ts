@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
-import type Stripe from 'stripe';
 import { createSupabaseAdminClient } from '@template/api';
-import { getStripeClient, mustVerifyStripeWebhookSignature } from '@/lib/stripe';
+import { getStripeClient } from '@/lib/stripe';
+import { parseStripeWebhookEvent } from '@/lib/stripe-webhook';
+import { routeErrorResponse } from '@/lib/api/route-auth';
 import { webhookHandlers } from './handlers';
 
 export async function POST(req: Request) {
@@ -9,25 +10,13 @@ export async function POST(req: Request) {
   const signature = req.headers.get('stripe-signature');
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
-  let event: Stripe.Event;
-  try {
-    if (mustVerifyStripeWebhookSignature(webhookSecret)) {
-      if (!webhookSecret || webhookSecret === 'whsec_mock') {
-        console.error('[Webhook] STRIPE_WEBHOOK_SECRET is required in production');
-        return NextResponse.json({ error: 'Webhook not configured' }, { status: 500 });
-      }
-      if (!signature) {
-        return NextResponse.json({ error: 'Missing stripe-signature header' }, { status: 400 });
-      }
-      event = getStripeClient().webhooks.constructEvent(body, signature, webhookSecret);
-    } else {
-      event = JSON.parse(body) as Stripe.Event;
-    }
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown webhook error';
-    console.error(`[Webhook Signature Verification Failed]: ${message}`);
-    return NextResponse.json({ error: `Webhook Error: ${message}` }, { status: 400 });
+  const parsed = parseStripeWebhookEvent(body, signature, webhookSecret, (message, status) =>
+    NextResponse.json({ error: message }, { status })
+  );
+  if (parsed.errorResponse) {
+    return parsed.errorResponse;
   }
+  const event = parsed.event;
 
   const supabaseAdmin = createSupabaseAdminClient();
   const stripe = getStripeClient();
@@ -35,9 +24,13 @@ export async function POST(req: Request) {
   const handler = webhookHandlers[event.type];
 
   if (handler) {
-    await handler(event, stripe, supabaseAdmin);
+    try {
+      await handler(event, stripe, supabaseAdmin);
+    } catch (err) {
+      return routeErrorResponse(err, `[Webhook Handler ${event.type}]`);
+    }
   } else {
-    console.log(`Unhandled event type ${event.type}`);
+    console.warn(`[Webhook] Unhandled event type: ${event.type}`);
   }
 
   return NextResponse.json({ received: true });

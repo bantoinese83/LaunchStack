@@ -9,12 +9,13 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@types/react": "^19.3.0",
     "@template/config": "workspace:*",
+    "@types/react": "^19.3.0",
     "typescript": "^5.9.3"
   },
   "peerDependencies": {
     "react": "^19.0.0",
-    "react-native": ">=0.86.0"
+    "react-native": ">=0.86.0",
+    "react-native-svg": ">=15.0.0"
   }
 }

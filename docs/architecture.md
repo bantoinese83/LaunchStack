@@ -1,5 +1,57 @@
 # Architecture Decisions & Monorepo Boundaries (`LaunchStack`)
 
+## Toolchain Baseline (verified against upstream docs)
+
+These are the current, non-legacy APIs this repo targets. Verify against the
+linked docs before changing any of them.
+
+| Area       | Choice                                  | Why / Doc                                                                |
+| ---------- | --------------------------------------- | ------------------------------------------------------------------------ |
+| Next.js    | `16.x`, App Router, `src/proxy.ts`      | `middleware.ts` → `proxy.ts` (middleware deprecated in v16)              |
+| Next.js    | `typedRoutes: true` + `next typegen`    | Statically typed `href`; `typecheck` runs `next typegen && tsc --noEmit` |
+| Next.js    | ESLint via `eslint-config-next` flat    | `next lint` was removed; scripts call `eslint .` directly                |
+| Expo       | SDK `57`, React Native `0.86`           | SDK 57 requires Node `>=22.13.0` and pins React `19.2.3`                 |
+| Expo       | TypeScript `~6.0.3` in `apps/mobile`    | SDK 57 templates ship TS 6; web/admin/packages stay on TS `5.9`          |
+| Expo       | **No** `metro.config.js`                | SDK 52+ auto-configures Metro for pnpm/npm/yarn/bun monorepos            |
+| Expo       | **No** `babel.config.js`                | `babel-preset-expo` is the default preset; only needed for custom Babel  |
+| Expo       | Splash via `expo-splash-screen` plugin  | The top-level `splash` key was removed from the app config schema        |
+| Expo       | `experiments.typedRoutes`               | Typed `href` in Expo Router                                              |
+| Expo       | Named `ErrorBoundary` on a layout       | Expo Router wraps the named export; `error.tsx` is a `/error` route      |
+| Expo       | `build` = `expo export`                 | Proves Metro; Turbo caches `apps/mobile/dist/**`                         |
+| TypeScript | No `baseUrl` in mobile tsconfigs        | Deprecated in TypeScript 6; `paths` entries are explicit                 |
+| Vitest     | `test.projects` in root config          | `vitest.workspace.ts` / `defineWorkspace` removed in Vitest 4            |
+| Turbo      | `transit` nodes for lint/typecheck/test | Parallel tasks that still invalidate when an upstream package changes    |
+| pnpm       | `auto-install-peers=false` (`.npmrc`)   | Prevents duplicate native modules; verified by `expo-doctor`             |
+
+> `.npmrc` is used rather than `pnpm-workspace.yaml` for settings because the
+> pinned pnpm 9 reads them from `.npmrc`.
+
+### Rejected legacy patterns
+
+Do **not** reintroduce these — they are outdated and were removed:
+
+- `node-linker=hoisted` — a pre-SDK-52 workaround for Metro monorepo support.
+- `metro.config.js` with `watchFolders` / `resolver.nodeModulesPaths` — Expo
+  handles these automatically now.
+- Top-level `splash` in `app.json` — removed from the SDK 57 schema.
+- `middleware.ts` / `export function middleware` — renamed to `proxy.ts`.
+- `next lint` — removed in Next 16.
+- `apps/mobile/app/error.tsx` or `+error.tsx` as a default-exported boundary —
+  Expo Router only treats a **named** `export function ErrorBoundary` on a
+  route or layout as a boundary. A default export in `error.tsx` is the
+  `/error` screen.
+- Mapping `react` → `@types/react` in `apps/mobile/tsconfig.json` — Metro
+  reads that file while bundling. Every `paths` entry must point at a real
+  runtime package. `react` stays unmapped so `tsc` uses each package's
+  `@types/react` and Metro keeps the real copy. Mapping React Native (and
+  `react-native-svg`) to `apps/mobile/node_modules` is intentional.
+- `apps/mobile` `build` as `tsc --noEmit` — that duplicates `typecheck`.
+  `build` must run `expo export` and Turbo must cache `dist/**`.
+
+Run `pnpm check:expo` (`expo-doctor`) after any mobile dependency or
+app-config change. CI runs it in `.github/workflows/main.yml`; `pnpm quality`
+does not (format → lint → typecheck → test → build).
+
 ## Monorepo Package Topology
 
 ```
@@ -19,6 +71,7 @@ pnpm Workspaces
       ├── email (Brevo Email Integration & Templates)
       ├── analytics (PostHog Event Taxonomy & Dispatcher)
       └── feature-flags (Plan Entitlements & Flag Checks)
+      └── ui/.storybook (Storybook 8 for shared web primitives)
 ```
 
 ## Architectural Guidelines

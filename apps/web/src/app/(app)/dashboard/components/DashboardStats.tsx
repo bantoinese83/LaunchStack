@@ -1,11 +1,16 @@
 import React from 'react';
-import { StatsCard } from '@template/ui';
-import { WorkspaceMember } from '@template/types';
+import { Skeleton, StatsCard } from '@template/ui';
+import { Subscription, WorkspaceMember } from '@template/types';
 import { getPlanLimits } from '@template/feature-flags';
+import { formatSubscriptionLabel } from '@/lib/billing/format-subscription-label';
 import { motion, Variants } from 'framer-motion';
 
 interface DashboardStatsProps {
   members: WorkspaceMember[];
+  feedbackCount: number;
+  subscription: Subscription | null;
+  planOverride?: 'free' | 'pro' | 'enterprise' | null;
+  isLoading?: boolean;
 }
 
 const container: Variants = {
@@ -21,13 +26,24 @@ const item: Variants = {
   show: { opacity: 1, y: 0, transition: { type: 'spring', damping: 20 } },
 };
 
-export function DashboardStats({ members }: DashboardStatsProps) {
-  const planLimits = getPlanLimits('active');
+export function DashboardStats({
+  members,
+  feedbackCount,
+  subscription,
+  planOverride = null,
+  isLoading = false,
+}: DashboardStatsProps) {
+  const planLimits = getPlanLimits(
+    subscription?.status,
+    subscription?.stripe_price_id,
+    planOverride
+  );
   const seatCount = members.length || 1;
   const seatsRemainingPct = Math.max(
     0,
     Math.round(((planLimits.maxMembers - seatCount) / planLimits.maxMembers) * 100)
   );
+  const billing = formatSubscriptionLabel(subscription);
 
   return (
     <motion.div
@@ -37,31 +53,43 @@ export function DashboardStats({ members }: DashboardStatsProps) {
       className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6"
     >
       <motion.div variants={item}>
-        <StatsCard
-          title="Team Seat Usage"
-          value={`${seatCount} / ${planLimits.maxMembers}`}
-          change={`${seatsRemainingPct}% free`}
-          isPositive={true}
-          subtext={`Pro tier allows up to ${planLimits.maxMembers} seats`}
-        />
+        {isLoading ? (
+          <Skeleton className="h-32 w-full" />
+        ) : (
+          <StatsCard
+            title="Team Seat Usage"
+            value={`${seatCount} / ${planLimits.maxMembers}`}
+            change={`${seatsRemainingPct}% free`}
+            isPositive={true}
+            subtext={`Pro tier allows up to ${planLimits.maxMembers} seats`}
+          />
+        )}
       </motion.div>
       <motion.div variants={item}>
-        <StatsCard
-          title="Roadmap Feedback"
-          value="18"
-          change="+5 this week"
-          isPositive={true}
-          subtext="5 items marked as Planned"
-        />
+        {isLoading ? (
+          <Skeleton className="h-32 w-full" />
+        ) : (
+          <StatsCard
+            title="Roadmap Feedback"
+            value={String(feedbackCount)}
+            change={feedbackCount === 1 ? '1 post' : `${feedbackCount} posts`}
+            isPositive={feedbackCount > 0}
+            subtext="Posts in this workspace feedback board"
+          />
+        )}
       </motion.div>
       <motion.div variants={item}>
-        <StatsCard
-          title="Stripe Subscription"
-          value="$49 / mo"
-          change="Active"
-          isPositive={true}
-          subtext="Next invoice on Aug 30, 2026"
-        />
+        {isLoading ? (
+          <Skeleton className="h-32 w-full" />
+        ) : (
+          <StatsCard
+            title="Stripe Subscription"
+            value={billing.value}
+            change={billing.change}
+            isPositive={subscription?.status === 'active' || subscription?.status === 'trialing'}
+            subtext={billing.subtext}
+          />
+        )}
       </motion.div>
     </motion.div>
   );

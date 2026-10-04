@@ -7,15 +7,6 @@
     "icon": "./assets/icon.png",
     "scheme": "launchstack",
     "userInterfaceStyle": "dark",
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#F3F4F1"
-    },
-    "updates": {
-      "enabled": false,
-      "fallbackToCacheTimeout": 0
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.launchstack.app"
@@ -27,6 +18,37 @@
       },
       "package": "com.launchstack.app"
     },
-    "plugins": ["expo-router", "expo-secure-store"]
+    "experiments": {
+      "typedRoutes": true
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/00000000-0000-0000-0000-000000000000"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "00000000-0000-0000-0000-000000000000"
+      }
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-notifications",
+      "expo-updates",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#F3F4F1",
+          "dark": {
+            "backgroundColor": "#F3F4F1"
+          }
+        }
+      ]
+    ]
   }
 }

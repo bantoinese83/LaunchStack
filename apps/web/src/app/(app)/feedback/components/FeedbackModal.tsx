@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { FeedbackCategory, FEEDBACK_CATEGORIES } from '@template/types';
 import { Alert, Button, Input, Modal, fieldSelectClassName } from '@template/ui';
-import { createFeedbackSchema } from '@template/validation';
+import { createFeedbackSchema, firstZodIssueMessage, getErrorMessage } from '@template/validation';
 
 const CATEGORY_LABELS: Record<FeedbackCategory, string> = {
   feature: 'Feature Request',
@@ -13,7 +13,7 @@ interface FeedbackModalProps {
   isOpen: boolean;
   onClose: () => void;
   workspaceId: string;
-  onSubmit: (title: string, description: string, category: FeedbackCategory) => Promise<any>;
+  onSubmit: (title: string, description: string, category: FeedbackCategory) => Promise<void>;
 }
 
 export function FeedbackModal({ isOpen, onClose, workspaceId, onSubmit }: FeedbackModalProps) {
@@ -40,7 +40,7 @@ export function FeedbackModal({ isOpen, onClose, workspaceId, onSubmit }: Feedba
     });
 
     if (!validation.success) {
-      setError(validation.error.issues[0].message);
+      setError(firstZodIssueMessage(validation.error));
       return;
     }
 
@@ -51,7 +51,7 @@ export function FeedbackModal({ isOpen, onClose, workspaceId, onSubmit }: Feedba
       setTitle('');
       setDescription('');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to submit feedback');
+      setError(getErrorMessage(err, 'Failed to submit feedback'));
     } finally {
       setIsSubmitting(false);
     }

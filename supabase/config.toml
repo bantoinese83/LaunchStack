@@ -14,5 +14,10 @@ major_version = 15
 [auth]
 enabled = true
 site_url = "http://localhost:3000"
-additional_redirect_urls = ["https://localhost:3000", "exp://localhost:8081"]
+additional_redirect_urls = [
+  "https://localhost:3000",
+  "http://localhost:3000/auth/callback",
+  "http://localhost:3002/auth/callback",
+  "exp://localhost:8081",
+]
 jwt_expiry = 3600

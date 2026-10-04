@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { Alert, BrandMark, Button, Card, Input } from '@template/ui';
 import { useSignup } from './useSignup';
+import { OAuthButtons } from '../components/OAuthButtons';
 
 export default function SignupPage() {
   const {
@@ -19,10 +20,10 @@ export default function SignupPage() {
   } = useSignup();
 
   return (
-    <Card className="w-full max-w-md p-8 animate-[rise_400ms_ease-out]">
+    <Card className="w-full p-8">
       <div className="mb-8 text-center">
         <BrandMark className="mx-auto mb-4" />
-        <h1 className="font-display text-2xl font-semibold tracking-tight text-ink">
+        <h1 className="font-display text-2xl font-medium tracking-tight text-ink">
           Create an account
         </h1>
         <p className="mt-1.5 text-sm text-muted">Start building with LaunchStack</p>
@@ -33,6 +34,8 @@ export default function SignupPage() {
           {error}
         </Alert>
       )}
+
+      <OAuthButtons next="/onboarding" />
 
       <form onSubmit={handleSignup} className="space-y-5">
         <Input

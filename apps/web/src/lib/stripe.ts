@@ -29,3 +29,34 @@ export function mustVerifyStripeWebhookSignature(webhookSecret: string | undefin
   if (process.env.NODE_ENV === 'production') return true;
   return Boolean(webhookSecret && webhookSecret !== 'whsec_mock');
 }
+
+/** Expandable Stripe fields are either an ID string or an expanded object with `id`. */
+export function resolveStripeExpandableId(
+  value: string | { id: string } | null | undefined
+): string | null {
+  if (value == null) return null;
+  return typeof value === 'string' ? value : value.id;
+}
+
+/**
+ * Period end for persistence. Prefer the first subscription item until stripe type
+ * stubs expose top-level `current_period_end` for API version 2026-08-26.dahlia.
+ */
+export function subscriptionCurrentPeriodEndIso(subscription: Stripe.Subscription): string {
+  const unix = subscription.items.data[0]?.current_period_end;
+  if (unix == null) {
+    throw new Error(
+      `[Stripe] Subscription ${subscription.id} is missing current_period_end on its first item`
+    );
+  }
+  return new Date(unix * 1000).toISOString();
+}
+
+/** Fields shared by checkout completion and subscription update webhooks. */
+export function subscriptionSyncPayload(subscription: Stripe.Subscription) {
+  return {
+    status: subscription.status,
+    current_period_end: subscriptionCurrentPeriodEndIso(subscription),
+    cancel_at_period_end: subscription.cancel_at_period_end,
+  };
+}

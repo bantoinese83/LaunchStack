@@ -2,7 +2,7 @@
 
 ## Row Level Security (RLS) Model
 
-Row Level Security is enabled on all core database tables (`profiles`, `workspaces`, `workspace_members`, `subscriptions`, `feedback_posts`, `feedback_votes`, `audit_logs`).
+Row Level Security is enabled on all core database tables (`profiles`, `workspaces`, `workspace_members`, `subscriptions`, `feedback_posts`, `feedback_votes`, `audit_logs`, `workspace_invites`, `consent_records`, `data_export_requests`).
 
 ### Primary Security Invariants
 
@@ -38,7 +38,13 @@ Never deploy production (or preview treated as production) without a real webhoo
 
 ## Edge Rate Limiting
 
-`apps/web/src/proxy.ts` applies `@template/kv` rate limiters to `/api/*`. Auth and Stripe paths use the stricter `authRateLimiter`; other API routes use `apiRateLimiter`. Configure `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` in deployed environments (without them, limiters no-op allow-all for local DX).
+`apps/web/src/proxy.ts` refreshes the Supabase cookie session with `getClaims()` (never trust `getSession()` on the server) and applies `@template/kv` rate limiters to `/api/*`. The client IP is derived from `x-forwarded-for` (first hop — set by Vercel, nginx, Cloudflare, etc.) with an `x-real-ip` fallback; Next.js 16 removed the built-in `request.ip` property. Auth, Stripe, and privacy paths use the stricter `authRateLimiter`; other API routes use `apiRateLimiter`. Configure `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` in deployed environments (without them, limiters no-op allow-all for local DX). Protected pages (`/dashboard`, `/feedback`, `/onboarding`, `/settings`) redirect to `/login` when claims are missing.
+
+> **Proxy-header trust note**: `x-forwarded-for` is client-spoofable when your
+> platform does not strip/overwrite it. Hosting platforms like Vercel and
+> Cloudflare set the leftmost value themselves, which is what this code reads.
+> If you self-host behind a proxy you control, ensure it overwrites (not
+> appends to) the header, or rate-limit by another stable identifier.
 
 ## Application Security Headers
 

@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import { Alert, Button, Input, Modal, fieldSelectClassName } from '@template/ui';
 import {
@@ -6,7 +8,9 @@ import {
   InvitableWorkspaceRole,
   INVITABLE_WORKSPACE_ROLES,
 } from '@template/types';
-import { inviteMemberSchema } from '@template/validation';
+import { firstZodIssueMessage, getErrorMessage, inviteMemberSchema } from '@template/validation';
+import { authorizedFetch } from '@/lib/api/authorized-fetch';
+import { readApiError } from '@/lib/api/read-api-error';
 
 const INVITE_ROLE_LABELS: Record<InvitableWorkspaceRole, string> = {
   workspace_member: 'Workspace Member',
@@ -19,14 +23,15 @@ interface InviteModalProps {
   selectedWorkspace: Workspace | null;
   profile: Profile | null;
   showToast: (msg: string) => void;
+  onInviteSent?: () => void;
 }
 
 export function InviteModal({
   isOpen,
   onClose,
   selectedWorkspace,
-  profile,
   showToast,
+  onInviteSent,
 }: InviteModalProps) {
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<InvitableWorkspaceRole>('workspace_member');
@@ -44,37 +49,33 @@ export function InviteModal({
 
     const validation = inviteMemberSchema.safeParse({ email: inviteEmail, role: inviteRole });
     if (!validation.success) {
-      setModalError(validation.error.issues[0].message);
+      setModalError(firstZodIssueMessage(validation.error));
       return;
     }
 
     try {
-      if (!selectedWorkspace || !profile) return;
+      if (!selectedWorkspace) return;
       setInviteLoading(true);
 
-      const origin = typeof window !== 'undefined' ? window.location.origin : '';
-      const inviteUrl = `${origin}/login?invite=${selectedWorkspace.id}`;
-      const response = await fetch('/api/email/invite', {
+      const response = await authorizedFetch('/api/invites', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          to: inviteEmail,
-          inviterName: profile.full_name || profile.email,
-          workspaceName: selectedWorkspace.name,
-          inviteUrl,
+          email: inviteEmail,
+          role: inviteRole,
+          workspaceId: selectedWorkspace.id,
         }),
       });
 
       if (!response.ok) {
-        const data = (await response.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(data?.error || 'Failed to send invite');
+        throw new Error(await readApiError(response, 'Failed to send invite'));
       }
 
       handleClose();
       setInviteEmail('');
       showToast(`Invitation sent to ${inviteEmail}`);
+      onInviteSent?.();
     } catch (err: unknown) {
-      setModalError(err instanceof Error ? err.message : 'Failed to send invite');
+      setModalError(getErrorMessage(err, 'Failed to send invite'));
     } finally {
       setInviteLoading(false);
     }

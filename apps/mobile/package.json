@@ -4,33 +4,40 @@
   "private": true,
   "main": "expo-router/entry",
   "scripts": {
+    "dev": "expo start",
     "start": "expo start",
+    "start:clean": "expo start --clear",
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "build": "tsc --noEmit"
+    "build": "FORCE_COLOR= NO_COLOR= expo export --platform ios --output-dir dist --clear"
   },
   "dependencies": {
-    "@expo/metro-runtime": "~57.0.15",
+    "@expo/metro-runtime": "~57.0.16",
     "@supabase/supabase-js": "^2.116.0",
     "@template/analytics": "workspace:*",
     "@template/api": "workspace:*",
     "@template/mobile-ui": "workspace:*",
     "@template/types": "workspace:*",
     "@template/validation": "workspace:*",
-    "expo": "~57.0.23",
-    "expo-constants": "~57.0.18",
-    "expo-linking": "~57.0.10",
-    "expo-router": "~57.0.21",
+    "expo": "~57.0.26",
+    "expo-constants": "~57.0.20",
+    "expo-device": "~57.0.2",
+    "expo-linking": "~57.0.11",
+    "expo-notifications": "~57.0.21",
+    "expo-router": "~57.0.24",
     "expo-secure-store": "~57.0.4",
+    "expo-splash-screen": "~57.0.9",
     "expo-status-bar": "~57.0.1",
+    "expo-updates": "~57.0.24",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-native": "0.86.3",
     "react-native-safe-area-context": "5.7.0",
-    "react-native-screens": "~4.26.2"
+    "react-native-screens": "~4.26.2",
+    "react-native-svg": "15.15.4"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
@@ -38,7 +45,7 @@
     "@types/react": "~19.2.18",
     "babel-preset-expo": "~57.0.12",
     "eslint": "^9.0.0",
-    "typescript": "^6.0.3",
+    "typescript": "~6.0.3",
     "typescript-eslint": "^8.70.0"
   }
 }

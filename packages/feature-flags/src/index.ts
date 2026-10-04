@@ -30,8 +30,12 @@ export const PLAN_LIMITS: Record<string, PlanLimits> = {
 
 export const getPlanLimits = (
   status?: SubscriptionStatus | null,
-  priceId?: string | null
+  priceId?: string | null,
+  planOverride?: 'free' | 'pro' | 'enterprise' | null
 ): PlanLimits => {
+  if (planOverride && PLAN_LIMITS[planOverride]) {
+    return PLAN_LIMITS[planOverride];
+  }
   if (status !== 'active' && status !== 'trialing') {
     return PLAN_LIMITS.free;
   }

@@ -1,69 +1,151 @@
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { createSupabaseBrowserClient, ProfileService, WorkspaceService } from '@template/api';
-import { Workspace, Profile, WorkspaceMember } from '@template/types';
+'use client';
 
-export function useDashboardData() {
-  const router = useRouter();
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
-  const [selectedWorkspace, setSelectedWorkspace] = useState<Workspace | null>(null);
-  const [members, setMembers] = useState<WorkspaceMember[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [wsName, setWsName] = useState('');
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { FeedbackService, SubscriptionService, WorkspaceService } from '@template/api';
+import { WorkspaceMember, Subscription } from '@template/types';
+import { getBrowserSupabaseClient } from '@/lib/supabase/browser-session';
+import { useAppWorkspace } from '../../context/AppWorkspaceContext';
+
+export function useDashboardData(initial?: {
+  initialWorkspaceId?: string | null;
+  initialMembers?: WorkspaceMember[];
+  initialFeedbackCount?: number;
+  initialSubscription?: Subscription | null;
+}) {
+  const {
+    profile,
+    workspaces,
+    selectedWorkspace,
+    selectWorkspace,
+    isAppLoading,
+    wsName,
+    setWsName,
+    wsLogoUrl,
+    setWsLogoUrl,
+    updateWorkspaceSettings,
+    setPageDataLoading,
+  } = useAppWorkspace();
+
+  const [members, setMembers] = useState<WorkspaceMember[]>(initial?.initialMembers ?? []);
+  const [feedbackCount, setFeedbackCount] = useState(initial?.initialFeedbackCount ?? 0);
+  const [subscription, setSubscription] = useState<Subscription | null>(
+    initial?.initialSubscription ?? null
+  );
+  const [isMembersLoading, setIsMembersLoading] = useState(false);
+  const skippedInitialFetchRef = useRef(false);
+
+  const refreshWorkspaceContext = useCallback(
+    async (workspaceId: string) => {
+      setIsMembersLoading(true);
+      setPageDataLoading(true);
+      try {
+        const supabase = getBrowserSupabaseClient();
+        const workspaceService = new WorkspaceService(supabase);
+        const feedbackService = new FeedbackService(supabase);
+        const subscriptionService = new SubscriptionService(supabase);
+
+        const [workspaceMembers, feedbackPosts, workspaceSubscription] = await Promise.all([
+          workspaceService.getWorkspaceMembers(workspaceId),
+          feedbackService.getWorkspaceFeedback(workspaceId),
+          subscriptionService.getWorkspaceSubscription(workspaceId),
+        ]);
+
+        setMembers(workspaceMembers);
+        setFeedbackCount(feedbackPosts.length);
+        setSubscription(workspaceSubscription);
+      } catch (err) {
+        console.error('[Dashboard] Failed to load workspace context', err);
+      } finally {
+        setIsMembersLoading(false);
+        setPageDataLoading(false);
+      }
+    },
+    [setPageDataLoading]
+  );
 
   useEffect(() => {
-    async function loadData() {
-      try {
-        const supabase = createSupabaseBrowserClient();
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-
-        if (!session?.user) {
-          router.push('/login');
-          return;
-        }
-
-        const user = session.user;
-        const workspaceService = new WorkspaceService(supabase);
-        const userWorkspaces = await workspaceService.getUserWorkspaces(user.id);
-        const members =
-          userWorkspaces.length > 0
-            ? await workspaceService.getWorkspaceMembers(userWorkspaces[0].id)
-            : [];
-
-        const profileService = new ProfileService(supabase);
-        const profileData = await profileService.getProfile(user.id);
-        setProfile(profileData);
-        setWorkspaces(userWorkspaces);
-
-        if (userWorkspaces.length > 0) {
-          const ws = userWorkspaces[0];
-          setSelectedWorkspace(ws);
-          setWsName(ws.name);
-          const wsMembers = await workspaceService.getWorkspaceMembers(ws.id);
-          setMembers(wsMembers);
-        } else {
-          router.push('/onboarding');
-        }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setIsLoading(false);
-      }
+    const workspaceId = selectedWorkspace?.id;
+    if (!workspaceId) {
+      return;
     }
-    loadData();
-  }, [router]);
+
+    const hasServerPayload =
+      initial?.initialWorkspaceId != null && initial.initialMembers !== undefined;
+    if (
+      hasServerPayload &&
+      !skippedInitialFetchRef.current &&
+      workspaceId === initial.initialWorkspaceId
+    ) {
+      skippedInitialFetchRef.current = true;
+      return;
+    }
+
+    let cancelled = false;
+
+    void (async () => {
+      setIsMembersLoading(true);
+      setPageDataLoading(true);
+      try {
+        const supabase = getBrowserSupabaseClient();
+        const workspaceService = new WorkspaceService(supabase);
+        const feedbackService = new FeedbackService(supabase);
+        const subscriptionService = new SubscriptionService(supabase);
+
+        const [workspaceMembers, feedbackPosts, workspaceSubscription] = await Promise.all([
+          workspaceService.getWorkspaceMembers(workspaceId),
+          feedbackService.getWorkspaceFeedback(workspaceId),
+          subscriptionService.getWorkspaceSubscription(workspaceId),
+        ]);
+
+        if (cancelled) return;
+
+        setMembers(workspaceMembers);
+        setFeedbackCount(feedbackPosts.length);
+        setSubscription(workspaceSubscription);
+      } catch (err) {
+        console.error('[Dashboard] Failed to load workspace context', err);
+      } finally {
+        if (!cancelled) {
+          setIsMembersLoading(false);
+          setPageDataLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    initial?.initialMembers,
+    initial?.initialWorkspaceId,
+    selectedWorkspace?.id,
+    setPageDataLoading,
+  ]);
+
+  const saveWorkspaceSettings = useCallback(
+    async (input: { name: string; logoUrl: string }) => {
+      const logoUrl = input.logoUrl.trim() === '' ? null : input.logoUrl.trim();
+      await updateWorkspaceSettings({ name: input.name, logoUrl });
+    },
+    [updateWorkspaceSettings]
+  );
 
   return {
     profile,
     workspaces,
     selectedWorkspace,
-    setSelectedWorkspace,
+    selectWorkspace,
     members,
-    isLoading,
+    feedbackCount,
+    subscription,
+    isLoading: isAppLoading,
+    isMembersLoading,
     wsName,
     setWsName,
+    wsLogoUrl,
+    setWsLogoUrl,
+    saveWorkspaceSettings,
+    refreshMembers: () =>
+      selectedWorkspace ? refreshWorkspaceContext(selectedWorkspace.id) : Promise.resolve(),
   };
 }

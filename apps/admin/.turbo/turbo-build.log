@@ -1,24 +1,0 @@
-
-> @template/admin@1.0.0 build /Users/monarchlabsinc./Desktop/LaunchStack/apps/admin
-> next build
-
-▲ Next.js 16.3.5 (Turbopack)
-✓ Running next.config.mjs took 307ms
-- Experiments (use with caution):
-  · clientTraceMetadata
-
-  Creating an optimized production build ...
-✓ Compiled successfully in 1417ms
-✓ Completed runAfterProductionCompile in 210ms
-  Finished TypeScript in 956ms    ✓ Finished TypeScript in 956ms 
-  Collecting page data using 4 workers in 257ms    ✓ Collecting page data using 4 workers in 257ms 
-✓ Generating static pages using 4 workers (3/3) in 221ms
-  Finalizing page optimization in 401ms    ✓ Finalizing page optimization in 401ms 
-
-Route (app)
-┌ ○ /
-└ ○ /_not-found
-
-
-○  (Static)  prerendered as static content
-

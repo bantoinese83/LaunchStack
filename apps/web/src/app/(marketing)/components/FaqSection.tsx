@@ -36,9 +36,7 @@ export const FaqSection = () => {
   return (
     <section id="faq" className="border-b border-line py-20 md:py-24">
       <div className="mx-auto max-w-3xl px-6">
-        <p className="font-display text-xs font-semibold uppercase tracking-[0.2em] text-accent">
-          FAQ
-        </p>
+        <p className="type-eyebrow text-accent">FAQ</p>
         <h2 className="mt-3 font-display text-3xl font-semibold tracking-tight">Questions</h2>
         <div className="mt-10 divide-y divide-line border-y border-line">
           {faqs.map((faq, idx) => (

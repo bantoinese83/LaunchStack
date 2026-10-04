@@ -1,3 +1,4 @@
+import { getErrorMessage } from '@template/validation';
 import { SendEmailPayload } from './types';
 import { escapeHtml } from './utils';
 
@@ -50,7 +51,7 @@ export class BrevoEmailService {
       const data = await response.json();
       return { success: true, messageId: data.messageId };
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown email error';
+      const message = getErrorMessage(err, 'Unknown email error');
       console.error('[BrevoEmailService Error]', err);
       return { success: false, error: message };
     }

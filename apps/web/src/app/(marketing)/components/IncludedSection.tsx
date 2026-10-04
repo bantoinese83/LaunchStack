@@ -7,9 +7,7 @@ export const IncludedSection = () => (
   <section className="border-b border-line py-20 md:py-24">
     <div className="mx-auto grid max-w-6xl gap-12 px-6 md:grid-cols-[0.9fr_1.1fr] md:gap-16">
       <div>
-        <p className="font-display text-xs font-semibold uppercase tracking-[0.2em] text-accent">
-          Included
-        </p>
+        <p className="type-eyebrow text-accent">Included</p>
         <h2 className="mt-3 font-display text-3xl font-semibold tracking-tight text-ink sm:text-4xl text-balance">
           Production gaps, closed
         </h2>

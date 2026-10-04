@@ -8,6 +8,19 @@ out/
 build/
 dist/
 
+# Turborepo cache — do not commit cache blobs
+.turbo/
+
+# TypeScript incremental build info
+*.tsbuildinfo
+
+# Compiled package output — source is the source of truth
+packages/*/dist/
+apps/*/dist/
+
+# Storybook
+storybook-static/
+
 # Expo / React Native build
 .expo/
 *.apk

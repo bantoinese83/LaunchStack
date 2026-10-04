@@ -1,12 +1,19 @@
-import React from 'react';
-import { Avatar, Badge, Button, Card, EmptyState } from '@template/ui';
-import { WorkspaceMember } from '@template/types';
+'use client';
+
+import React, { useState } from 'react';
+import { Avatar, Badge, Button, Card, EmptyState, Skeleton } from '@template/ui';
+import { WorkspaceMember, WORKSPACE_ROLES } from '@template/types';
 import { isWorkspaceOwner } from '@template/auth';
 import { motion } from 'framer-motion';
+import { authorizedFetch } from '@/lib/api/authorized-fetch';
+import { readApiError } from '@/lib/api/read-api-error';
 
 interface MembersTableProps {
   members: WorkspaceMember[];
+  workspaceId: string | null;
+  isLoading?: boolean;
   onShowInvite: () => void;
+  onChanged: () => void;
 }
 
 const tableContainer = {
@@ -22,7 +29,55 @@ const rowItem = {
   show: { opacity: 1, x: 0 },
 };
 
-export function MembersTable({ members, onShowInvite }: MembersTableProps) {
+export function MembersTable({
+  members,
+  workspaceId,
+  isLoading = false,
+  onShowInvite,
+  onChanged,
+}: MembersTableProps) {
+  const [pendingId, setPendingId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const changeRole = async (member: WorkspaceMember, role: WorkspaceMember['role']) => {
+    if (!workspaceId || role === member.role) return;
+    setPendingId(member.id);
+    setError(null);
+    try {
+      const response = await authorizedFetch('/api/members', {
+        method: 'PATCH',
+        body: JSON.stringify({ memberId: member.id, workspaceId, role }),
+      });
+      if (!response.ok) throw new Error(await readApiError(response, 'Could not update role'));
+      onChanged();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not update role');
+    } finally {
+      setPendingId(null);
+    }
+  };
+
+  const removeMember = async (member: WorkspaceMember) => {
+    if (!workspaceId) return;
+    if (!window.confirm(`Remove ${member.profile?.email || 'this member'} from the workspace?`)) {
+      return;
+    }
+    setPendingId(member.id);
+    setError(null);
+    try {
+      const response = await authorizedFetch(
+        `/api/members?memberId=${member.id}&workspaceId=${workspaceId}`,
+        { method: 'DELETE' }
+      );
+      if (!response.ok) throw new Error(await readApiError(response, 'Could not remove member'));
+      onChanged();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not remove member');
+    } finally {
+      setPendingId(null);
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 15 }}
@@ -39,7 +94,15 @@ export function MembersTable({ members, onShowInvite }: MembersTableProps) {
           </Button>
         </div>
 
-        {members.length === 0 ? (
+        {error ? <p className="mb-3 text-sm text-danger">{error}</p> : null}
+
+        {isLoading ? (
+          <div className="space-y-3">
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-12 w-full" />
+          </div>
+        ) : members.length === 0 ? (
           <EmptyState
             title="No teammates yet"
             description="Invite your first collaborator to share this workspace."
@@ -76,6 +139,7 @@ export function MembersTable({ members, onShowInvite }: MembersTableProps) {
                       <div className="flex items-center gap-3">
                         <Avatar
                           name={mem.profile?.full_name || mem.profile?.email || 'User'}
+                          src={mem.profile?.avatar_url}
                           size="sm"
                         />
                         <div>
@@ -87,17 +151,43 @@ export function MembersTable({ members, onShowInvite }: MembersTableProps) {
                       </div>
                     </td>
                     <td className="px-3 py-3">
-                      <Badge variant={isWorkspaceOwner(mem.role) ? 'purple' : 'info'}>
-                        {mem.role.replaceAll('_', ' ')}
-                      </Badge>
+                      {isWorkspaceOwner(mem.role) ? (
+                        <Badge variant="purple">{mem.role.replaceAll('_', ' ')}</Badge>
+                      ) : (
+                        <select
+                          className="rounded-md border border-line bg-surface px-2 py-1 text-xs text-ink"
+                          value={mem.role}
+                          disabled={pendingId === mem.id}
+                          onChange={(event) =>
+                            void changeRole(mem, event.target.value as WorkspaceMember['role'])
+                          }
+                        >
+                          {WORKSPACE_ROLES.filter((role) => role !== 'workspace_owner').map(
+                            (role) => (
+                              <option key={role} value={role}>
+                                {role.replaceAll('_', ' ')}
+                              </option>
+                            )
+                          )}
+                        </select>
+                      )}
                     </td>
                     <td className="px-3 py-3 font-mono text-xs text-muted">
                       {new Date(mem.created_at).toLocaleDateString()}
                     </td>
                     <td className="px-3 py-3 text-right">
-                      <Button variant="ghost" size="sm">
-                        Edit
-                      </Button>
+                      {isWorkspaceOwner(mem.role) ? (
+                        <span className="text-xs text-muted">Owner</span>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          isLoading={pendingId === mem.id}
+                          onClick={() => void removeMember(mem)}
+                        >
+                          Remove
+                        </Button>
+                      )}
                     </td>
                   </motion.tr>
                 ))}

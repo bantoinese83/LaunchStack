@@ -1,6 +1,24 @@
 {
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
-    "strict": true
-  }
+    "strict": true,
+    // `@template/mobile-ui` is consumed as TypeScript source, so its files are
+    // compiled as part of this program. Module resolution for those files
+    // starts inside packages/mobile-ui and walks up past the workspace root,
+    // so point React Native back here — the app owns the only real copy
+    // (see the `auto-install-peers=false` note in .npmrc).
+    //
+    // Only React Native is remapped. Metro reads this tsconfig when bundling, so
+    // every entry must point at a real runtime package. `react` is deliberately
+    // NOT mapped: `tsc` then falls back to each package's own `@types/react`,
+    // while Metro keeps resolving the real one.
+    // `baseUrl` is intentionally omitted — TypeScript 6 deprecated it.
+    "paths": {
+      "react-native": ["./node_modules/react-native"],
+      "react-native/*": ["./node_modules/react-native/*"],
+      "react-native-svg": ["./node_modules/react-native-svg"]
+    }
+  },
+  "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"],
+  "exclude": ["node_modules"]
 }

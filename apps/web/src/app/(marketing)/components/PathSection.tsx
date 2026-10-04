@@ -22,9 +22,7 @@ export const PathSection = () => (
   <section id="path" className="border-b border-line py-20 md:py-24">
     <div className="mx-auto max-w-6xl px-6">
       <div className="max-w-xl">
-        <p className="font-display text-xs font-semibold uppercase tracking-[0.2em] text-accent">
-          Path
-        </p>
+        <p className="type-eyebrow text-accent">Path</p>
         <h2 className="mt-3 font-display text-3xl font-semibold tracking-tight text-ink sm:text-4xl text-balance">
           From empty repo to running product
         </h2>

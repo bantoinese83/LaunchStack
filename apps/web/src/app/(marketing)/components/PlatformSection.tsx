@@ -23,10 +23,8 @@ export const PlatformSection = () => (
   <section id="platform" className="border-b border-line py-20 md:py-24">
     <div className="mx-auto max-w-6xl px-6">
       <div className="max-w-2xl">
-        <p className="font-display text-xs font-semibold uppercase tracking-[0.2em] text-accent">
-          Platform
-        </p>
-        <h2 className="mt-3 font-display text-3xl font-semibold tracking-tight text-ink sm:text-4xl text-balance">
+        <p className="type-eyebrow text-accent">Platform</p>
+        <h2 className="mt-3 font-display text-3xl font-medium tracking-tight text-ink sm:text-4xl text-balance">
           Architecture that survives first customers
         </h2>
         <p className="mt-4 max-w-xl text-muted leading-relaxed">

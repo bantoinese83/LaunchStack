@@ -6,11 +6,12 @@ This guide walks you through setting up and running the full-stack monorepo (`La
 
 ## Prerequisites
 
-- **Node.js**: `v22.0.0` or higher (matches GitHub Actions CI)
+- **Node.js**: `v22.13.0` or higher (required by Expo SDK 57; root `engines` enforce this)
 - **pnpm**: `v9.0.0` or higher (`npm i -g pnpm`)
 - **Docker Desktop**: Required for local Supabase emulator
 - **Supabase CLI**: `brew install supabase/tap/supabase` (optional but recommended)
 - **Expo Go App**: Required if running mobile app on physical iOS/Android device
+- After changing mobile dependencies or `app.json`, run `pnpm check:expo` (`expo-doctor`)
 
 ---
 
@@ -39,6 +40,7 @@ NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 STRIPE_SECRET_KEY=sk_test_...
+NEXT_PUBLIC_STRIPE_PRICE_ID=price_...
 STRIPE_WEBHOOK_SECRET=whsec_...
 BREVO_API_KEY=xkeysib-...
 UPSTASH_REDIS_REST_URL=https://...upstash.io
@@ -46,6 +48,22 @@ UPSTASH_REDIS_REST_TOKEN=AXXX...
 ```
 
 > **Stripe note**: Local webhook fixtures may omit `STRIPE_WEBHOOK_SECRET` (unsigned JSON is allowed outside production). Production **must** set a real secret or the webhook route returns `500`.
+
+### How environment validation works
+
+`@template/config` validates the environment whenever a Next.js app boots. It is
+**non-throwing by design**: `next build` legitimately runs without runtime
+secrets (Stripe, Brevo, service-role key), so failing the build for those would
+make local and CI builds impossible. Instead:
+
+- Missing **`NEXT_PUBLIC_*`** variables are flagged `[BUILD-CRITICAL]` in the
+  build log — they get inlined into the client bundle and are required for a
+  correct deploy.
+- Missing **server secrets** are enforced _fail-closed at request time_: the
+  Stripe checkout/webhook routes return `5xx`, the admin layout redirects, and
+  the Supabase client factories throw.
+- Use `assertValidEnv(process.env)` from `@template/config` in scripts, edge
+  functions, or tests where a missing variable must be fatal.
 
 ---
 
@@ -86,5 +104,11 @@ Application URL map:
 
 ## Seed Accounts for Testing
 
-- **Super Admin**: `admin@launchstack.com`
-- **Demo Customer**: `demo@launchstack.com`
+- **Super Admin**: `admin@launchstack.com` / `LaunchStack!demo`
+- **Demo Customer**: `demo@launchstack.com` / `LaunchStack!demo`
+
+Signed-in Playwright (after `pnpm db:reset` and with the web app pointed at local Supabase):
+
+```bash
+E2E_SIGNED_IN=1 pnpm --filter @template/web test:e2e
+```

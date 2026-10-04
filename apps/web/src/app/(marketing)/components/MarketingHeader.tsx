@@ -3,27 +3,32 @@ import Link from 'next/link';
 import { Button, BrandMark } from '@template/ui';
 
 export const MarketingHeader = () => (
-  <header className="sticky top-0 z-50 border-b border-line bg-paper/90 backdrop-blur-sm">
-    <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
+  <header className="sticky top-0 z-50 border-b border-line/80 bg-paper/85 backdrop-blur-md">
+    <div className="mx-auto flex h-[4.25rem] max-w-6xl items-center justify-between px-6">
       <Link href="/" className="group flex items-center gap-3">
-        <BrandMark size="sm" className="transition-transform duration-200 group-hover:-rotate-3" />
-        <span className="font-display text-lg font-semibold tracking-tight">LaunchStack</span>
+        <BrandMark
+          size="sm"
+          tone="shell"
+          animated
+          className="transition-transform duration-300 group-hover:-rotate-6"
+        />
+        <span className="font-display text-xl font-medium tracking-tight">LaunchStack</span>
       </Link>
 
-      <nav className="hidden items-center gap-8 text-sm text-muted md:flex">
-        <a href="#platform" className="transition-colors hover:text-ink">
+      <nav className="hidden items-center gap-7 font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-muted md:flex">
+        <a href="#platform" className="transition-colors hover:text-accent">
           Platform
         </a>
-        <a href="#surfaces" className="transition-colors hover:text-ink">
+        <a href="#surfaces" className="transition-colors hover:text-accent">
           Surfaces
         </a>
-        <a href="#path" className="transition-colors hover:text-ink">
+        <a href="#path" className="transition-colors hover:text-accent">
           Path
         </a>
-        <a href="#pricing" className="transition-colors hover:text-ink">
+        <a href="#pricing" className="transition-colors hover:text-accent">
           Pricing
         </a>
-        <a href="#faq" className="transition-colors hover:text-ink">
+        <a href="#faq" className="transition-colors hover:text-accent">
           FAQ
         </a>
       </nav>

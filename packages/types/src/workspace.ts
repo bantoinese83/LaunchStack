@@ -13,6 +13,7 @@ export interface Workspace {
   slug: string;
   logo_url: string | null;
   stripe_customer_id: string | null;
+  plan_override: 'free' | 'pro' | 'enterprise' | null;
   created_at: string;
   updated_at: string;
 }

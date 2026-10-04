@@ -20,6 +20,7 @@ export interface FeedbackPost {
   description: string;
   category: FeedbackCategory;
   status: FeedbackStatus;
+  flagged: boolean;
   upvotes_count: number;
   created_at: string;
   updated_at: string;

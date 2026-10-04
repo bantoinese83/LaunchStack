@@ -7,16 +7,21 @@
     "build": "next build",
     "start": "next start -p 3002",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "next typegen && tsc --noEmit"
   },
   "dependencies": {
     "@sentry/nextjs": "^10.75.0",
+    "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.116.0",
     "@template/api": "workspace:*",
     "@template/auth": "workspace:*",
+    "@template/validation": "workspace:*",
+    "@vercel/config": "^0.7.2",
+    "@vercel/otel": "^2.1.0",
     "@template/kv": "workspace:*",
     "@template/types": "workspace:*",
     "@template/ui": "workspace:*",
+    "geist": "^1.7.2",
     "lucide-react": "^1.46.0",
     "next": "^16.3.5",
     "react": "^19.3.0",

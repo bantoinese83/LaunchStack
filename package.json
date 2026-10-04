@@ -6,16 +6,22 @@
     "dev": "turbo run dev",
     "dev:web": "turbo run dev --filter=@template/web",
     "dev:mobile": "turbo run dev --filter=@template/mobile",
+    "mobile": "pnpm --filter @template/mobile start",
+    "mobile:clean": "pnpm --filter @template/mobile start:clean",
     "dev:admin": "turbo run dev --filter=@template/admin",
     "build": "turbo run build",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
+    "check:expo": "pnpm --filter @template/mobile exec -- npx --yes expo-doctor@latest",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,css}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,css}\"",
     "db:start": "supabase start",
     "db:reset": "supabase db reset",
     "db:types": "supabase gen types typescript --local > packages/types/src/supabase.ts",
     "test": "turbo run test",
+    "test:e2e": "pnpm --filter @template/web test:e2e",
+    "storybook": "pnpm --filter @template/ui storybook",
+    "quality": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build",
     "clean": "turbo run clean && rimraf node_modules",
     "prepare": "husky"
   },
@@ -31,12 +37,11 @@
     "rimraf": "^6.1.3",
     "turbo": "^2.10.13",
     "typescript": "^5.9.3",
-    "vitest": "^4.1.10",
-    "xmlbuilder": "15.1.1"
+    "vitest": "^4.1.10"
   },
   "packageManager": "pnpm@9.0.6",
   "engines": {
-    "node": ">=20.9.0",
+    "node": ">=22.13.0",
     "pnpm": ">=9.0.0"
   },
   "lint-staged": {

@@ -1,6 +1,7 @@
 import React from 'react';
+import { Platform } from 'react-native';
 import { Tabs } from 'expo-router';
-import { theme } from '@template/mobile-ui';
+import { monoLabel, theme } from '@template/mobile-ui';
 
 export default function TabsLayout() {
   return (
@@ -8,25 +9,26 @@ export default function TabsLayout() {
       screenOptions={{
         headerStyle: { backgroundColor: theme.paper },
         headerTintColor: theme.ink,
-        headerTitleStyle: { fontWeight: '700', letterSpacing: -0.3 },
+        headerTitleStyle: { fontWeight: '500', letterSpacing: -0.4, fontSize: 17 },
         headerShadowVisible: false,
         tabBarStyle: {
-          backgroundColor: theme.surface,
-          borderTopColor: theme.line,
-          height: 58,
-          paddingBottom: 6,
-          paddingTop: 6,
+          backgroundColor: theme.shell,
+          borderTopColor: 'rgba(255,255,255,0.08)',
+          height: Platform.OS === 'ios' ? 84 : 62,
+          paddingBottom: Platform.OS === 'ios' ? 24 : 8,
+          paddingTop: 8,
         },
         tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: '600',
-          letterSpacing: 0.2,
+          ...monoLabel,
+          fontSize: 9,
+          letterSpacing: 1.2,
         },
         tabBarActiveTintColor: theme.accent,
-        tabBarInactiveTintColor: theme.muted,
+        tabBarInactiveTintColor: 'rgba(255,255,255,0.45)',
       }}
     >
-      <Tabs.Screen name="home" options={{ title: 'Home' }} />
+      <Tabs.Screen name="home" options={{ title: 'Overview' }} />
+      <Tabs.Screen name="feedback" options={{ title: 'Feedback' }} />
     </Tabs>
   );
 }

@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   ActivityIndicator,
+  Platform,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -37,7 +38,7 @@ export const NativeButton: React.FC<NativeButtonProps> = ({
     <TouchableOpacity
       style={buttonStyle}
       disabled={disabled || isLoading}
-      activeOpacity={0.85}
+      activeOpacity={0.88}
       {...props}
     >
       {isLoading ? (
@@ -52,16 +53,36 @@ export const NativeButton: React.FC<NativeButtonProps> = ({
 const styles = StyleSheet.create({
   button: {
     height: 48,
-    borderRadius: 6,
+    borderRadius: theme.radii.pill,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
   },
   primaryBtn: {
     backgroundColor: theme.accent,
+    ...Platform.select({
+      ios: {
+        shadowColor: theme.accent,
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.35,
+        shadowRadius: 16,
+      },
+      android: { elevation: 4 },
+      default: {},
+    }),
   },
   secondaryBtn: {
-    backgroundColor: theme.ink,
+    backgroundColor: theme.shell,
+    ...Platform.select({
+      ios: {
+        shadowColor: theme.shell,
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.4,
+        shadowRadius: 20,
+      },
+      android: { elevation: 5 },
+      default: {},
+    }),
   },
   outlineBtn: {
     backgroundColor: theme.surface,

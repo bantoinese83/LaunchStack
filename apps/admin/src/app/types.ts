@@ -1,1 +1,1 @@
-export type AdminTab = 'overview' | 'workspaces' | 'users' | 'moderation';
+export type AdminTab = 'overview' | 'workspaces' | 'users' | 'moderation' | 'flags';

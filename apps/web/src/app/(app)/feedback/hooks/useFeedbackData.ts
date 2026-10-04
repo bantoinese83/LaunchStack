@@ -1,74 +1,70 @@
+'use client';
+
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { createSupabaseBrowserClient, FeedbackService, WorkspaceService } from '@template/api';
+import { FeedbackService } from '@template/api';
 import { FeedbackPost, FeedbackCategory } from '@template/types';
 import { analytics } from '@template/analytics';
+import { useToast } from '@/hooks/useToast';
+import { getBrowserSupabaseClient, requireBrowserSession } from '@/lib/supabase/browser-session';
+import { useAppWorkspace } from '../../context/AppWorkspaceContext';
 
 export function useFeedbackData() {
-  const router = useRouter();
+  const { selectedWorkspace, isAppLoading, setPageDataLoading } = useAppWorkspace();
   const [posts, setPosts] = useState<FeedbackPost[]>([]);
-  const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const { toastMessage, toastVariant, showToast, dismissToast } = useToast();
 
   useEffect(() => {
-    async function loadFeedback() {
+    if (isAppLoading) {
+      return;
+    }
+    const workspaceId = selectedWorkspace?.id;
+    if (!workspaceId) {
+      return;
+    }
+
+    let cancelled = false;
+
+    void (async () => {
+      setIsLoading(true);
+      setPageDataLoading(true);
       try {
-        const supabase = createSupabaseBrowserClient();
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        if (!session?.user) {
-          router.push('/login');
-          return;
-        }
-
-        const workspaceService = new WorkspaceService(supabase);
-        const userWorkspaces = await workspaceService.getUserWorkspaces(session.user.id);
-
-        if (userWorkspaces.length > 0) {
-          const wsId = userWorkspaces[0].id;
-          setSelectedWorkspaceId(wsId);
-          const feedbackService = new FeedbackService(supabase);
-          const feedbackPosts = await feedbackService.getWorkspaceFeedback(wsId);
+        const feedbackService = new FeedbackService(getBrowserSupabaseClient());
+        const feedbackPosts = await feedbackService.getWorkspaceFeedback(workspaceId);
+        if (!cancelled) {
           setPosts(feedbackPosts);
         }
       } catch (err) {
-        console.error(err);
+        console.error('[Feedback] Failed to load posts', err);
       } finally {
-        setIsLoading(false);
+        if (!cancelled) {
+          setIsLoading(false);
+          setPageDataLoading(false);
+        }
       }
-    }
-    loadFeedback();
-  }, [router]);
+    })();
 
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3000);
-  };
+    return () => {
+      cancelled = true;
+    };
+  }, [isAppLoading, selectedWorkspace?.id, setPageDataLoading]);
 
   const handleUpvote = async (postId: string) => {
     try {
-      const supabase = createSupabaseBrowserClient();
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session?.user) return;
+      const auth = await requireBrowserSession();
+      if (!auth) return;
 
-      const feedbackService = new FeedbackService(supabase);
-      await feedbackService.upvoteFeedback(postId, session.user.id);
+      const feedbackService = new FeedbackService(auth.supabase);
+      await feedbackService.upvoteFeedback(postId, auth.user.id);
 
       setPosts((prev) =>
         prev.map((p) => (p.id === postId ? { ...p, upvotes_count: p.upvotes_count + 1 } : p))
       );
 
       showToast('Upvote recorded');
-      analytics.track(
-        { name: 'feedback_upvoted', properties: { post_id: postId } },
-        session.user.id
-      );
+      analytics.track({ name: 'feedback_upvoted', properties: { post_id: postId } }, auth.user.id);
     } catch {
-      showToast('You have already upvoted this item');
+      showToast('You have already upvoted this item', 'error');
     }
   };
 
@@ -77,16 +73,18 @@ export function useFeedbackData() {
     description: string,
     category: FeedbackCategory
   ) => {
-    const supabase = createSupabaseBrowserClient();
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (!session?.user) throw new Error('Not authenticated');
+    const workspaceId = selectedWorkspace?.id;
+    if (!workspaceId) {
+      throw new Error('No workspace selected');
+    }
 
-    const feedbackService = new FeedbackService(supabase);
+    const auth = await requireBrowserSession();
+    if (!auth) throw new Error('Not authenticated');
+
+    const feedbackService = new FeedbackService(auth.supabase);
     const newPost = await feedbackService.createFeedbackPost(
-      selectedWorkspaceId,
-      session.user.id,
+      workspaceId,
+      auth.user.id,
       title,
       description,
       category
@@ -98,9 +96,9 @@ export function useFeedbackData() {
     analytics.track(
       {
         name: 'feedback_submitted',
-        properties: { workspace_id: selectedWorkspaceId, post_id: newPost.id, category },
+        properties: { workspace_id: workspaceId, post_id: newPost.id, category },
       },
-      session.user.id
+      auth.user.id
     );
 
     return newPost;
@@ -108,10 +106,11 @@ export function useFeedbackData() {
 
   return {
     posts,
-    selectedWorkspaceId,
-    isLoading,
+    selectedWorkspaceId: selectedWorkspace?.id ?? '',
+    isLoading: isAppLoading || isLoading,
     toastMessage,
-    setToastMessage,
+    toastVariant,
+    dismissToast,
     handleUpvote,
     handleCreateFeedback,
   };

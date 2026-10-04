@@ -1,6 +1,8 @@
 import { z } from 'zod';
 import { FEEDBACK_CATEGORIES, FEEDBACK_STATUSES, INVITABLE_WORKSPACE_ROLES } from '@template/types';
 
+export { firstZodIssueMessage, slugifyWorkspaceName, getErrorMessage } from './helpers';
+
 // AUTH SCHEMAS
 export const loginSchema = z.object({
   email: z.email('Please enter a valid email address'),
@@ -50,6 +52,10 @@ export const inviteMemberSchema = z.object({
   role: z.enum(INVITABLE_WORKSPACE_ROLES),
 });
 
+export const createWorkspaceInviteSchema = inviteMemberSchema.extend({
+  workspaceId: z.uuid('Invalid workspace ID'),
+});
+
 // FEEDBACK SCHEMAS
 export const createFeedbackSchema = z.object({
   workspaceId: z.uuid('Invalid workspace ID'),
@@ -75,12 +81,35 @@ export const createCheckoutSchema = z.object({
   priceId: z.string().min(1, 'Price ID is required'),
 });
 
+export const createPortalSchema = z.object({
+  workspaceId: z.uuid('Invalid workspace ID'),
+});
+
+export const forgotPasswordSchema = z.object({
+  email: z.email('Please enter a valid email address'),
+});
+
+export const acceptInviteSchema = z.object({
+  token: z.string().min(16, 'Invite token is required'),
+});
+
+export const consentSchema = z.object({
+  analytics: z.boolean(),
+  marketing: z.boolean(),
+});
+
+export type CreatePortalInput = z.infer<typeof createPortalSchema>;
+export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
+export type AcceptInviteInput = z.infer<typeof acceptInviteSchema>;
+export type ConsentInput = z.infer<typeof consentSchema>;
+
 export type LoginInput = z.infer<typeof loginSchema>;
 export type SignupInput = z.infer<typeof signupSchema>;
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 export type CreateWorkspaceInput = z.infer<typeof createWorkspaceSchema>;
 export type UpdateWorkspaceInput = z.infer<typeof updateWorkspaceSchema>;
 export type InviteMemberInput = z.infer<typeof inviteMemberSchema>;
+export type CreateWorkspaceInviteInput = z.infer<typeof createWorkspaceInviteSchema>;
 export type CreateFeedbackInput = z.infer<typeof createFeedbackSchema>;
 export type UpdateFeedbackStatusInput = z.infer<typeof updateFeedbackStatusSchema>;
 export type CreateCheckoutInput = z.infer<typeof createCheckoutSchema>;

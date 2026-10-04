@@ -11,4 +11,5 @@ export * from './components/Modal';
 export * from './components/Avatar';
 export * from './components/StatsCard';
 export * from './components/BrandMark';
+export * from './components/LaunchStackMarkGraphic';
 export * from './components/Skeleton';

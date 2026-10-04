@@ -1,17 +1,18 @@
 import type { Metadata } from 'next';
-import { Syne, IBM_Plex_Sans } from 'next/font/google';
+import { Fraunces, IBM_Plex_Mono } from 'next/font/google';
+import { GeistSans } from 'geist/font/sans';
 import './globals.css';
 
-const display = Syne({
+const display = Fraunces({
   subsets: ['latin'],
   variable: '--font-display',
-  weight: ['500', '600', '700', '800'],
+  weight: ['400', '500', '600', '700'],
 });
 
-const sans = IBM_Plex_Sans({
+const mono = IBM_Plex_Mono({
   subsets: ['latin'],
-  variable: '--font-sans',
-  weight: ['400', '500', '600', '700'],
+  variable: '--font-mono',
+  weight: ['400', '500', '600'],
 });
 
 export const metadata: Metadata = {
@@ -20,12 +21,10 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${display.variable} ${sans.variable}`}>
-      <body className="min-h-screen bg-paper font-sans text-ink antialiased atlas-grain">
-        {children}
-      </body>
+    <html lang="en" className={`${display.variable} ${GeistSans.variable} ${mono.variable}`}>
+      <body className="min-h-screen bg-paper font-sans text-ink antialiased">{children}</body>
     </html>
   );
 }

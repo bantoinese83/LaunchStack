@@ -34,10 +34,24 @@ export class AnalyticsTracker {
   }
 
   track<T extends AnalyticsEvent>(event: T, userId?: string): void {
+    if (typeof window !== 'undefined') {
+      const raw = window.localStorage.getItem('launchstack-consent');
+      if (raw) {
+        try {
+          const consent = JSON.parse(raw) as { analytics?: boolean };
+          if (consent.analytics === false) return;
+        } catch {
+          return;
+        }
+      } else {
+        return;
+      }
+    }
+
     if (!this.apiKey) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log(
-          '[Analytics Mock Track]:',
+      if (process.env.NODE_ENV === 'development' && process.env.DEBUG_ANALYTICS === '1') {
+        console.debug(
+          '[Analytics]',
           event.name,
           event.properties,
           userId ? `(User: ${userId})` : ''

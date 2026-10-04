@@ -8,6 +8,9 @@
     "build": "tsc",
     "typecheck": "tsc --noEmit"
   },
+  "dependencies": {
+    "@template/validation": "workspace:*"
+  },
   "devDependencies": {
     "@types/node": "^20.12.12",
     "@template/config": "workspace:*",

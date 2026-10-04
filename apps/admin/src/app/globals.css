@@ -3,48 +3,86 @@
 @source "../../../../packages/ui/src";
 
 @theme {
-  --color-paper: #f3f4f1;
+  --color-shell: #141313;
+  --color-paper: #faf8f4;
   --color-surface: #ffffff;
-  --color-ink: #141714;
-  --color-muted: #5a635c;
-  --color-line: #c9cec6;
-  --color-accent: #0f6e56;
-  --color-accent-hover: #0b5844;
-  --color-accent-soft: #e3f0eb;
+  --color-ink: #1f1e1e;
+  --color-muted: #666666;
+  --color-line: #ebebeb;
+  --color-accent: #da3750;
+  --color-accent-hover: #c42f48;
+  --color-accent-soft: #fff5f6;
+  --color-chalk: #2e4a62;
+  --color-chalk-soft: #eef3f7;
   --color-danger: #b42318;
   --color-success: #027a48;
+  --color-background: #faf8f4;
+  --color-foreground: #1f1e1e;
 
-  --radius-sm: 4px;
-  --radius-md: 6px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
 }
 
-/* next/font sets these runtime variables on <html>; `@theme inline`
-   keeps Tailwind utilities in sync without redefining them. */
 @theme inline {
-  --font-display: var(--font-display);
-  --font-sans: var(--font-sans);
+  --font-display: var(--font-display), Georgia, serif;
+  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
+  --font-mono: var(--font-mono), ui-monospace, monospace;
 }
 
 :root {
-  --paper: #f3f4f1;
-  --ink: #141714;
-  --accent: #0f6e56;
+  --shell: #141313;
+  --paper: #faf8f4;
+  --ink: #1f1e1e;
+  --accent: #da3750;
+  --display-soft: 28;
+  --display-wonk: 0;
 }
 
 body {
   background-color: var(--paper);
+  color: color-mix(in srgb, var(--ink) 87%, transparent);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--accent) 22%, white);
   color: var(--ink);
 }
 
+.font-display {
+  font-optical-sizing: auto;
+  font-variation-settings:
+    'SOFT' var(--display-soft),
+    'WONK' var(--display-wonk);
+}
+
+.type-eyebrow {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
 .atlas-grain {
-  background-image: radial-gradient(rgba(20, 23, 20, 0.035) 0.6px, transparent 0.6px);
-  background-size: 3px 3px;
+  background-image: radial-gradient(rgba(31, 30, 30, 0.04) 0.55px, transparent 0.55px);
+  background-size: 4px 4px;
+}
+
+.app-main-panel {
+  background:
+    radial-gradient(ellipse 120% 80% at 100% 0%, rgba(218, 55, 80, 0.04), transparent 50%),
+    var(--paper);
 }
 
 @keyframes rise {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(12px);
   }
   to {
     opacity: 1;

@@ -14,7 +14,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FEF3F2',
     borderColor: '#FECDCA',
     borderWidth: 1,
-    borderRadius: 6,
+    borderRadius: theme.radii.md,
     paddingVertical: 10,
     paddingHorizontal: 12,
     marginBottom: 14,

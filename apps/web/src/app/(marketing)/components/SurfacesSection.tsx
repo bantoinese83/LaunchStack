@@ -22,9 +22,7 @@ export const SurfacesSection = () => (
   <section id="surfaces" className="border-b border-line bg-ink text-paper py-20 md:py-24">
     <div className="mx-auto max-w-6xl px-6">
       <div className="max-w-xl">
-        <p className="font-display text-xs font-semibold uppercase tracking-[0.2em] text-accent">
-          Surfaces
-        </p>
+        <p className="type-eyebrow text-accent">Surfaces</p>
         <h2 className="mt-3 font-display text-3xl font-semibold tracking-tight sm:text-4xl text-balance">
           Three apps. One package graph.
         </h2>
@@ -40,9 +38,7 @@ export const SurfacesSection = () => (
             className="border-t border-white/15 pt-6 animate-[rise_500ms_ease-out]"
             style={{ animationDelay: `${80 + i * 80}ms` }}
           >
-            <p className="font-display text-xs font-semibold uppercase tracking-[0.18em] text-accent">
-              {surface.stack}
-            </p>
+            <p className="type-eyebrow text-accent">{surface.stack}</p>
             <h3 className="mt-3 font-display text-2xl font-semibold tracking-tight">
               {surface.name}
             </h3>

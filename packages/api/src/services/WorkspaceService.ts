@@ -27,23 +27,39 @@ export class WorkspaceService {
   }
 
   async createWorkspace(userId: string, name: string, slug: string): Promise<Workspace> {
-    const { data: workspace, error: wsError } = await this.client
+    // Fix L4: Use an atomic RPC instead of two sequential inserts.
+    // Previously, a failure between the workspace insert and the membership insert
+    // would leave an ownerless workspace that RLS would hide from everyone.
+    // The create_workspace_with_owner function wraps both inserts in a single
+    // Postgres transaction (defined in migration 20260812000001_rls_security_fixes.sql).
+    const { data: workspace, error } = await this.client.rpc('create_workspace_with_owner', {
+      p_name: name,
+      p_slug: slug,
+      p_user_id: userId,
+    });
+
+    if (error) throw new Error(error.message);
+
+    return workspace as Workspace;
+  }
+
+  async updateWorkspace(
+    workspaceId: string,
+    updates: { name?: string; logoUrl?: string | null }
+  ): Promise<Workspace> {
+    const payload: { name?: string; logo_url?: string | null } = {};
+    if (updates.name !== undefined) payload.name = updates.name;
+    if (updates.logoUrl !== undefined) payload.logo_url = updates.logoUrl;
+
+    const { data, error } = await this.client
       .from('workspaces')
-      .insert({ name, slug })
+      .update(payload)
+      .eq('id', workspaceId)
       .select()
       .single();
 
-    if (wsError) throw new Error(wsError.message);
-
-    const { error: memError } = await this.client.from('workspace_members').insert({
-      workspace_id: workspace.id,
-      user_id: userId,
-      role: 'workspace_owner',
-    });
-
-    if (memError) throw new Error(memError.message);
-
-    return workspace as Workspace;
+    if (error) throw new Error(error.message);
+    return data as Workspace;
   }
 
   async getWorkspaceMembers(workspaceId: string): Promise<WorkspaceMember[]> {
@@ -53,5 +69,24 @@ export class WorkspaceService {
       .eq('workspace_id', workspaceId);
     if (error) throw new Error(error.message);
     return data as WorkspaceMember[];
+  }
+
+  async updateMemberRole(
+    memberId: string,
+    role: WorkspaceMember['role']
+  ): Promise<WorkspaceMember> {
+    const { data, error } = await this.client
+      .from('workspace_members')
+      .update({ role })
+      .eq('id', memberId)
+      .select('*, profile:profiles(*)')
+      .single();
+    if (error) throw new Error(error.message);
+    return data as WorkspaceMember;
+  }
+
+  async removeMember(memberId: string): Promise<void> {
+    const { error } = await this.client.from('workspace_members').delete().eq('id', memberId);
+    if (error) throw new Error(error.message);
   }
 }

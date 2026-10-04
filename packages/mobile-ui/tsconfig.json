@@ -1,7 +1,25 @@
 {
   "extends": "@template/config/tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "./dist"
+    "outDir": "./dist",
+    // This is a source-only library: `apps/mobile` owns the real React /
+    // React Native copies. `auto-install-peers=false` keeps pnpm from
+    // installing a second copy here (duplicate native modules break Metro
+    // autolinking), so point resolution at this package's own type-only copies
+    // and at the app's runtime packages.
+    //
+    // This file is only used by `tsc` for this package. Metro reads
+    // `apps/mobile/tsconfig.json` when bundling and must NOT map `react`
+    // (that path has to stay a real runtime package). Mapping `react` to
+    // `@types/react` here is safe because this config never reaches Metro.
+    // `baseUrl` is intentionally omitted — TypeScript 6 deprecated it.
+    "paths": {
+      "react": ["./node_modules/@types/react"],
+      "react/jsx-runtime": ["./node_modules/@types/react/jsx-runtime"],
+      "react-native": ["../../apps/mobile/node_modules/react-native"],
+      "react-native/*": ["../../apps/mobile/node_modules/react-native/*"],
+      "react-native-svg": ["../../apps/mobile/node_modules/react-native-svg"]
+    }
   },
   "include": ["src/**/*"]
 }

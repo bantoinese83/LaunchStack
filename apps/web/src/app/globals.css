@@ -3,61 +3,94 @@
 @source "../../../../packages/ui/src";
 
 @theme {
-  --color-paper: #f3f4f1;
+  --color-shell: #141313;
+  --color-paper: #faf8f4;
   --color-surface: #ffffff;
-  --color-ink: #141714;
-  --color-muted: #5a635c;
-  --color-line: #c9cec6;
-  --color-accent: #0f6e56;
-  --color-accent-hover: #0b5844;
-  --color-accent-soft: #e3f0eb;
+  --color-ink: #1f1e1e;
+  --color-muted: #666666;
+  --color-line: #ebebeb;
+  --color-accent: #da3750;
+  --color-accent-hover: #c42f48;
+  --color-accent-soft: #fff5f6;
+  --color-chalk: #2e4a62;
+  --color-chalk-soft: #eef3f7;
   --color-danger: #b42318;
   --color-success: #027a48;
-  --color-background: #f3f4f1;
-  --color-foreground: #141714;
+  --color-background: #faf8f4;
+  --color-foreground: #1f1e1e;
 
-  --radius-sm: 4px;
-  --radius-md: 6px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
 }
 
-/* next/font sets these runtime variables on <html>; `@theme inline`
-   keeps Tailwind utilities in sync without redefining them. */
 @theme inline {
-  --font-display: var(--font-display);
-  --font-sans: var(--font-sans);
+  --font-display: var(--font-display), Georgia, serif;
+  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
+  --font-mono: var(--font-mono), ui-monospace, monospace;
 }
 
 :root {
-  --background: 90 8% 95%;
-  --foreground: 140 8% 8%;
-  --paper: #f3f4f1;
+  --background: 40 33% 97%;
+  --foreground: 0 3% 12%;
+  --paper: #faf8f4;
   --surface: #ffffff;
-  --ink: #141714;
-  --muted: #5a635c;
-  --line: #c9cec6;
-  --accent: #0f6e56;
+  --shell: #141313;
+  --ink: #1f1e1e;
+  --muted: #666666;
+  --line: #ebebeb;
+  --accent: #da3750;
+  --chalk: #2e4a62;
+  --display-soft: 28;
+  --display-wonk: 0;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   background-color: var(--paper);
-  color: var(--ink);
+  color: color-mix(in srgb, var(--ink) 87%, transparent);
   overflow-x: hidden;
+  font-size: 1.0625rem;
+  line-height: 1.65;
+  letter-spacing: -0.011em;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
 }
 
 ::selection {
-  background: color-mix(in srgb, var(--accent) 28%, white);
+  background: color-mix(in srgb, var(--accent) 22%, white);
   color: var(--ink);
 }
 
-/* Quiet paper grain — subtle, not decorative noise */
+.font-display {
+  font-optical-sizing: auto;
+  font-variation-settings:
+    'SOFT' var(--display-soft),
+    'WONK' var(--display-wonk);
+}
+
+.type-eyebrow {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+/* Warm paper grain */
 .atlas-grain {
-  background-image: radial-gradient(rgba(20, 23, 20, 0.035) 0.6px, transparent 0.6px);
-  background-size: 3px 3px;
+  background-image: radial-gradient(rgba(31, 30, 30, 0.04) 0.55px, transparent 0.55px);
+  background-size: 4px 4px;
 }
 
 .atlas-rule {
-  height: 1px;
-  background: var(--line);
+  height: 2px;
+  background: var(--accent);
   transform-origin: left center;
   animation: draw 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
@@ -65,7 +98,7 @@ body {
 @keyframes rise {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(12px);
   }
   to {
     opacity: 1;
@@ -88,31 +121,23 @@ body {
     transform: translateY(0);
   }
   50% {
-    transform: translateY(-6px);
-  }
-}
-
-@keyframes fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
+    transform: translateY(-8px);
   }
 }
 
 .atlas-ink-panel {
-  background-color: var(--ink);
+  background-color: var(--shell);
   background-image:
+    radial-gradient(ellipse 90% 70% at 72% 38%, rgba(218, 55, 80, 0.22), transparent 58%),
+    radial-gradient(ellipse 60% 50% at 20% 80%, rgba(46, 74, 98, 0.35), transparent 55%),
     linear-gradient(
-      135deg,
+      128deg,
       transparent 0%,
-      transparent 48%,
-      rgba(15, 110, 86, 0.32) 48%,
-      rgba(15, 110, 86, 0.32) 50%,
-      transparent 50%
-    ),
-    radial-gradient(ellipse 80% 60% at 70% 40%, rgba(15, 110, 86, 0.18), transparent 55%);
+      transparent 46%,
+      rgba(218, 55, 80, 0.12) 46%,
+      rgba(218, 55, 80, 0.12) 48%,
+      transparent 48%
+    );
 }
 
 .atlas-float {
@@ -123,10 +148,555 @@ body {
   animation: float-soft 7s ease-in-out 1.2s infinite;
 }
 
+.marketing-stage {
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--shell) 8%, transparent),
+    0 24px 80px -40px rgba(20, 19, 19, 0.45);
+}
+
+.app-main-panel {
+  background:
+    radial-gradient(ellipse 120% 80% at 100% 0%, rgba(218, 55, 80, 0.04), transparent 50%),
+    var(--paper);
+}
+
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--accent) 70%, var(--shell));
+  border-radius: 999px;
+}
+
+/* Hero 3D phones (Monarch Labs phone-stage pattern) */
+.phone-stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 24rem;
+  padding: 0;
+  perspective: 1400px;
+  perspective-origin: 50% 40%;
+}
+
+.phone-stage__float {
+  transform-style: preserve-3d;
+  animation: phoneFloat 7s ease-in-out infinite;
+}
+
+@keyframes phoneFloat {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -0.45rem, 0);
+  }
+}
+
+.phone-stage__cluster {
+  position: relative;
+  width: min(100%, 24rem);
+  height: 23.5rem;
+  transform-style: preserve-3d;
+  transform: rotateX(calc(var(--ry) * -7deg)) rotateY(calc(var(--rx) * 11deg));
+  transition: transform 0.12s linear;
+  will-change: transform;
+  --phone-shift: 5.6rem;
+}
+
+.phone-stage__shadow {
+  position: absolute;
+  left: 50%;
+  bottom: -0.9rem;
+  width: 15rem;
+  height: 2.6rem;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(20, 18, 18, 0.34),
+    rgba(20, 18, 18, 0.08) 55%,
+    transparent 72%
+  );
+  transform: translateX(calc(-50% + var(--rx) * -1.2rem)) translateZ(-120px)
+    scaleX(calc(1 - var(--ry) * 0.08));
+  filter: blur(6px);
+  pointer-events: none;
+}
+
+.phone3d {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 12.4rem;
+  aspect-ratio: 9 / 19.2;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  transform-style: preserve-3d;
+  transform-origin: center bottom;
+  transform: translateX(-50%) translateZ(40px);
+  transition:
+    transform 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+    width 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.45s ease,
+    filter 0.7s ease;
+  z-index: 3;
+  cursor: default;
+}
+
+.phone3d--left,
+.phone3d--right {
+  width: 10.2rem;
+  z-index: 1;
+  cursor: pointer;
+  filter: saturate(0.85) brightness(0.98);
+}
+
+.phone3d--left {
+  transform: translateX(calc(-50% - var(--phone-shift))) translateZ(-110px) rotateY(24deg);
+}
+
+.phone3d--right {
+  transform: translateX(calc(-50% + var(--phone-shift))) translateZ(-110px) rotateY(-24deg);
+}
+
+.phone3d--left:hover,
+.phone3d--right:hover {
+  filter: saturate(1) brightness(1.02);
+}
+
+.phone3d--left:hover {
+  transform: translateX(calc(-50% - var(--phone-shift) - 0.3rem)) translateZ(-80px) rotateY(20deg);
+}
+
+.phone3d--right:hover {
+  transform: translateX(calc(-50% + var(--phone-shift) + 0.3rem)) translateZ(-80px) rotateY(-20deg);
+}
+
+.phone3d--hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-50%) translateZ(-260px) scale(0.7);
+}
+
+.phone3d:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 6px;
+  border-radius: 2.2rem;
+}
+
+.phone3d__body {
+  position: absolute;
+  inset: 0;
+  display: block;
+  padding: 0.42rem;
+  border-radius: 2.1rem;
+  background: linear-gradient(
+    calc(135deg + var(--rx) * 30deg),
+    #2a2a2a 0%,
+    #141414 38%,
+    #1c1c1c 62%,
+    #333333 100%
+  );
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.07),
+    0 40px 60px -30px rgba(20, 18, 18, 0.55),
+    0 12px 24px -16px rgba(20, 18, 18, 0.5);
+  transform-style: preserve-3d;
+}
+
+.phone3d__edge {
+  position: absolute;
+  inset: 0;
+  display: block;
+  border-radius: 2.1rem;
+  pointer-events: none;
+  background: linear-gradient(
+    calc(90deg + var(--rx) * 60deg),
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.55) calc(50% + var(--rx) * 20%),
+    rgba(255, 255, 255, 0) 100%
+  );
+  padding: 1px;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0.9;
+  transform: translateZ(1px);
+}
+
+.phone3d__screen {
+  position: relative;
+  display: block;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 1.72rem;
+  background: #0d0d0d;
+  transform: translateZ(6px);
+}
+
+/* Screenshots include native status bars; no overlay island. */
+.phone3d__island {
+  display: none;
+}
+
+.phone3d--android .phone3d__body {
+  border-radius: 1.65rem;
+}
+
+.phone3d--android .phone3d__screen {
+  border-radius: 1.35rem;
+}
+
+.phone3d__media {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.phone3d__empty {
+  display: flex;
+  align-items: flex-end;
+  width: 100%;
+  height: 100%;
+  padding: 0.9rem;
+  background:
+    linear-gradient(#ebebeb 1px, transparent 1px) 0 0 / 100% 1.35rem,
+    #f7f7f7;
+}
+
+.phone3d__glare {
+  position: absolute;
+  inset: 0.42rem;
+  display: block;
+  border-radius: 1.72rem;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      70% 50% at calc(var(--mx) * 100%) calc(var(--my) * 100%),
+      rgba(255, 255, 255, 0.16),
+      rgba(255, 255, 255, 0.04) 45%,
+      transparent 70%
+    ),
+    linear-gradient(
+      calc(100deg + var(--rx) * 40deg),
+      transparent 42%,
+      rgba(255, 255, 255, 0.07) 50%,
+      transparent 58%
+    );
+  transform: translateZ(12px);
+}
+
+.phone3d--left .phone3d__glare,
+.phone3d--right .phone3d__glare {
+  opacity: 0.5;
+}
+
+.phone-stage__controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  margin-top: 1.4rem;
+}
+
+.phone-stage__nav {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--ink);
+  transition:
+    width 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.phone-stage__nav-icon,
+.phone-stage__nav-label {
+  grid-area: 1 / 1;
+  transition:
+    opacity 0.2s ease,
+    transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.phone-stage__nav-label {
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0;
+  transform: translateY(0.4rem);
+}
+
+.phone-stage__nav:hover,
+.phone-stage__nav:focus-visible {
+  width: 4.1rem;
+  background: var(--paper);
+  color: var(--ink);
+  border-color: var(--paper);
+  outline: none;
+}
+
+.phone-stage__nav:hover .phone-stage__nav-icon,
+.phone-stage__nav:focus-visible .phone-stage__nav-icon {
+  opacity: 0;
+  transform: translateY(-0.4rem);
+}
+
+.phone-stage__nav:hover .phone-stage__nav-label,
+.phone-stage__nav:focus-visible .phone-stage__nav-label {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.phone-stage__index {
+  min-width: 6.5rem;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.55);
+  animation: rise 0.45s ease-out both;
+}
+
+@media (max-width: 1023px) {
+  .phone-stage {
+    min-height: 21rem;
+  }
+  .phone-stage__cluster {
+    height: 21rem;
+    --phone-shift: 4.6rem;
+  }
+  .phone3d {
+    width: 11rem;
+  }
+  .phone3d--left,
+  .phone3d--right {
+    width: 9rem;
+  }
+}
+
+/* ─── Tech stack — dark stage + conveyor belt ──────────────────────────── */
+.tech-stack-stage {
+  perspective: 1200px;
+  perspective-origin: calc(var(--mx, 0.5) * 100%) calc(var(--my, 0.4) * 100%);
+  transform: rotateX(calc(var(--ry, 0) * -2deg)) rotateY(calc(var(--rx, 0) * 3deg));
+  transform-style: preserve-3d;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.06),
+    0 28px 80px -32px rgba(20, 19, 19, 0.65);
+}
+
+.tech-stack-stage:hover .tech-marquee__track {
+  animation-play-state: paused;
+}
+
+.tech-stack-grid {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mask-image: radial-gradient(ellipse 85% 70% at 50% 55%, black, transparent);
+}
+
+.tech-stack-rail {
+  position: relative;
+  width: 8rem;
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+
+.tech-stack-rail__fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 40%, white));
+  transition: width 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tech-stack-belt {
+  position: relative;
+  perspective: 800px;
+  perspective-origin: 50% 0%;
+}
+
+.tech-stack-belt__floor {
+  position: absolute;
+  left: 5%;
+  right: 5%;
+  bottom: 0.35rem;
+  height: 3.5rem;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(218, 55, 80, 0.18), transparent 68%);
+  filter: blur(8px);
+  transform: rotateX(72deg) scaleY(0.35);
+  pointer-events: none;
+}
+
+.tech-stack-belt__inner {
+  transform: rotateX(14deg);
+  transform-style: preserve-3d;
+}
+
+.tech-marquee {
+  overflow: hidden;
+  mask-image: linear-gradient(90deg, transparent, black 12%, black 88%, transparent);
+  -webkit-mask-image: linear-gradient(90deg, transparent, black 12%, black 88%, transparent);
+}
+
+.tech-marquee--spotlight {
+  mask-image: linear-gradient(90deg, transparent, black 18%, black 82%, transparent);
+  -webkit-mask-image: linear-gradient(90deg, transparent, black 18%, black 82%, transparent);
+}
+
+.tech-marquee__track {
+  display: flex;
+  width: max-content;
+  align-items: center;
+  gap: clamp(0.85rem, 2vw, 1.35rem);
+  padding: 0.25rem 0 1.25rem;
+  will-change: transform;
+}
+
+.tech-marquee__track--left {
+  animation: marquee-left var(--marquee-duration, 48s) linear infinite;
+}
+
+.tech-marquee__item {
+  flex-shrink: 0;
+  list-style: none;
+}
+
+.tech-token {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 3.65rem;
+  height: 3.65rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  transform-style: preserve-3d;
+}
+
+.tech-token:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 80%, white);
+  outline-offset: 3px;
+}
+
+.tech-token__ring {
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.tech-token__glass {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 10px 28px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(10px);
+  transition:
+    transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.3s ease,
+    box-shadow 0.3s ease,
+    background 0.3s ease;
+}
+
+.tech-token:hover .tech-token__glass,
+.tech-token:focus-visible .tech-token__glass {
+  transform: translateY(-6px) translateZ(12px);
+  border-color: rgba(255, 255, 255, 0.28);
+}
+
+.tech-token--active .tech-token__ring {
+  opacity: 1;
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+  box-shadow: 0 0 24px rgba(218, 55, 80, 0.35);
+}
+
+.tech-token--active .tech-token__glass {
+  transform: translateY(-10px) translateZ(18px) scale(1.08);
+  background: rgba(255, 255, 255, 0.12);
+  border-color: color-mix(in srgb, var(--accent) 65%, white);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    0 0 0 1px rgba(255, 255, 255, 0.15),
+    0 16px 40px rgba(218, 55, 80, 0.28);
+}
+
+.tech-token .tech-marquee__logo-mark,
+.tech-token .tech-marquee__logo-img {
+  width: 1.35rem;
+  height: 1.35rem;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.45));
+}
+
+.tech-marquee__logo-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+@keyframes marquee-left {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.launchstack-mark--animated .launchstack-mark__dot {
+  animation: launchstack-mark-twinkle 2.8s ease-in-out infinite;
+  animation-delay: calc(var(--mark-dot-i, 0) * 37ms);
+}
+
+@keyframes launchstack-mark-twinkle {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .atlas-rule,
   .atlas-float,
   .atlas-float-delayed,
+  .phone-stage__float,
   .animate-\[rise_220ms_ease-out\],
   .animate-\[rise_350ms_ease-out\],
   .animate-\[rise_400ms_ease-out\],
@@ -135,5 +705,25 @@ body {
   .animate-\[rise_700ms_ease-out\],
   .animate-\[fade-in_800ms_ease-out\] {
     animation: none !important;
+  }
+  .phone-stage__cluster {
+    transform: none;
+    transition: none;
+  }
+  .phone3d {
+    transition: none;
+  }
+  .tech-marquee__track--left {
+    animation: none !important;
+  }
+  .tech-stack-stage {
+    transform: none;
+  }
+  .tech-stack-belt__inner {
+    transform: none;
+  }
+  .launchstack-mark--animated .launchstack-mark__dot {
+    animation: none !important;
+    opacity: 1;
   }
 }

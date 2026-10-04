@@ -14,7 +14,8 @@ export default function FeedbackBoardPage() {
     selectedWorkspaceId,
     isLoading,
     toastMessage,
-    setToastMessage,
+    toastVariant,
+    dismissToast,
     handleUpvote,
     handleCreateFeedback,
   } = useFeedbackData();
@@ -32,33 +33,39 @@ export default function FeedbackBoardPage() {
   });
 
   return (
-    <div className="min-h-screen bg-paper atlas-grain p-6 text-ink md:p-8">
-      {toastMessage && <Toast message={toastMessage} onDismiss={() => setToastMessage(null)} />}
+    <>
+      {toastMessage && (
+        <Toast message={toastMessage} variant={toastVariant} onDismiss={dismissToast} />
+      )}
 
-      <div className="mx-auto max-w-5xl animate-[rise_400ms_ease-out]">
-        <FeedbackHeader onShowModal={() => setShowModal(true)} />
+      <div className="atlas-grain p-6 text-ink md:p-8">
+        <div className="mx-auto max-w-5xl animate-[rise_400ms_ease-out]">
+          <FeedbackHeader onShowModal={() => setShowModal(true)} />
 
-        <FeedbackFilters
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          filterCategory={filterCategory}
-          setFilterCategory={setFilterCategory}
-        />
+          <FeedbackFilters
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            filterCategory={filterCategory}
+            setFilterCategory={setFilterCategory}
+          />
 
-        <FeedbackList
-          isLoading={isLoading}
-          posts={filteredPosts}
-          onUpvote={handleUpvote}
-          onShowModal={() => setShowModal(true)}
-        />
+          <FeedbackList
+            isLoading={isLoading}
+            posts={filteredPosts}
+            onUpvote={handleUpvote}
+            onShowModal={() => setShowModal(true)}
+          />
 
-        <FeedbackModal
-          isOpen={showModal}
-          onClose={() => setShowModal(false)}
-          workspaceId={selectedWorkspaceId}
-          onSubmit={handleCreateFeedback}
-        />
+          <FeedbackModal
+            isOpen={showModal}
+            onClose={() => setShowModal(false)}
+            workspaceId={selectedWorkspaceId}
+            onSubmit={async (title, description, category) => {
+              await handleCreateFeedback(title, description, category);
+            }}
+          />
+        </div>
       </div>
-    </div>
+    </>
   );
 }

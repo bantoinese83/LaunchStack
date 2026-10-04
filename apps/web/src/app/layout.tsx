@@ -1,17 +1,22 @@
 import type { Metadata } from 'next';
-import { Syne, IBM_Plex_Sans } from 'next/font/google';
+import { cookies } from 'next/headers';
+import { Fraunces, IBM_Plex_Mono } from 'next/font/google';
+import { GeistSans } from 'geist/font/sans';
+import { CookieConsent } from '@/components/CookieConsent';
+import { I18nProvider } from '@/lib/i18n/I18nProvider';
+import { isLocale } from '@/lib/i18n/dictionaries';
 import './globals.css';
 
-const display = Syne({
+const display = Fraunces({
   subsets: ['latin'],
   variable: '--font-display',
-  weight: ['500', '600', '700', '800'],
+  weight: ['400', '500', '600', '700'],
 });
 
-const sans = IBM_Plex_Sans({
+const mono = IBM_Plex_Mono({
   subsets: ['latin'],
-  variable: '--font-sans',
-  weight: ['400', '500', '600', '700'],
+  variable: '--font-mono',
+  weight: ['400', '500', '600'],
 });
 
 export const metadata: Metadata = {
@@ -36,10 +41,22 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const cookieStore = await cookies();
+  const requestedLocale = cookieStore.get('locale')?.value;
+  const locale = isLocale(requestedLocale) ? requestedLocale : 'en';
+
   return (
-    <html lang="en" className={`${display.variable} ${sans.variable}`}>
-      <body className="min-h-screen bg-paper font-sans text-ink antialiased">{children}</body>
+    <html
+      lang={locale}
+      className={`${display.variable} ${GeistSans.variable} ${mono.variable} scroll-smooth`}
+    >
+      <body className="min-h-screen bg-paper font-sans text-ink antialiased">
+        <I18nProvider locale={locale}>
+          {children}
+          <CookieConsent />
+        </I18nProvider>
+      </body>
     </html>
   );
 }

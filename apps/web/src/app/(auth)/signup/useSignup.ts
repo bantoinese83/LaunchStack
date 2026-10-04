@@ -1,7 +1,9 @@
+'use client';
+
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createSupabaseBrowserClient } from '@template/api';
-import { signupSchema } from '@template/validation';
+import { getBrowserSupabaseClient } from '@/lib/supabase/browser-session';
+import { firstZodIssueMessage, getErrorMessage, signupSchema } from '@template/validation';
 import { analytics } from '@template/analytics';
 
 export function useSignup() {
@@ -18,13 +20,13 @@ export function useSignup() {
 
     const validation = signupSchema.safeParse({ fullName, email, password });
     if (!validation.success) {
-      setError(validation.error.issues[0].message);
+      setError(firstZodIssueMessage(validation.error));
       return;
     }
 
     setIsLoading(true);
     try {
-      const supabase = createSupabaseBrowserClient();
+      const supabase = getBrowserSupabaseClient();
       const { data, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -39,19 +41,33 @@ export function useSignup() {
 
       if (data.user) {
         analytics.track(
-          { name: 'signup_completed', properties: { user_id: data.user.id, email } },
+          {
+            name: 'signup_completed',
+            properties: { user_id: data.user.id, email },
+          },
           data.user.id
         );
-        void fetch('/api/email/welcome', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ to: email, name: fullName }),
-        }).catch((err) => console.error('[welcome email]', err));
+        const accessToken = data.session?.access_token;
+        if (accessToken) {
+          void fetch('/api/email/welcome', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${accessToken}`,
+            },
+            body: JSON.stringify({ to: email, name: fullName }),
+          }).catch((err) => console.error('[welcome email]', err));
+        }
+      }
+
+      if (!data.session) {
+        router.push(`/verify-email?email=${encodeURIComponent(email)}`);
+        return;
       }
 
       router.push('/onboarding');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to sign up');
+      setError(getErrorMessage(err, 'Failed to sign up'));
     } finally {
       setIsLoading(false);
     }

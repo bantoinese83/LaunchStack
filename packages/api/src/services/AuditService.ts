@@ -11,13 +11,16 @@ export class AuditService {
     targetId: string,
     metadata: Record<string, unknown> = {}
   ): Promise<void> {
-    await this.client.from('audit_logs').insert({
-      workspace_id: workspaceId,
-      actor_id: actorId,
-      action,
-      target_type: targetType,
-      target_id: targetId,
-      metadata,
+    // The log_audit_event RPC securely derives the actor_id from auth.uid()
+    // inside a SECURITY DEFINER function, so the provided actorId parameter
+    // is technically ignored by the RPC, but we keep it in the signature
+    // for backward compatibility and server-side contexts.
+    await this.client.rpc('log_audit_event', {
+      p_workspace_id: workspaceId,
+      p_action: action,
+      p_target_type: targetType,
+      p_target_id: targetId,
+      p_metadata: metadata,
     });
   }
 }

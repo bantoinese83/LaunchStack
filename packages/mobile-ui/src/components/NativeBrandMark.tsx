@@ -1,21 +1,53 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
+import Svg, { G, Path } from 'react-native-svg';
 import { theme } from '../theme';
+import { LAUNCHSTACK_MARK_VIEWBOX, launchstackMarkPaths } from '../launchstackMarkPaths';
 
-export const NativeBrandMark: React.FC<{ size?: number }> = ({ size = 44 }) => (
-  <View style={[styles.logoBadge, { width: size, height: size, borderRadius: size * 0.09 }]}>
-    <Text style={[styles.logoText, { fontSize: size * 0.36 }]}>LS</Text>
+export type NativeBrandMarkProps = {
+  size?: number;
+  color?: string;
+};
+
+export const NativeBrandMark: React.FC<NativeBrandMarkProps> = ({
+  size = 44,
+  color = theme.shell,
+}) => (
+  <View
+    style={[
+      styles.wrap,
+      {
+        width: size,
+        height: size,
+      },
+    ]}
+  >
+    <Svg
+      width={size}
+      height={size}
+      viewBox={LAUNCHSTACK_MARK_VIEWBOX}
+      accessibilityLabel="LaunchStack"
+    >
+      <G fill={color}>
+        {launchstackMarkPaths.map((d, index) => (
+          <Path key={index} d={d} />
+        ))}
+      </G>
+    </Svg>
   </View>
 );
 
 const styles = StyleSheet.create({
-  logoBadge: {
-    backgroundColor: theme.ink,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logoText: {
-    color: theme.paper,
-    fontWeight: '700',
+  wrap: {
+    ...Platform.select({
+      ios: {
+        shadowColor: theme.shell,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+      },
+      android: { elevation: 2 },
+      default: {},
+    }),
   },
 });

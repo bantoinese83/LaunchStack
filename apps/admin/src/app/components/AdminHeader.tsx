@@ -10,15 +10,25 @@ const titles: Record<AdminTab, string> = {
   workspaces: 'Workspaces',
   users: 'User accounts',
   moderation: 'Feedback moderation',
+  flags: 'Feature flags',
+};
+
+const eyebrows: Record<AdminTab, string> = {
+  overview: 'Telemetry',
+  workspaces: 'Tenants',
+  users: 'Directory',
+  moderation: 'Trust & safety',
+  flags: 'Rollouts',
 };
 
 export function AdminHeader({ activeTab }: AdminHeaderProps) {
   return (
     <header className="mb-8">
-      <h1 className="font-display text-3xl font-semibold tracking-tight text-ink">
+      <p className="type-eyebrow text-accent">{eyebrows[activeTab]}</p>
+      <h1 className="mt-2 font-display text-3xl font-medium tracking-tight text-ink">
         {titles[activeTab]}
       </h1>
-      <p className="mt-1.5 text-sm text-muted">
+      <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted">
         Server-verified admin operations and multi-tenant telemetry.
       </p>
     </header>

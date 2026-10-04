@@ -2,7 +2,7 @@
   "name": "@template/config",
   "version": "1.0.0",
   "private": true,
-  "main": "./index.js",
+  "type": "module",
   "license": "MIT",
   "exports": {
     "./tsconfig.base.json": "./tsconfig.base.json",
@@ -10,7 +10,8 @@
   },
   "files": [
     "tsconfig.base.json",
-    "env.ts"
+    "env.ts",
+    "merge-env.mjs"
   ],
   "dependencies": {
     "zod": "^4.6.5"

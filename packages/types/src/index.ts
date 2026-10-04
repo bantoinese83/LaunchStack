@@ -3,3 +3,4 @@ export * from './workspace';
 export * from './billing';
 export * from './feedback';
 export * from './system';
+export * from './invite';
