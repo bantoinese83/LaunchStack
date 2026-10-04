@@ -1,6 +1,15 @@
 <div align="center">
 
-# 🚀 LaunchStack
+<p>
+  <img
+    src="./docs/images/launchstack-mark.svg"
+    alt="LaunchStack launch pad mark"
+    width="72"
+    height="72"
+  />
+</p>
+
+# LaunchStack
 
 **The Ultimate Enterprise Full-Stack Monorepo Template**
 
