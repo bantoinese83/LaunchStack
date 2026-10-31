@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { MysticEmptyState } from '@/components/mystic/MysticEmptyState';
 import { getMysticWorkspaceId } from '@/lib/mystic/config';
 
 type Credit = {
@@ -29,34 +30,34 @@ export function ClientsPanel() {
       .then((data) => setClients(data.clients ?? []));
   }, [workspaceId]);
 
+  if (clients.length === 0) {
+    return <MysticEmptyState variant="clients" className="mt-6" />;
+  }
+
   return (
     <ul className="mt-6 divide-y divide-line rounded-2xl border border-line bg-surface">
-      {clients.length === 0 ? (
-        <li className="p-6 text-sm text-muted">No client profiles yet.</li>
-      ) : (
-        clients.map((client) => (
-          <li key={client.user_id} className="p-4">
-            <p className="font-medium">
-              {client.full_name ?? client.email ?? client.user_id.slice(0, 8)}
-            </p>
-            <p className="text-sm text-muted">{client.phone ?? 'No phone'}</p>
-            {client.referral_code ? (
-              <p className="mt-1 font-mono text-xs text-accent">Code {client.referral_code}</p>
-            ) : null}
-            {client.credits.length > 0 ? (
-              <ul className="mt-2 text-xs text-chalk">
-                {client.credits.map((c) => (
-                  <li key={`${c.source_kind}-${c.source_id}`}>
-                    {c.blowouts_remaining} left · {c.source_kind} {c.source_id}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="mt-1 text-xs text-muted">No active credits</p>
-            )}
-          </li>
-        ))
-      )}
+      {clients.map((client) => (
+        <li key={client.user_id} className="p-4">
+          <p className="font-medium">
+            {client.full_name ?? client.email ?? client.user_id.slice(0, 8)}
+          </p>
+          <p className="text-sm text-muted">{client.phone ?? 'No phone'}</p>
+          {client.referral_code ? (
+            <p className="mt-1 font-mono text-xs text-accent">Code {client.referral_code}</p>
+          ) : null}
+          {client.credits.length > 0 ? (
+            <ul className="mt-2 text-xs text-chalk">
+              {client.credits.map((c) => (
+                <li key={`${c.source_kind}-${c.source_id}`}>
+                  {c.blowouts_remaining} left · {c.source_kind} {c.source_id}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-1 text-xs text-muted">No active credits</p>
+          )}
+        </li>
+      ))}
     </ul>
   );
 }

@@ -11,14 +11,29 @@ export async function GET(req: Request) {
     if (auth.response) return auth.response;
 
     const admin = createSupabaseAdminClient();
-    const { data, error } = await admin
-      .from('mystic_client_profiles')
-      .select('*')
-      .eq('user_id', auth.user.id)
-      .maybeSingle();
-    if (error) throw error;
+    const [{ data: identity, error: identityError }, { data: mystic, error: mysticError }] =
+      await Promise.all([
+        admin.from('profiles').select('full_name, email').eq('id', auth.user.id).single(),
+        admin.from('mystic_client_profiles').select('*').eq('user_id', auth.user.id).maybeSingle(),
+      ]);
+    if (identityError) throw identityError;
+    if (mysticError) throw mysticError;
 
-    return NextResponse.json({ profile: data });
+    return NextResponse.json({
+      profile: {
+        ...(mystic ?? {
+          user_id: auth.user.id,
+          phone: null,
+          birthday: null,
+          marketing_sms: true,
+          marketing_email: true,
+          referral_code: null,
+          referral_count: 0,
+        }),
+        full_name: identity?.full_name ?? null,
+        email: identity?.email ?? auth.user.email ?? null,
+      },
+    });
   } catch (err) {
     return routeErrorResponse(err, 'mystic.clientProfile.get');
   }
@@ -37,7 +52,14 @@ export async function PUT(req: Request) {
     const admin = createSupabaseAdminClient();
     const workspaceId = getMysticWorkspaceId();
 
-    await admin.from('profiles').update({ full_name: parsed.data.fullName }).eq('id', auth.user.id);
+    await admin
+      .from('profiles')
+      .update({
+        full_name: parsed.data.fullName,
+        email: parsed.data.email,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', auth.user.id);
 
     const { data: existing } = await admin
       .from('mystic_client_profiles')

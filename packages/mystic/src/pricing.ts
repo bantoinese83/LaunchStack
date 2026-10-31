@@ -13,6 +13,36 @@ export const DEFAULT_SURCHARGE_RULES = {
   maxInspoPhotos: 4,
 } as const;
 
+export type SurchargeRules = {
+  eveningStartHour: number;
+  eveningSurchargeCents: number;
+  includedMiles: number;
+  perMileAfterIncludedCents: number;
+  defaultTravelBufferMinutes: number;
+  winterTravelBufferMinutes: number;
+};
+
+export type StudioSettingsSurchargeSource = {
+  evening_surcharge_cents?: number | null;
+  included_miles?: number | null;
+  per_mile_surcharge_cents?: number | null;
+};
+
+export function studioSettingsToSurchargeRules(
+  settings?: StudioSettingsSurchargeSource | null
+): SurchargeRules {
+  return {
+    eveningStartHour: DEFAULT_SURCHARGE_RULES.eveningStartHour,
+    eveningSurchargeCents:
+      settings?.evening_surcharge_cents ?? DEFAULT_SURCHARGE_RULES.eveningSurchargeCents,
+    includedMiles: Number(settings?.included_miles ?? DEFAULT_SURCHARGE_RULES.includedMiles),
+    perMileAfterIncludedCents:
+      settings?.per_mile_surcharge_cents ?? DEFAULT_SURCHARGE_RULES.perMileAfterIncludedCents,
+    defaultTravelBufferMinutes: DEFAULT_SURCHARGE_RULES.defaultTravelBufferMinutes,
+    winterTravelBufferMinutes: DEFAULT_SURCHARGE_RULES.winterTravelBufferMinutes,
+  };
+}
+
 export type ClientEntitlement = 'none' | 'membership' | 'package';
 
 export type SurchargeLine = {
@@ -28,6 +58,7 @@ export type BookingQuoteInput = {
   entitlement: ClientEntitlement;
   tipCents?: number;
   winterBufferMode?: boolean;
+  rules?: SurchargeRules;
 };
 
 export type BookingQuote = {
@@ -40,24 +71,25 @@ export type BookingQuote = {
 };
 
 export function computeBookingQuote(input: BookingQuoteInput): BookingQuote {
+  const rules = input.rules ?? studioSettingsToSurchargeRules();
   const service = getServiceById(input.serviceId);
   const surcharges: SurchargeLine[] = [];
   const exempt = input.entitlement === 'membership' || input.entitlement === 'package';
 
-  if (!exempt && input.scheduledAt.getHours() >= DEFAULT_SURCHARGE_RULES.eveningStartHour) {
+  if (!exempt && input.scheduledAt.getHours() >= rules.eveningStartHour) {
     surcharges.push({
       code: 'evening',
-      label: 'After 8:00 PM house call',
-      amountCents: DEFAULT_SURCHARGE_RULES.eveningSurchargeCents,
+      label: `After ${rules.eveningStartHour}:00 house call`,
+      amountCents: rules.eveningSurchargeCents,
     });
   }
 
-  if (!exempt && input.distanceMiles > DEFAULT_SURCHARGE_RULES.includedMiles) {
-    const extraMiles = input.distanceMiles - DEFAULT_SURCHARGE_RULES.includedMiles;
-    const amountCents = Math.round(extraMiles * DEFAULT_SURCHARGE_RULES.perMileAfterIncludedCents);
+  if (!exempt && input.distanceMiles > rules.includedMiles) {
+    const extraMiles = input.distanceMiles - rules.includedMiles;
+    const amountCents = Math.round(extraMiles * rules.perMileAfterIncludedCents);
     surcharges.push({
       code: 'distance',
-      label: `Travel (${extraMiles.toFixed(1)} mi beyond ${DEFAULT_SURCHARGE_RULES.includedMiles} mi)`,
+      label: `Travel (${extraMiles.toFixed(1)} mi beyond ${rules.includedMiles} mi)`,
       amountCents,
     });
   }
@@ -65,8 +97,8 @@ export function computeBookingQuote(input: BookingQuoteInput): BookingQuote {
   const tipCents = input.tipCents ?? 0;
   const surchargeTotal = surcharges.reduce((sum, line) => sum + line.amountCents, 0);
   const travelBufferMinutes = input.winterBufferMode
-    ? DEFAULT_SURCHARGE_RULES.winterTravelBufferMinutes
-    : DEFAULT_SURCHARGE_RULES.defaultTravelBufferMinutes;
+    ? rules.winterTravelBufferMinutes
+    : rules.defaultTravelBufferMinutes;
 
   return {
     baseCents: service.priceCents,

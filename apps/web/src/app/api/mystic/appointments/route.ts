@@ -1,13 +1,17 @@
 import { NextResponse } from 'next/server';
 import { MysticAppointmentService, createSupabaseAdminClient } from '@template/api';
-import { firstZodIssueMessage, mysticCreateAppointmentSchema } from '@template/validation';
+import {
+  firstZodIssueMessage,
+  mysticCreateAppointmentSchema,
+  mysticWorkspaceIdSchema,
+} from '@template/validation';
 import { requireAuthenticatedUser, routeErrorResponse } from '@/lib/api/route-auth';
 import { requireStudioManager } from '@/lib/mystic/studio-auth';
 import { getServiceById } from '@template/mystic';
 import { z } from 'zod';
 
 const listSchema = z.object({
-  workspaceId: z.uuid(),
+  workspaceId: mysticWorkspaceIdSchema,
   from: z.string().datetime(),
   to: z.string().datetime(),
 });

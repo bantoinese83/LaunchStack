@@ -2,9 +2,11 @@ import React from 'react';
 import { Platform } from 'react-native';
 import { Tabs } from 'expo-router';
 import { monoLabel, theme } from '@template/mobile-ui';
+import { useStudioAccess } from '../../../hooks/useStudioAccess';
 
 export default function TabsLayout() {
   const isIos = Platform.OS === 'ios';
+  const { isManager, loading } = useStudioAccess();
 
   return (
     <Tabs
@@ -40,6 +42,14 @@ export default function TabsLayout() {
       <Tabs.Screen name="membership" options={{ title: 'Plans' }} />
       <Tabs.Screen name="shop" options={{ title: 'Shop' }} />
       <Tabs.Screen name="messages" options={{ title: 'Messages' }} />
+      <Tabs.Screen
+        name="studio"
+        options={{
+          title: 'Studio',
+          headerShown: false,
+          href: !loading && isManager ? undefined : null,
+        }}
+      />
       <Tabs.Screen name="account" options={{ title: 'Account' }} />
     </Tabs>
   );

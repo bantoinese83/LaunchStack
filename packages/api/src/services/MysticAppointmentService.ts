@@ -95,13 +95,42 @@ export class MysticAppointmentService {
     return data as MysticAppointmentRow;
   }
 
-  async markEnRoute(id: string, etaMinutes: number) {
+  async markEnRoute(
+    id: string,
+    etaMinutes: number,
+    location?: { latitude: number; longitude: number }
+  ) {
+    const now = new Date().toISOString();
     const { data, error } = await this.supabase
       .from('mystic_appointments')
       .update({
         status: 'stylist_en_route',
         eta_minutes: etaMinutes,
-        updated_at: new Date().toISOString(),
+        ...(location
+          ? {
+              stylist_latitude: location.latitude,
+              stylist_longitude: location.longitude,
+              stylist_location_updated_at: now,
+            }
+          : {}),
+        updated_at: now,
+      })
+      .eq('id', id)
+      .select('*')
+      .single();
+    if (error) throw error;
+    return data as MysticAppointmentRow;
+  }
+
+  async updateStylistLocation(id: string, latitude: number, longitude: number) {
+    const now = new Date().toISOString();
+    const { data, error } = await this.supabase
+      .from('mystic_appointments')
+      .update({
+        stylist_latitude: latitude,
+        stylist_longitude: longitude,
+        stylist_location_updated_at: now,
+        updated_at: now,
       })
       .eq('id', id)
       .select('*')
@@ -146,6 +175,34 @@ export class MysticAppointmentService {
       .update({
         status: 'no_show',
         deposit_captured: true,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', id)
+      .select('*')
+      .single();
+    if (error) throw error;
+    return data as MysticAppointmentRow;
+  }
+
+  async cancel(id: string) {
+    const { data, error } = await this.supabase
+      .from('mystic_appointments')
+      .update({
+        status: 'canceled',
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', id)
+      .select('*')
+      .single();
+    if (error) throw error;
+    return data as MysticAppointmentRow;
+  }
+
+  async reschedule(id: string, startsAt: string) {
+    const { data, error } = await this.supabase
+      .from('mystic_appointments')
+      .update({
+        starts_at: startsAt,
         updated_at: new Date().toISOString(),
       })
       .eq('id', id)

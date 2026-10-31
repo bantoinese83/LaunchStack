@@ -1,12 +1,16 @@
 import { NextResponse } from 'next/server';
 import { MysticMessageService, createSupabaseAdminClient } from '@template/api';
 import { canManageMembers } from '@template/auth';
-import { firstZodIssueMessage, mysticSendMessageSchema } from '@template/validation';
+import {
+  firstZodIssueMessage,
+  mysticSendMessageSchema,
+  mysticWorkspaceIdSchema,
+} from '@template/validation';
 import { z } from 'zod';
 import { requireAuthenticatedUser, routeErrorResponse } from '@/lib/api/route-auth';
 
 const listSchema = z.object({
-  workspaceId: z.uuid(),
+  workspaceId: mysticWorkspaceIdSchema,
   clientUserId: z.uuid(),
 });
 

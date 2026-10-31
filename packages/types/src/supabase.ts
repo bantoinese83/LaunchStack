@@ -342,6 +342,9 @@ export type Database = {
           duration_minutes: number;
           entitlement: string;
           eta_minutes: number | null;
+          stylist_latitude: number | null;
+          stylist_longitude: number | null;
+          stylist_location_updated_at: string | null;
           id: string;
           payment_captured: boolean;
           quote_cents: number;
@@ -368,6 +371,9 @@ export type Database = {
           duration_minutes: number;
           entitlement?: string;
           eta_minutes?: number | null;
+          stylist_latitude?: number | null;
+          stylist_longitude?: number | null;
+          stylist_location_updated_at?: string | null;
           id?: string;
           payment_captured?: boolean;
           quote_cents: number;
@@ -394,6 +400,9 @@ export type Database = {
           duration_minutes?: number;
           entitlement?: string;
           eta_minutes?: number | null;
+          stylist_latitude?: number | null;
+          stylist_longitude?: number | null;
+          stylist_location_updated_at?: string | null;
           id?: string;
           payment_captured?: boolean;
           quote_cents?: number;

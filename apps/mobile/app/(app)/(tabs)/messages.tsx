@@ -3,6 +3,7 @@ import { Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-n
 import { MYSTIC_DEFAULT_WORKSPACE_ID } from '@template/mystic';
 import { createSupabaseMobileClient } from '@template/api/mobile';
 import { NativeButton, displayTitle, monoLabel, theme } from '@template/mobile-ui';
+import { NativeEmptyState } from '../../../components/mystic/NativeEmptyState';
 import { fetchMessageThread, sendClientMessage } from '../../../lib/mysticApi';
 
 type Message = {
@@ -47,6 +48,7 @@ export default function MessagesTab() {
     <ScrollView style={styles.scroll} contentContainerStyle={styles.container}>
       <Text style={styles.kicker}>Messages</Text>
       <Text style={styles.heading}>Chat with Luke</Text>
+      {messages.length === 0 ? <NativeEmptyState variant="messages" compact /> : null}
       {messages.map((msg) => (
         <View
           key={msg.id}

@@ -1,16 +1,16 @@
 import Constants from 'expo-constants';
 import { createSupabaseMobileClient } from '@template/api/mobile';
-import type { ServiceId } from '@template/mystic';
+import type { ServiceId, SurchargeRules } from '@template/mystic';
 import type { AppointmentTagId } from '@template/mystic';
 
 const appUrl = Constants.expoConfig?.extra?.appUrl ?? process.env.EXPO_PUBLIC_APP_URL ?? '';
 
-async function authHeaders(): Promise<HeadersInit> {
+async function authHeaders(json = true): Promise<HeadersInit> {
   const supabase = createSupabaseMobileClient();
   const { data } = await supabase.auth.getSession();
   const token = data.session?.access_token;
   return {
-    'Content-Type': 'application/json',
+    ...(json ? { 'Content-Type': 'application/json' } : {}),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
 }
@@ -18,6 +18,31 @@ async function authHeaders(): Promise<HeadersInit> {
 export async function fetchAvailability(date: string, serviceId: ServiceId) {
   if (!appUrl) throw new Error('EXPO_PUBLIC_APP_URL not set');
   const res = await fetch(`${appUrl}/api/mystic/availability?date=${date}&serviceId=${serviceId}`);
+  return res.json();
+}
+
+export async function fetchGeocodedDistance(address: {
+  line1: string;
+  city: string;
+  state: string;
+  postalCode: string;
+}) {
+  if (!appUrl) throw new Error('EXPO_PUBLIC_APP_URL not set');
+  const res = await fetch(`${appUrl}/api/mystic/geocode/distance`, {
+    method: 'POST',
+    headers: await authHeaders(),
+    body: JSON.stringify(address),
+  });
+  return res.json();
+}
+
+export async function fetchBookingSettings(): Promise<{
+  rules?: SurchargeRules;
+  depositCents?: number;
+  winterBufferEnabled?: boolean;
+}> {
+  if (!appUrl) throw new Error('EXPO_PUBLIC_APP_URL not set');
+  const res = await fetch(`${appUrl}/api/mystic/public/booking-settings`);
   return res.json();
 }
 
@@ -37,7 +62,9 @@ export async function startBookingCheckout(payload: {
   surchargeJson: { code: string; label: string; amountCents: number }[];
   tipCents?: number;
   tags?: AppointmentTagId[];
+  referredByName?: string;
   referralCode?: string;
+  clientNotes?: string;
   policiesAccepted: boolean;
 }) {
   if (!appUrl) throw new Error('EXPO_PUBLIC_APP_URL not set');
@@ -47,6 +74,24 @@ export async function startBookingCheckout(payload: {
     body: JSON.stringify(payload),
   });
   return { ok: res.ok, status: res.status, ...(await res.json()) };
+}
+
+export async function uploadInspoPhoto(appointmentId: string, uri: string, fileName: string) {
+  if (!appUrl) throw new Error('EXPO_PUBLIC_APP_URL not set');
+  const form = new FormData();
+  form.append('appointmentId', appointmentId);
+  form.append('file', {
+    uri,
+    name: fileName,
+    type: 'image/jpeg',
+  } as unknown as Blob);
+
+  const res = await fetch(`${appUrl}/api/mystic/appointments/inspo`, {
+    method: 'POST',
+    headers: await authHeaders(false),
+    body: form,
+  });
+  return res.json();
 }
 
 export async function fetchMyAppointments() {
@@ -104,20 +149,50 @@ export async function startPackageCheckout(packageId: string) {
   return res.json();
 }
 
-export async function fetchClientProfile() {
+export type ClientProfileForm = {
+  fullName: string;
+  email: string;
+  phone: string;
+  birthday?: string;
+  marketingSms: boolean;
+  marketingEmail: boolean;
+};
+
+export type ClientProfileRow = {
+  full_name?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  birthday?: string | null;
+  marketing_sms?: boolean;
+  marketing_email?: boolean;
+  referral_code?: string | null;
+};
+
+export async function fetchClientProfile(): Promise<{
+  profile?: ClientProfileRow;
+  error?: string;
+}> {
   if (!appUrl) throw new Error('EXPO_PUBLIC_APP_URL not set');
   const res = await fetch(`${appUrl}/api/mystic/client-profile`, {
     headers: await authHeaders(),
   });
-  return res.json();
+  const data = await res.json();
+  if (!res.ok) return { error: data.error ?? 'Could not load profile' };
+  return data;
 }
 
-export async function saveClientProfile(body: Record<string, unknown>) {
+export async function saveClientProfile(body: ClientProfileForm): Promise<{
+  ok: boolean;
+  profile?: ClientProfileRow;
+  error?: string;
+}> {
   if (!appUrl) throw new Error('EXPO_PUBLIC_APP_URL not set');
   const res = await fetch(`${appUrl}/api/mystic/client-profile`, {
     method: 'PUT',
     headers: await authHeaders(),
     body: JSON.stringify(body),
   });
-  return res.json();
+  const data = await res.json();
+  if (!res.ok) return { ok: false, error: data.error ?? 'Could not save' };
+  return { ok: true, profile: data.profile };
 }

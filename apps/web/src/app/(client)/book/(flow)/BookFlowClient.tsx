@@ -4,37 +4,38 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   APPOINTMENT_TAGS,
+  DEFAULT_SURCHARGE_RULES,
   HOUSE_CALL_POLICIES,
+  MYSTIC_RIVER_NORTH,
   MYSTIC_SERVICES,
   computeBookingQuote,
   formatUsd,
+  formatVisitWhen,
+  type AppointmentTagId,
+  type BookingFlowStep,
   type ServiceId,
+  type SurchargeRules,
 } from '@template/mystic';
-import type { AppointmentTagId } from '@template/mystic';
+import { MysticEmptyState } from '@/components/mystic/MysticEmptyState';
+import { MysticBookStepProgress } from '@/components/mystic/book/MysticBookStepProgress';
+import { fetchGeocodedDistance } from '@/lib/mystic/client-geocode';
+import { uploadInspoPhotosForAppointment } from '@/lib/mystic/inspo-upload';
 import { MysticMagneticButton } from '@/components/mystic/MysticMagneticButton';
 import { MysticBookDateStrip } from '@/components/mystic/book/MysticBookDateStrip';
 import { mysticCard, mysticInput, mysticTimeChip } from '@/components/mystic/mystic-styles';
 import { MysticSecureBookingLine } from '@/components/mystic/MysticSecureBookingLine';
 import { Alert } from '@template/ui';
 
-type Step = 'service' | 'datetime' | 'location' | 'details' | 'review';
-
-const STEP_HINT: Record<Step, string> = {
-  service: 'Pick a service',
-  datetime: 'Choose date & time',
-  location: 'House-call address',
-  details: 'Preferences & referral',
-  review: 'Review summary before payment',
-};
-
 export function BookFlowClient() {
   const router = useRouter();
-  const [step, setStep] = useState<Step>('service');
+  const [step, setStep] = useState<BookingFlowStep>('service');
   const [serviceId, setServiceId] = useState<ServiceId>('blowout');
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
   const [slots, setSlots] = useState<string[]>([]);
   const [distanceMiles, setDistanceMiles] = useState(3);
+  const [distanceNote, setDistanceNote] = useState<string | null>(null);
+  const [geocodeBusy, setGeocodeBusy] = useState(false);
   const [entitlement, setEntitlement] = useState<'none' | 'membership' | 'package'>('none');
   const [tags, setTags] = useState<AppointmentTagId[]>([]);
   const [referredBy, setReferredBy] = useState('');
@@ -50,6 +51,42 @@ export function BookFlowClient() {
     postalCode: '',
     notes: '',
   });
+  const [surchargeRules, setSurchargeRules] = useState<SurchargeRules | null>(null);
+  const [depositCents, setDepositCents] = useState(2500);
+  const [inspoFiles, setInspoFiles] = useState<File[]>([]);
+
+  useEffect(() => {
+    void fetch('/api/mystic/public/booking-settings')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.rules) setSurchargeRules(data.rules);
+        if (typeof data.depositCents === 'number') setDepositCents(data.depositCents);
+      })
+      .catch(() => setSurchargeRules(null));
+  }, []);
+
+  useEffect(() => {
+    if (!address.line1 || address.postalCode.length < 5) return;
+    const timer = setTimeout(() => {
+      setGeocodeBusy(true);
+      void fetchGeocodedDistance({
+        line1: address.line1,
+        city: address.city,
+        state: address.state,
+        postalCode: address.postalCode,
+        notes: address.notes,
+      })
+        .then((geo) => {
+          setDistanceMiles(geo.distanceMiles);
+          setDistanceNote(
+            `${geo.distanceMiles.toFixed(1)} mi from ${MYSTIC_RIVER_NORTH.label} (auto)`
+          );
+        })
+        .catch((err: Error) => setDistanceNote(err.message))
+        .finally(() => setGeocodeBusy(false));
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [address.line1, address.city, address.state, address.postalCode]);
 
   useEffect(() => {
     if (!date) return;
@@ -73,10 +110,9 @@ export function BookFlowClient() {
       distanceMiles,
       entitlement,
       tipCents,
+      rules: surchargeRules ?? undefined,
     });
-  }, [scheduledAt, serviceId, distanceMiles, entitlement, tipCents]);
-
-  const stepIndex = ['service', 'datetime', 'location', 'details', 'review'].indexOf(step);
+  }, [scheduledAt, serviceId, distanceMiles, entitlement, tipCents, surchargeRules]);
 
   function toggleTag(id: AppointmentTagId) {
     setTags((current) =>
@@ -123,6 +159,10 @@ export function BookFlowClient() {
         setError(data.error ?? 'Checkout failed');
         return;
       }
+      const appointmentId = data.appointmentId as string | undefined;
+      if (appointmentId && inspoFiles.length > 0) {
+        await uploadInspoPhotosForAppointment(appointmentId, inspoFiles);
+      }
       if (data.url) window.location.href = data.url;
     } catch {
       setError('Network error — try again');
@@ -137,23 +177,7 @@ export function BookFlowClient() {
       <h1 className="font-display mt-2 text-3xl font-medium tracking-tight md:text-4xl">
         Book a house call
       </h1>
-      <p className="mt-2 text-sm text-muted">
-        Step {stepIndex + 1} of 5 · {STEP_HINT[step]}
-      </p>
-
-      <div
-        className="mystic-progress-track mt-8"
-        role="progressbar"
-        aria-valuemin={1}
-        aria-valuemax={5}
-        aria-valuenow={stepIndex + 1}
-        aria-valuetext={`Step ${stepIndex + 1} of 5: ${STEP_HINT[step]}`}
-      >
-        <div
-          className="mystic-progress-fill"
-          style={{ width: `${((stepIndex + 1) / 5) * 100}%` }}
-        />
-      </div>
+      <MysticBookStepProgress step={step} onStepChange={setStep} />
 
       {step === 'service' && (
         <section className="mt-8 space-y-3">
@@ -200,8 +224,11 @@ export function BookFlowClient() {
             }}
           />
           <label className="block text-sm font-medium">Time</label>
+          {date && slots.length === 0 ? (
+            <MysticEmptyState variant="book-slots" compact className="mb-4" />
+          ) : null}
           <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-            {(slots.length ? slots : ['10:00', '12:00', '15:00']).map((slot) => (
+            {(slots.length ? slots : date ? [] : ['10:00', '12:00', '15:00']).map((slot) => (
               <button
                 key={slot}
                 type="button"
@@ -268,16 +295,13 @@ export function BookFlowClient() {
               className="rounded-xl border border-line px-4 py-3"
             />
           </div>
-          <label className="block text-sm font-medium">Distance from River North (miles)</label>
-          <input
-            type="number"
-            min={0}
-            max={50}
-            step={0.5}
-            value={distanceMiles}
-            onChange={(e) => setDistanceMiles(Number(e.target.value))}
-            className="w-full rounded-xl border border-line px-4 py-3"
-          />
+          <p className="text-sm font-medium">Travel distance</p>
+          <p className="text-sm text-muted">
+            {geocodeBusy
+              ? 'Calculating from your address…'
+              : (distanceNote ??
+                `We estimate miles from ${MYSTIC_RIVER_NORTH.label} when you enter street + ZIP.`)}
+          </p>
           <textarea
             placeholder="Gate code, parking, pets…"
             value={address.notes}
@@ -336,9 +360,30 @@ export function BookFlowClient() {
             onChange={(e) => setReferredBy(e.target.value)}
             className="w-full rounded-xl border border-line px-4 py-3"
           />
-          <p className="text-sm text-muted">
-            Inspo photos — upload up to 4 on My visits after booking.
-          </p>
+          <div>
+            <p className="text-sm font-medium">Inspo photos (optional, up to 4)</p>
+            <p className="text-xs text-muted">
+              Luke preps products before arrival — you can add more on My visits later.
+            </p>
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              className="mt-2 w-full text-sm"
+              onChange={(e) => {
+                const list = Array.from(e.target.files ?? []).slice(
+                  0,
+                  DEFAULT_SURCHARGE_RULES.maxInspoPhotos
+                );
+                setInspoFiles(list);
+              }}
+            />
+            {inspoFiles.length > 0 ? (
+              <p className="mt-1 text-xs text-muted">
+                {inspoFiles.length} photo(s) ready to upload
+              </p>
+            ) : null}
+          </div>
           <div className="flex gap-3">
             <MysticMagneticButton
               type="button"
@@ -366,13 +411,7 @@ export function BookFlowClient() {
           <div className="rounded-2xl border border-line bg-surface p-6">
             <p className="font-medium">
               {MYSTIC_SERVICES.find((s) => s.id === serviceId)?.name} ·{' '}
-              {scheduledAt.toLocaleString(undefined, {
-                weekday: 'short',
-                month: 'short',
-                day: 'numeric',
-                hour: 'numeric',
-                minute: '2-digit',
-              })}
+              {formatVisitWhen(scheduledAt.toISOString())}
             </p>
             <p className="mt-1 text-sm text-muted">
               {address.line1}, {address.city}
@@ -400,8 +439,12 @@ export function BookFlowClient() {
               <option value={1500}>$15</option>
               <option value={2000}>$20</option>
             </select>
+            <p className="mt-2 flex justify-between text-sm text-muted">
+              <span>Refundable hold (no-show / door timer)</span>
+              <span>{formatUsd(depositCents)}</span>
+            </p>
             <p className="mt-4 flex justify-between border-t border-line pt-4 font-medium">
-              <span>Total</span>
+              <span>Total due now</span>
               <span>{formatUsd(quote.totalCents)}</span>
             </p>
           </div>

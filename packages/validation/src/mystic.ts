@@ -60,7 +60,7 @@ export const mysticCreateAppointmentSchema = z.object({
   address: mysticAddressSchema,
   distanceMiles: z.number().min(0).max(100),
   entitlement: z.enum(['none', 'membership', 'package']),
-  quoteCents: z.number().int().positive(),
+  quoteCents: z.number().int().min(0),
   surchargeJson: z.array(
     z.object({ code: z.string(), label: z.string(), amountCents: z.number().int() })
   ),
@@ -108,6 +108,14 @@ export const mysticBlastSchema = z.object({
 export const mysticEnRouteSchema = z.object({
   appointmentId: z.uuid(),
   etaMinutes: z.number().int().min(1).max(180),
+  latitude: z.number().min(-90).max(90).optional(),
+  longitude: z.number().min(-180).max(180).optional(),
+});
+
+export const mysticShareLocationSchema = z.object({
+  appointmentId: z.uuid(),
+  latitude: z.number().min(-90).max(90),
+  longitude: z.number().min(-180).max(180),
 });
 
 export const mysticDoorTimerSchema = z.object({
@@ -124,3 +132,20 @@ export const mysticStudioSettingsSchema = z.object({
   doorTimerMinutes: z.number().int().min(5).max(60).optional(),
   referralRewardAfter: z.number().int().min(1).max(50).optional(),
 });
+
+export const mysticStudioAppointmentPatchSchema = z
+  .object({
+    workspaceId: mysticWorkspaceIdSchema,
+    appointmentId: z.uuid(),
+    action: z.enum(['cancel', 'reschedule']),
+    startsAt: z.iso.datetime().optional(),
+  })
+  .superRefine((value, ctx) => {
+    if (value.action === 'reschedule' && !value.startsAt) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'startsAt required for reschedule',
+        path: ['startsAt'],
+      });
+    }
+  });

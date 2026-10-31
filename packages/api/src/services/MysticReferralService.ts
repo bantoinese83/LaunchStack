@@ -45,4 +45,56 @@ export class MysticReferralService {
     if (error) throw error;
     return count ?? 0;
   }
+
+  /** Per-referrer counts for a calendar month (YYYY-MM). */
+  async dashboardForMonth(workspaceId: string, month: string) {
+    const [year, mon] = month.split('-').map(Number);
+    const start = new Date(Date.UTC(year, mon - 1, 1)).toISOString();
+    const end = new Date(Date.UTC(year, mon, 1)).toISOString();
+
+    const { data: rows, error } = await this.supabase
+      .from('mystic_referrals')
+      .select('id, referrer_user_id, referred_name, credited, created_at')
+      .eq('workspace_id', workspaceId)
+      .gte('created_at', start)
+      .lt('created_at', end)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+
+    const referrerIds = [...new Set((rows ?? []).map((r) => r.referrer_user_id as string))];
+    const { data: profiles } = await this.supabase
+      .from('profiles')
+      .select('id, full_name, email')
+      .in('id', referrerIds.length ? referrerIds : ['00000000-0000-0000-0000-000000000000']);
+
+    const nameById = new Map(
+      (profiles ?? []).map((p) => [p.id, p.full_name?.trim() || p.email || 'Referrer'])
+    );
+
+    const byReferrer = new Map<
+      string,
+      { referrerUserId: string; name: string; total: number; pending: number; credited: number }
+    >();
+
+    for (const row of rows ?? []) {
+      const id = row.referrer_user_id as string;
+      const entry = byReferrer.get(id) ?? {
+        referrerUserId: id,
+        name: nameById.get(id) ?? 'Referrer',
+        total: 0,
+        pending: 0,
+        credited: 0,
+      };
+      entry.total += 1;
+      if (row.credited) entry.credited += 1;
+      else entry.pending += 1;
+      byReferrer.set(id, entry);
+    }
+
+    return {
+      month,
+      referrers: [...byReferrer.values()].sort((a, b) => b.total - a.total),
+      recent: rows ?? [],
+    };
+  }
 }

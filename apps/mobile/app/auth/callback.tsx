@@ -17,8 +17,11 @@ export default function AuthCallbackScreen() {
 
     let cancelled = false;
     void createSessionFromUrl(url)
-      .then(() => {
-        if (!cancelled) router.replace('/(app)/(tabs)/book');
+      .then(async () => {
+        if (cancelled) return;
+        const { fetchStudioAccess } = await import('../../lib/studioApi');
+        const access = await fetchStudioAccess().catch(() => ({ allowed: false }));
+        router.replace(access.allowed ? '/(app)/(tabs)/studio' : '/(app)/(tabs)/book');
       })
       .catch((err) => {
         if (!cancelled) setError(getErrorMessage(err, 'Could not complete sign-in'));

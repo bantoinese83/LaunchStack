@@ -75,8 +75,10 @@ export async function sendSms(input: SmsSendInput): Promise<SmsSendResult> {
 export const SMS_TEMPLATES = {
   bookingConfirmed: (when: string) =>
     `Mystic Hair Co.: You're booked for ${when}. House-call policies are in your confirmation email.`,
-  onTheWay: (etaMinutes: number) =>
-    `Luke is on the way — about ${etaMinutes} min. Reply if you need anything.`,
+  onTheWay: (etaMinutes: number, mapUrl?: string) =>
+    mapUrl
+      ? `Luke is on the way (~${etaMinutes} min). Live map: ${mapUrl}`
+      : `Luke is on the way — about ${etaMinutes} min. Reply if you need anything.`,
   doorTimer: (minutes: number) =>
     `Luke is at your door. Please answer within ${minutes} minutes to keep your appointment.`,
 } as const;

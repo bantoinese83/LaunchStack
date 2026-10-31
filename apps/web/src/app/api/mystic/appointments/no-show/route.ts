@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
-import { MysticAppointmentService, createSupabaseAdminClient } from '@template/api';
+import { createSupabaseAdminClient } from '@template/api';
 import { z } from 'zod';
 import { firstZodIssueMessage } from '@template/validation';
 import { requireAuthenticatedUser, routeErrorResponse } from '@/lib/api/route-auth';
 import { requireStudioManager } from '@/lib/mystic/studio-auth';
-import { getStripeClient } from '@/lib/stripe';
+import { captureAppointmentDeposit } from '@/lib/mystic/capture-deposit';
 
 const schema = z.object({ appointmentId: z.uuid() });
 
@@ -30,16 +30,12 @@ export async function POST(req: Request) {
     const forbidden = await requireStudioManager(auth.user, row.workspace_id);
     if (forbidden) return forbidden;
 
-    if (row.stripe_payment_intent_id && row.deposit_cents > 0 && process.env.STRIPE_SECRET_KEY) {
-      const stripe = getStripeClient();
-      await stripe.paymentIntents.capture(row.stripe_payment_intent_id, {
-        amount_to_capture: row.deposit_cents,
-      });
-    }
-
-    const appointment = await new MysticAppointmentService(admin).markNoShowDepositCaptured(
-      parsed.data.appointmentId
-    );
+    await captureAppointmentDeposit(admin, parsed.data.appointmentId);
+    const { data: appointment } = await admin
+      .from('mystic_appointments')
+      .select('*')
+      .eq('id', parsed.data.appointmentId)
+      .single();
 
     return NextResponse.json({ appointment });
   } catch (err) {

@@ -42,18 +42,24 @@ node scripts/push-env-to-vercel.mjs       # sync apps/web/.env.local → Vercel
 3. Webhook endpoint: `https://YOUR_DOMAIN/api/stripe/webhook`  
    Events: `checkout.session.completed`, `invoice.payment_succeeded`, `invoice.payment_failed`, subscription events.
 
-## 4. Brevo + Twilio (optional until live)
+## 4. Door timer cron (production)
+
+Set `CRON_SECRET` on Vercel. Cron hits `POST /api/mystic/cron/door-timer-expire` every 5 minutes (see `apps/web/vercel.json`) with header `Authorization: Bearer $CRON_SECRET`. Captures deposit via Stripe when the door timer expires.
+
+Optional Supabase edge proxy: deploy `supabase/functions/mystic-door-timer-expire` with `MYSTIC_APP_URL` + `CRON_SECRET`.
+
+## 5. Brevo + Twilio (optional until live)
 
 - `BREVO_API_KEY`, `SENDER_EMAIL`, `SENDER_NAME=Mystic Hair Co.`
 - `TWILIO_*` for SMS (on-the-way, door timer, booking texts)
 
 Without these, booking still works; email/SMS are skipped safely.
 
-## 5. Luke studio access
+## 6. Luke studio access
 
 Add your Supabase auth user to `workspace_members` for workspace `33333333-…` with role `workspace_owner`, or sign in as seed user `00000000-0000-0000-0000-000000000002` in dev.
 
-## 6. Database
+## 7. Database
 
 If you pull fresh:
 
@@ -63,7 +69,17 @@ pnpm db:seed:remote   # optional re-seed
 pnpm db:types:remote
 ```
 
-## 7. Mobile stores (EAS + Fastlane)
+## 8. Geocoding & live map
+
+- Run migration `20261031160000_mystic_stylist_location.sql` (`pnpm db:push`).
+- Booking distance is **auto-calculated** from address (Nominatim; optional `GOOGLE_MAPS_GEOCODING_KEY`).
+- Luke shares GPS on **On the way** (web studio or mobile Studio tab); clients see an **embedded map** on My visits (web: OpenStreetMap embed; mobile: native map) that refreshes every ~20s while en route.
+
+## 9. Luke studio on mobile
+
+The native app shows a **Studio** tab when the signed-in user is in `workspace_members` with owner/admin role (`GET /api/mystic/studio/access`). Same APIs as web `/studio` — today’s ops, calendar, client messages, MTD stats, winter buffer, quick blast.
+
+## 10. Mobile stores (EAS + Fastlane)
 
 Expo **does not require Fastlane** for day-to-day dev; **EAS Build** is the primary path.
 

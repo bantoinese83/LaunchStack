@@ -4,6 +4,7 @@ import { firstZodIssueMessage, mysticEnRouteSchema } from '@template/validation'
 import { requireAuthenticatedUser, routeErrorResponse } from '@/lib/api/route-auth';
 import { requireStudioManager } from '@/lib/mystic/studio-auth';
 import { notifyEnRoute } from '@/lib/mystic/notifications';
+import { stylistLiveMapUrl } from '@template/mystic';
 
 export async function POST(req: Request) {
   try {
@@ -29,9 +30,15 @@ export async function POST(req: Request) {
     const forbidden = await requireStudioManager(auth.user, existing.data.workspace_id);
     if (forbidden) return forbidden;
 
+    const location =
+      parsed.data.latitude != null && parsed.data.longitude != null
+        ? { latitude: parsed.data.latitude, longitude: parsed.data.longitude }
+        : undefined;
+
     const appointment = await new MysticAppointmentService(admin).markEnRoute(
       parsed.data.appointmentId,
-      parsed.data.etaMinutes
+      parsed.data.etaMinutes,
+      location
     );
 
     const { data: clientProfile } = await admin
@@ -42,9 +49,15 @@ export async function POST(req: Request) {
 
     if (clientProfile?.phone) {
       try {
-        await notifyEnRoute({ phone: clientProfile.phone, etaMinutes: parsed.data.etaMinutes });
-      } catch {
-        /* Twilio optional */
+        const mapUrl =
+          location != null ? stylistLiveMapUrl(location.latitude, location.longitude) : undefined;
+        await notifyEnRoute({
+          phone: clientProfile.phone,
+          etaMinutes: parsed.data.etaMinutes,
+          mapUrl,
+        });
+      } catch (err) {
+        console.warn('[mystic.enRoute] SMS failed', err);
       }
     }
 

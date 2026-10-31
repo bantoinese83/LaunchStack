@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { createSupabaseBrowserClient } from '@template/api';
+import { MysticEmptyState } from '@/components/mystic/MysticEmptyState';
 import { MysticPageIntro } from '@/components/mystic/MysticPageIntro';
 import { MysticMagneticButton } from '@/components/mystic/MysticMagneticButton';
 import { mysticCard, mysticInput } from '@/components/mystic/mystic-styles';
@@ -66,19 +67,23 @@ export function ClientMessages() {
         title="Message Luke"
         description="House-call questions, inspo, or schedule tweaks — one thread with your stylist."
       />
-      <ul className={`${mysticCard} mt-8 max-h-72 space-y-2 overflow-y-auto p-4`}>
-        {messages.map((msg) => (
-          <li
-            key={msg.id}
-            className={`rounded-2xl px-3 py-2 text-sm ${
-              msg.sender_role === 'stylist' ? 'bg-accent-soft' : 'border border-line/80 bg-paper'
-            }`}
-          >
-            <p className="text-xs uppercase text-muted">{msg.sender_role}</p>
-            <p>{msg.body}</p>
-          </li>
-        ))}
-      </ul>
+      {messages.length === 0 ? (
+        <MysticEmptyState variant="messages" className="mt-8" compact />
+      ) : (
+        <ul className={`${mysticCard} mt-8 max-h-72 space-y-2 overflow-y-auto p-4`}>
+          {messages.map((msg) => (
+            <li
+              key={msg.id}
+              className={`rounded-2xl px-3 py-2 text-sm ${
+                msg.sender_role === 'stylist' ? 'bg-accent-soft' : 'border border-line/80 bg-paper'
+              }`}
+            >
+              <p className="text-xs uppercase text-muted">{msg.sender_role}</p>
+              <p>{msg.body}</p>
+            </li>
+          ))}
+        </ul>
+      )}
       <textarea
         value={body}
         onChange={(e) => setBody(e.target.value)}

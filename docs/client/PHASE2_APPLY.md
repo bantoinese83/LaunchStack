@@ -27,7 +27,7 @@ Seed `mystic_studio_settings` for the workspace (defaults exist in migration-les
 
 ## 3. Edge function (optional)
 
-Deploy `supabase/functions/mystic-door-timer-expire` on a cron to auto–no-show after door timer.
+Prefer Vercel Cron (`apps/web/vercel.json`) → `POST /api/mystic/cron/door-timer-expire` with `CRON_SECRET`. Optional Supabase edge proxy: `supabase/functions/mystic-door-timer-expire`.
 
 ## 4. Luke studio
 

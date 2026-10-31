@@ -12,6 +12,8 @@ import { requireAuthenticatedUser, routeErrorResponse } from '@/lib/api/route-au
 import { getStripeClient } from '@/lib/stripe';
 import { getMysticWorkspaceId } from '@/lib/mystic/config';
 import { resolveReferrerUserIdByCode, resolveReferrerUserIdByName } from '@/lib/mystic/referrals';
+import { loadStudioSurchargeRules } from '@/lib/mystic/studio-surcharge-rules';
+import { geocodeHouseCallAddress } from '@/lib/mystic/geocode';
 
 export async function POST(req: Request) {
   try {
@@ -46,12 +48,22 @@ export async function POST(req: Request) {
     }
 
     const service = getServiceById(parsed.data.serviceId);
+    let distanceMiles = parsed.data.distanceMiles;
+    try {
+      const geo = await geocodeHouseCallAddress(parsed.data.address);
+      distanceMiles = geo.distanceMiles;
+    } catch {
+      /* keep client-supplied miles if geocoder unavailable */
+    }
+
+    const surchargeRules = await loadStudioSurchargeRules(admin, parsed.data.workspaceId);
     const serverQuote = computeBookingQuote({
       serviceId: parsed.data.serviceId,
       scheduledAt: new Date(parsed.data.scheduledAt),
-      distanceMiles: parsed.data.distanceMiles,
+      distanceMiles,
       entitlement: parsed.data.entitlement,
       tipCents: parsed.data.tipCents ?? 0,
+      rules: surchargeRules,
     });
     const usesCredit = parsed.data.entitlement !== 'none' && parsed.data.serviceId === 'blowout';
     const expectedQuoteCents = usesCredit
@@ -67,7 +79,7 @@ export async function POST(req: Request) {
       startsAt: parsed.data.scheduledAt,
       durationMinutes: service.durationMinutes,
       address: parsed.data.address,
-      distanceMiles: parsed.data.distanceMiles,
+      distanceMiles,
       entitlement: parsed.data.entitlement,
       quoteCents: parsed.data.quoteCents,
       surchargeJson: parsed.data.surchargeJson,
@@ -105,6 +117,7 @@ export async function POST(req: Request) {
         referredUserId: auth.user.id,
         appointmentId: appointment.id,
       });
+      // Rewards run after payment confirms (webhook / mock confirm → onMysticAppointmentConfirmed).
     }
 
     const totalCents = expectedQuoteCents + (parsed.data.tipCents ?? 0);
@@ -123,6 +136,7 @@ export async function POST(req: Request) {
       await onMysticAppointmentConfirmed(admin, appointment.id);
       return NextResponse.json({
         url: `${appUrl}/book/success?appointment_id=${appointment.id}`,
+        appointmentId: appointment.id,
         mock: true,
       });
     }

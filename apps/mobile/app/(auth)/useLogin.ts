@@ -4,8 +4,10 @@ import { createSupabaseMobileClient } from '@template/api/mobile';
 import { firstZodIssueMessage, getErrorMessage, loginSchema } from '@template/validation';
 import { authorizedFetch } from '../../lib/auth/authorizedFetch';
 import { getMobileAuthRedirectUri } from '../../lib/auth/oauth';
+import { fetchStudioAccess } from '../../lib/studioApi';
 
-const POST_AUTH_ROUTE = '/(app)/(tabs)/book' as const;
+const CLIENT_HOME = '/(app)/(tabs)/book' as const;
+const STUDIO_HOME = '/(app)/(tabs)/studio' as const;
 
 export function useLogin() {
   const router = useRouter();
@@ -19,8 +21,13 @@ export function useLogin() {
   const [message, setMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const redirectAfterAuth = () => {
-    router.replace(POST_AUTH_ROUTE);
+  const redirectAfterAuth = async () => {
+    try {
+      const access = await fetchStudioAccess();
+      router.replace(access.allowed ? STUDIO_HOME : CLIENT_HOME);
+    } catch {
+      router.replace(CLIENT_HOME);
+    }
   };
 
   const verifyMfa = async () => {

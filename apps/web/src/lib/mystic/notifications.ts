@@ -45,10 +45,10 @@ export async function notifyBookingConfirmed(input: {
   return result;
 }
 
-export async function notifyEnRoute(input: { phone: string; etaMinutes: number }) {
+export async function notifyEnRoute(input: { phone: string; etaMinutes: number; mapUrl?: string }) {
   const smsResult = await sendSms({
     to: input.phone,
-    body: SMS_TEMPLATES.onTheWay(input.etaMinutes),
+    body: SMS_TEMPLATES.onTheWay(input.etaMinutes, input.mapUrl),
   });
   if (smsResult.status === 'error') {
     logNotifyWarning('sms', smsResult.message);
