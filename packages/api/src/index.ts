@@ -8,6 +8,12 @@ export { SubscriptionService } from './services/SubscriptionService';
 export { AuditService } from './services/AuditService';
 export { InviteService } from './services/InviteService';
 export { FeatureFlagService } from './services/FeatureFlagService';
+export { MysticAppointmentService } from './services/MysticAppointmentService';
+export { MysticMessageService } from './services/MysticMessageService';
+export { MysticReferralService } from './services/MysticReferralService';
+export { MysticBlastService } from './services/MysticBlastService';
+export { MysticStudioService } from './services/MysticStudioService';
+export { MysticCreditsService } from './services/MysticCreditsService';
 
 // CLIENT FACTORIES
 

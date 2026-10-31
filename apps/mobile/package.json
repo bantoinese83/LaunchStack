@@ -20,6 +20,7 @@
     "@template/analytics": "workspace:*",
     "@template/api": "workspace:*",
     "@template/mobile-ui": "workspace:*",
+    "@template/mystic": "workspace:*",
     "@template/types": "workspace:*",
     "@template/validation": "workspace:*",
     "expo": "~57.0.26",

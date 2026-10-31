@@ -3,20 +3,23 @@
 @source "../../../../packages/ui/src";
 
 @theme {
-  --color-shell: #141313;
-  --color-paper: #faf8f4;
+  --color-shell: #1a1f18;
+  --color-paper: #f7f4ed;
   --color-surface: #ffffff;
   --color-ink: #1f1e1e;
-  --color-muted: #666666;
-  --color-line: #ebebeb;
-  --color-accent: #da3750;
-  --color-accent-hover: #c42f48;
-  --color-accent-soft: #fff5f6;
-  --color-chalk: #2e4a62;
-  --color-chalk-soft: #eef3f7;
+  --color-muted: #5c5a55;
+  --color-line: #e5e0d6;
+  --color-accent: #7a8f6e;
+  --color-accent-hover: #65785b;
+  --color-accent-soft: #eef2eb;
+  --color-chalk: #8b7355;
+  --color-chalk-soft: #f3ede3;
+  --color-gold: #c4a962;
+  --color-gold-soft: #f8f3e6;
+  --color-plum: #6b4f5b;
   --color-danger: #b42318;
   --color-success: #027a48;
-  --color-background: #faf8f4;
+  --color-background: #f7f4ed;
   --color-foreground: #1f1e1e;
 
   --radius-sm: 6px;
@@ -40,8 +43,9 @@
   --ink: #1f1e1e;
   --muted: #666666;
   --line: #ebebeb;
-  --accent: #da3750;
-  --chalk: #2e4a62;
+  --accent: #7a8f6e;
+  --chalk: #8b7355;
+  --gold: #c4a962;
   --display-soft: 28;
   --display-wonk: 0;
 }

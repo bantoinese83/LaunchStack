@@ -53,7 +53,7 @@ export default function MobileSignupScreen() {
       <StatusBar style="light" />
       <NativeCard style={styles.card}>
         <NativeBrandMark />
-        <Text style={styles.kicker}>LaunchStack</Text>
+        <Text style={styles.kicker}>Mystic Hair Co.</Text>
         <Text style={styles.title}>Create an account</Text>
         {error ? <NativeAlert message={error} /> : null}
         <NativeInput label="Full name" value={fullName} onChangeText={setFullName} />

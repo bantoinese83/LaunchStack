@@ -48,7 +48,7 @@ export default function MobileForgotScreen() {
       <StatusBar style="light" />
       <NativeCard style={styles.card}>
         <NativeBrandMark />
-        <Text style={styles.kicker}>LaunchStack</Text>
+        <Text style={styles.kicker}>Mystic Hair Co.</Text>
         <Text style={styles.title}>Reset password</Text>
         {error ? <NativeAlert message={error} /> : null}
         {sent ? <Text style={styles.success}>Check your inbox for a reset link.</Text> : null}

@@ -1,22 +1,22 @@
 {
   "expo": {
-    "name": "LaunchStack Mobile",
-    "slug": "launchstack-mobile",
+    "name": "Mystic Hair Co.",
+    "slug": "mystic-hair-co",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "scheme": "launchstack",
-    "userInterfaceStyle": "dark",
+    "scheme": "mystichair",
+    "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.launchstack.app"
+      "bundleIdentifier": "co.mystichair.app"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#F3F4F1"
       },
-      "package": "com.launchstack.app"
+      "package": "co.mystichair.app"
     },
     "experiments": {
       "typedRoutes": true
@@ -28,6 +28,7 @@
       "url": "https://u.expo.dev/00000000-0000-0000-0000-000000000000"
     },
     "extra": {
+      "appUrl": "http://localhost:3000",
       "eas": {
         "projectId": "00000000-0000-0000-0000-000000000000"
       }

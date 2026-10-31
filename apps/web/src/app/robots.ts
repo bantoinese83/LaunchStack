@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: '/',
       disallow: ['/api/', '/dashboard/', '/onboarding/'],
     },
-    sitemap: 'https://launchstack.com/sitemap.xml',
+    sitemap: `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://mystichair.co'}/sitemap.xml`,
   };
 }

@@ -22,6 +22,8 @@
     "@template/email": "workspace:*",
     "@template/feature-flags": "workspace:*",
     "@template/kv": "workspace:*",
+    "@template/mystic": "workspace:*",
+    "@template/sms": "workspace:*",
     "@template/types": "workspace:*",
     "@template/ui": "workspace:*",
     "@template/validation": "workspace:*",

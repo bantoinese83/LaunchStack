@@ -26,7 +26,7 @@ export const NativeBrandMark: React.FC<NativeBrandMarkProps> = ({
       width={size}
       height={size}
       viewBox={LAUNCHSTACK_MARK_VIEWBOX}
-      accessibilityLabel="LaunchStack"
+      accessibilityLabel="Mystic Hair Co."
     >
       <G fill={color}>
         {launchstackMarkPaths.map((d, index) => (

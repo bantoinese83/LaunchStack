@@ -4,31 +4,45 @@ import { Tabs } from 'expo-router';
 import { monoLabel, theme } from '@template/mobile-ui';
 
 export default function TabsLayout() {
+  const isIos = Platform.OS === 'ios';
+
   return (
     <Tabs
       screenOptions={{
         headerStyle: { backgroundColor: theme.paper },
         headerTintColor: theme.ink,
-        headerTitleStyle: { fontWeight: '500', letterSpacing: -0.4, fontSize: 17 },
+        headerTitleStyle: {
+          fontWeight: isIos ? '600' : '500',
+          letterSpacing: isIos ? -0.4 : 0,
+          fontSize: 17,
+        },
         headerShadowVisible: false,
         tabBarStyle: {
-          backgroundColor: theme.shell,
-          borderTopColor: 'rgba(255,255,255,0.08)',
-          height: Platform.OS === 'ios' ? 84 : 62,
-          paddingBottom: Platform.OS === 'ios' ? 24 : 8,
+          backgroundColor: isIos ? theme.shell : theme.surface,
+          borderTopColor: isIos ? 'rgba(255,255,255,0.08)' : theme.line,
+          height: isIos ? 84 : 64,
+          paddingBottom: isIos ? 24 : 10,
           paddingTop: 8,
+          elevation: isIos ? 0 : 8,
         },
         tabBarLabelStyle: {
           ...monoLabel,
-          fontSize: 9,
-          letterSpacing: 1.2,
+          fontSize: isIos ? 9 : 10,
+          letterSpacing: isIos ? 1.2 : 0.5,
+          textTransform: isIos ? 'uppercase' : 'none',
         },
-        tabBarActiveTintColor: theme.accent,
-        tabBarInactiveTintColor: 'rgba(255,255,255,0.45)',
+        tabBarActiveTintColor: isIos ? theme.gold : theme.accent,
+        tabBarInactiveTintColor: isIos ? 'rgba(255,255,255,0.45)' : theme.muted,
       }}
     >
-      <Tabs.Screen name="home" options={{ title: 'Overview' }} />
-      <Tabs.Screen name="feedback" options={{ title: 'Feedback' }} />
+      <Tabs.Screen name="book" options={{ title: 'Book' }} />
+      <Tabs.Screen name="visits" options={{ title: 'Visits' }} />
+      <Tabs.Screen name="membership" options={{ title: 'Plans' }} />
+      <Tabs.Screen name="shop" options={{ title: 'Shop' }} />
+      <Tabs.Screen name="messages" options={{ title: 'Messages' }} />
+      <Tabs.Screen name="account" options={{ title: 'Account' }} />
+      <Tabs.Screen name="home" options={{ href: null }} />
+      <Tabs.Screen name="feedback" options={{ href: null }} />
     </Tabs>
   );
 }

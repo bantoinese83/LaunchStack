@@ -10,6 +10,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@template/mystic": "workspace:*",
     "@template/types": "workspace:*",
     "zod": "^4.6.5"
   },

@@ -130,3 +130,16 @@ VALUES
     true
 )
 ON CONFLICT (id) DO NOTHING;
+
+-- Mystic Hair Co. studio (Luke) — separate from LaunchStack demo workspace
+INSERT INTO public.workspaces (id, name, slug)
+VALUES ('33333333-3333-3333-3333-333333333333', 'Mystic Hair Co.', 'mystic-hair-co')
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO public.workspace_members (workspace_id, user_id, role)
+VALUES ('33333333-3333-3333-3333-333333333333', '00000000-0000-0000-0000-000000000002', 'workspace_owner')
+ON CONFLICT (workspace_id, user_id) DO NOTHING;
+
+INSERT INTO public.mystic_studio_settings (workspace_id)
+VALUES ('33333333-3333-3333-3333-333333333333')
+ON CONFLICT (workspace_id) DO NOTHING;

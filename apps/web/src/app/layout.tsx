@@ -21,17 +21,17 @@ const mono = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: 'LaunchStack — Enterprise monorepo starter',
-    template: '%s | LaunchStack',
+    default: 'Mystic Hair Co. — Luxury house-call hair',
+    template: '%s | Mystic Hair Co.',
   },
   description:
-    'Production-ready full-stack monorepo for B2B SaaS and native apps — Next.js, Expo, Supabase, Stripe.',
-  keywords: ['Monorepo', 'Next.js', 'Expo', 'Supabase', 'Stripe', 'React Native', 'TypeScript'],
+    'Mobile blowouts, cuts, and updos at your home in Chicago. Book memberships, packages, and appointments with Luke.',
+  keywords: ['Chicago blowout', 'mobile hairstylist Chicago', 'house call hair', 'Mystic Hair Co'],
   openGraph: {
-    title: 'LaunchStack — Full-Stack Monorepo Template',
-    description: 'Build enterprise B2B SaaS and cross-platform mobile apps with shared packages.',
-    url: 'https://launchstack.com',
-    siteName: 'LaunchStack',
+    title: 'Mystic Hair Co.',
+    description: 'Luxury hair, delivered to you — house calls in Chicago.',
+    url: 'https://mystichair.co',
+    siteName: 'Mystic Hair Co.',
     locale: 'en_US',
     type: 'website',
   },

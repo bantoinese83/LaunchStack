@@ -24,9 +24,9 @@ export default function MobileLoginScreen() {
       <StatusBar style="light" />
       <NativeCard style={styles.card}>
         <NativeBrandMark />
-        <Text style={styles.kicker}>LaunchStack</Text>
+        <Text style={styles.kicker}>Mystic Hair Co.</Text>
         <Text style={styles.title}>Welcome back</Text>
-        <Text style={styles.subtitle}>Sign in to your workspace</Text>
+        <Text style={styles.subtitle}>Book house calls & manage visits</Text>
 
         {error ? <NativeAlert message={error} /> : null}
 

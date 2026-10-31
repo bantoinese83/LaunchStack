@@ -22,7 +22,15 @@ export type AnalyticsEvent =
     }
   | { name: 'feedback_upvoted'; properties: { post_id: string } }
   | { name: 'page_error'; properties: { message: string } }
-  | { name: 'app_error'; properties: { message: string } };
+  | { name: 'app_error'; properties: { message: string } }
+  | { name: 'mystic_booking_started'; properties: { service_id: string } }
+  | {
+      name: 'mystic_booking_completed';
+      properties: { appointment_id: string; quote_cents: number };
+    }
+  | { name: 'mystic_stylist_en_route'; properties: { appointment_id: string; eta_minutes: number } }
+  | { name: 'mystic_blast_sent'; properties: { channel: string; recipient_count: number } }
+  | { name: 'mystic_referral_recorded'; properties: { workspace_id: string } };
 
 export class AnalyticsTracker {
   private apiKey: string;

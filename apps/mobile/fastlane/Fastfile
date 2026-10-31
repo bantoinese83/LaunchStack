@@ -1,0 +1,28 @@
+# Mystic Hair Co. — store release automation
+#
+# Expo projects typically use EAS Build + EAS Submit. Fastlane wraps those CLI
+# commands so CI (or you locally) can run one lane after env is configured.
+#
+# Prerequisites:
+#   npm i -g eas-cli
+#   eas login
+#   eas init  (sets projectId in app.json)
+#   EXPO_TOKEN in CI for non-interactive builds
+
+default_platform(:ios)
+
+platform :ios do
+  desc 'Build iOS via EAS and submit to TestFlight'
+  lane :beta do
+    sh('cd .. && eas build --platform ios --profile production --non-interactive')
+    sh('cd .. && eas submit --platform ios --latest --non-interactive')
+  end
+end
+
+platform :android do
+  desc 'Build Android via EAS and submit to Play internal track'
+  lane :beta do
+    sh('cd .. && eas build --platform android --profile production --non-interactive')
+    sh('cd .. && eas submit --platform android --latest --non-interactive')
+  end
+end

@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { FEEDBACK_CATEGORIES, FEEDBACK_STATUSES, INVITABLE_WORKSPACE_ROLES } from '@template/types';
 
 export { firstZodIssueMessage, slugifyWorkspaceName, getErrorMessage } from './helpers';
+export * from './mystic';
 
 // AUTH SCHEMAS
 export const loginSchema = z.object({
