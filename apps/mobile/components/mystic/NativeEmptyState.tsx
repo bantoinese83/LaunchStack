@@ -46,7 +46,7 @@ export function NativeEmptyState({
           accessible={false}
         />
       </View>
-      <View style={styles.hairline} />
+      {compact ? null : <View style={styles.hairline} />}
       <Text style={[styles.title, compact && styles.titleCompact]}>{heading}</Text>
       <Text style={[styles.body, compact && styles.bodyCompact]}>{body}</Text>
       {action ? <View style={styles.action}>{action}</View> : null}
@@ -82,8 +82,8 @@ const styles = StyleSheet.create({
     borderColor: theme.line,
   },
   artFrameCompact: {
-    maxWidth: 220,
-    aspectRatio: 1.1,
+    maxWidth: 168,
+    aspectRatio: 1.2,
   },
   artPlumAccent: {
     position: 'absolute',

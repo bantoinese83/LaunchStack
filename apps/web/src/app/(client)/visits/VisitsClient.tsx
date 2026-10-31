@@ -189,11 +189,7 @@ export function VisitsClient() {
 
   return (
     <MysticClientPage>
-      <MysticPageIntro
-        eyebrow="My visits"
-        title="Your house calls"
-        description="Live map when Luke is en route, inspo uploads, and messages."
-      />
+      <MysticPageIntro eyebrow="My visits" title="Your house calls" />
       <div className={mysticSegmentShell} role="tablist" aria-label="Visit timeframe">
         {(
           [
@@ -216,8 +212,6 @@ export function VisitsClient() {
       <div className={`${mysticToolbarRow} text-xs text-muted`}>
         {hasLiveTracking ? (
           <span className="text-chalk">Live updates while Luke is on the way</span>
-        ) : hasPending ? (
-          <span>Pending visits refresh automatically</span>
         ) : (
           <span />
         )}

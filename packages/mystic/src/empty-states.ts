@@ -1,3 +1,5 @@
+import { MYSTIC_SHOP_COMING_SOON } from './shop';
+
 /** Shared copy for illustrated empty states (web + mobile). */
 export const MYSTIC_EMPTY_VARIANTS = [
   'visits',
@@ -77,10 +79,9 @@ export const MYSTIC_EMPTY_CONTENT: Record<MysticEmptyVariant, MysticEmptyContent
   shop: {
     illustration: 'referrals.jpg',
     eyebrow: 'Shop',
-    title: 'Coming soon',
-    description:
-      'Luke is finishing the at-home product line. Book a house call and he can recommend what to grab when we launch.',
-    compactDescription: 'Product checkout opens soon.',
+    title: MYSTIC_SHOP_COMING_SOON.title,
+    description: MYSTIC_SHOP_COMING_SOON.description,
+    compactDescription: MYSTIC_SHOP_COMING_SOON.compactDescription,
   },
   generic: {
     illustration: 'visits.jpg',

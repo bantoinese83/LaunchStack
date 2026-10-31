@@ -1,11 +1,10 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { isVisitLiveTracking, studioWeekBoardRangeIso } from '@template/mystic';
+import { useCallback, useEffect, useState } from 'react';
+import { studioWeekBoardRangeIso } from '@template/mystic';
 import { getMysticWorkspaceId } from '@/lib/mystic/config';
 import { useDeferredEffect } from '@/lib/react/useDeferredEffect';
 import { StudioWorkspaceNotice } from '@/components/mystic/studio/StudioWorkspaceNotice';
-import { mysticCard } from '@/components/mystic/mystic-styles';
 import { StudioOpsPanel } from './StudioOpsPanel';
 import { StudioTodayMap } from './StudioTodayMap';
 
@@ -87,15 +86,6 @@ export function StudioTodayLoader() {
     return () => document.removeEventListener('visibilitychange', onVisible);
   }, [load]);
 
-  const stats = useMemo(() => {
-    const live = appointments.filter((a) => isVisitLiveTracking(a.status)).length;
-    const pending = appointments.filter(
-      (a) => a.status === 'pending' || a.status === 'confirmed'
-    ).length;
-    const done = appointments.filter((a) => a.status === 'completed').length;
-    return { total: appointments.length, live, pending, done };
-  }, [appointments]);
-
   if (!workspaceId) {
     return <StudioWorkspaceNotice />;
   }
@@ -103,24 +93,9 @@ export function StudioTodayLoader() {
   return (
     <div className="space-y-6">
       {error ? <p className="text-sm text-danger">{error}</p> : null}
-      <div className="grid gap-3 sm:grid-cols-4">
-        {[
-          { label: 'Today', value: stats.total },
-          { label: 'Live / en route', value: stats.live },
-          { label: 'Upcoming', value: stats.pending },
-          { label: 'Completed', value: stats.done },
-        ].map((s) => (
-          <div key={s.label} className={`${mysticCard} px-4 py-3`}>
-            <p className="text-2xl font-semibold tabular-nums text-ink">
-              {loading ? '—' : s.value}
-            </p>
-            <p className="text-xs text-muted">{s.label}</p>
-          </div>
-        ))}
-      </div>
       {lastFetchedAt ? (
         <p className="text-xs text-muted">
-          Board auto-refreshes · last sync{' '}
+          Auto-refreshes · last sync{' '}
           {new Date(lastFetchedAt).toLocaleTimeString(undefined, {
             hour: 'numeric',
             minute: '2-digit',

@@ -1,10 +1,13 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useRouter } from 'expo-router';
-import { studioWeekBoardRangeIso } from '@template/mystic';
-import { theme } from '@template/mobile-ui';
-import { NativeScreenHeader } from '../../../../components/mystic/NativeScreenHeader';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  buildStudioRoadBrief,
+  partitionStudioBoardAppointments,
+  studioWeekBoardRangeIso,
+} from '@template/mystic';
+import { monoLabel, theme } from '@template/mobile-ui';
 import { NativeStudioBoard } from '../../../../components/studio/NativeStudioBoard';
+import { NativeStudioRoadBrief } from '../../../../components/studio/NativeStudioRoadBrief';
 import { NativeStudioTodayMap } from '../../../../components/studio/NativeStudioTodayMap';
 import {
   type StudioAppointment,
@@ -15,7 +18,6 @@ import { MYSTIC_TAB_BAR_SCROLL_PADDING } from '../../../../components/navigation
 import { fetchStudioAppointments, fetchStudioClients } from '../../../../lib/studioApi';
 
 export default function StudioHomeScreen() {
-  const router = useRouter();
   const { workspaceId } = useStudioAccess();
   const [appointments, setAppointments] = useState<StudioAppointment[]>([]);
   const [clientsById, setClientsById] = useState<Record<string, StudioClientRow>>({});
@@ -72,6 +74,20 @@ export default function StudioHomeScreen() {
     void load();
   }, [load]);
 
+  const { today, upcoming } = useMemo(
+    () => partitionStudioBoardAppointments(appointments),
+    [appointments]
+  );
+  const hasBoard = today.length > 0 || upcoming.length > 0;
+
+  const brief = useMemo(() => {
+    const names: Record<string, string | null | undefined> = {};
+    for (const [id, row] of Object.entries(clientsById)) {
+      names[id] = row.full_name;
+    }
+    return buildStudioRoadBrief(appointments, names);
+  }, [appointments, clientsById]);
+
   return (
     <ScrollView
       style={styles.scroll}
@@ -84,13 +100,9 @@ export default function StudioHomeScreen() {
         />
       }
     >
-      <NativeScreenHeader
-        kicker="Studio · Today"
-        title="House calls"
-        lede="This week — en route, door timer, complete, or no-show."
-      />
+      <NativeStudioRoadBrief brief={brief} />
 
-      {workspaceId ? (
+      {workspaceId && hasBoard ? (
         <NativeStudioTodayMap
           workspaceId={workspaceId}
           appointments={appointments}
@@ -98,70 +110,27 @@ export default function StudioHomeScreen() {
         />
       ) : null}
 
-      <NativeStudioBoard
-        appointments={appointments}
-        clientsById={clientsById}
-        loading={loading}
-        error={error}
-        onRefresh={() => void load()}
-        onChanged={() => void load({ pull: true })}
-      />
-
-      <View style={styles.links}>
-        <LinkRow
-          label="Calendar & reschedule"
-          onPress={() => router.push('/(app)/(tabs)/studio/calendar')}
-        />
-        <LinkRow
-          label="Client list & messages"
-          onPress={() => router.push('/(app)/(tabs)/studio/clients')}
-        />
-        <LinkRow
-          label="Referrals by month"
-          onPress={() => router.push('/(app)/(tabs)/studio/referrals')}
-        />
-        <LinkRow
-          label="Blocked dates"
-          onPress={() => router.push('/(app)/(tabs)/studio/blocked')}
-        />
-        <LinkRow
-          label="Blasts (all segments)"
-          onPress={() => router.push('/(app)/(tabs)/studio/blasts')}
-        />
-        <LinkRow
-          label="Deposits & surcharges"
-          onPress={() => router.push('/(app)/(tabs)/studio/settings')}
-        />
-        <LinkRow
-          label="Analytics & winter buffer"
-          onPress={() => router.push('/(app)/(tabs)/studio/more')}
-        />
-      </View>
+      {hasBoard || loading || error ? (
+        <View style={styles.boardBlock}>
+          {hasBoard ? <Text style={styles.boardKicker}>Stops</Text> : null}
+          <NativeStudioBoard
+            appointments={appointments}
+            clientsById={clientsById}
+            loading={loading}
+            error={error}
+            onRefresh={() => void load()}
+            onChanged={() => void load({ pull: true })}
+            hideWhenEmpty
+          />
+        </View>
+      ) : null}
     </ScrollView>
-  );
-}
-
-function LinkRow({ label, onPress }: { label: string; onPress: () => void }) {
-  return (
-    <Pressable onPress={onPress} style={styles.link}>
-      <Text style={styles.linkText}>{label}</Text>
-      <Text style={styles.chevron}>→</Text>
-    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   scroll: { flex: 1, backgroundColor: theme.paper },
   container: { padding: 20, paddingBottom: MYSTIC_TAB_BAR_SCROLL_PADDING + 24 },
-  links: { marginTop: 28, gap: 0 },
-  link: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 16,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: theme.line,
-  },
-  linkText: { fontWeight: '500', color: theme.ink, flex: 1 },
-  chevron: { color: theme.muted, marginLeft: 8 },
+  boardBlock: { marginTop: 22, gap: 8 },
+  boardKicker: { ...monoLabel, color: theme.plum, fontSize: 10 },
 });

@@ -1,9 +1,7 @@
 import React from 'react';
 import { useRouter } from 'expo-router';
-import { MYSTIC_SHOP_COMING_SOON } from '@template/mystic';
 import { NativeButton } from '@template/mobile-ui';
 import { NativeEmptyState } from '../../../components/mystic/NativeEmptyState';
-import { NativeScreenHeader } from '../../../components/mystic/NativeScreenHeader';
 import { NativeScreenShell } from '../../../components/mystic/NativeScreenShell';
 
 export default function ShopTab() {
@@ -11,15 +9,8 @@ export default function ShopTab() {
 
   return (
     <NativeScreenShell>
-      <NativeScreenHeader
-        kicker="Shop"
-        title="At-home essentials"
-        lede="Pro styling products for house-call clients."
-      />
       <NativeEmptyState
         variant="shop"
-        title={MYSTIC_SHOP_COMING_SOON.title}
-        description={MYSTIC_SHOP_COMING_SOON.compactDescription}
         action={
           <>
             <NativeButton

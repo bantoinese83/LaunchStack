@@ -12,6 +12,7 @@ export * from './booking-flow';
 export * from './booking-limits';
 export * from './empty-states';
 export * from './studio-board';
+export * from './studio-brief';
 export * from './icons';
 export * from './dicebear';
 export * from './address';

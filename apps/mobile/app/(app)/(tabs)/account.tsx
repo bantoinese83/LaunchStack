@@ -140,11 +140,7 @@ export default function AccountTab() {
 
   return (
     <NativeScreenShell>
-      <NativeScreenHeader
-        kicker="Account"
-        title="Your profile"
-        lede="Phone and SMS preferences for en route, door timer, and booking updates."
-      />
+      <NativeScreenHeader kicker="Account" title="Your profile" />
 
       {referralCode ? (
         <View style={styles.referralBox}>
@@ -242,22 +238,13 @@ export default function AccountTab() {
         </Text>
       ) : null}
 
-      <View style={styles.links}>
-        <Pressable style={styles.linkRow} onPress={() => router.push('/(app)/(tabs)/visits')}>
-          <Text style={styles.link}>My visits</Text>
-        </Pressable>
-        <Pressable style={styles.linkRow} onPress={() => router.push('/(app)/(tabs)/book')}>
-          <Text style={styles.link}>Book again</Text>
-        </Pressable>
-        <Pressable style={styles.linkRow} onPress={() => router.push('/(app)/(tabs)/shop')}>
-          <Text style={styles.link}>Shop (coming soon)</Text>
-        </Pressable>
-        {!studioAccessLoading && isManager ? (
+      {!studioAccessLoading && isManager ? (
+        <View style={styles.links}>
           <Pressable style={styles.linkRow} onPress={() => router.push('/(app)/(tabs)/membership')}>
             <Text style={styles.link}>Membership & packages</Text>
           </Pressable>
-        ) : null}
-      </View>
+        </View>
+      ) : null}
 
       <NativeButton
         title="Sign out"

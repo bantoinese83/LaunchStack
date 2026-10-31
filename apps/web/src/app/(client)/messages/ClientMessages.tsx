@@ -109,11 +109,7 @@ export function ClientMessages() {
 
   return (
     <MysticClientPage>
-      <MysticPageIntro
-        eyebrow="Messages"
-        title="Message Luke"
-        description="House-call questions, inspo, or schedule tweaks — one thread with your stylist."
-      />
+      <MysticPageIntro eyebrow="Messages" title="Message Luke" />
       {loadError ? (
         <p className="text-sm text-plum">
           {loadError}

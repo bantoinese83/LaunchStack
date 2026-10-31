@@ -139,11 +139,7 @@ export default function MessagesTab() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={nativeScreenStyles.stack}>
-          <NativeScreenHeader
-            kicker="Messages"
-            title="Chat with Luke"
-            lede="House-call questions, inspo, or schedule tweaks — one thread with your stylist."
-          />
+          <NativeScreenHeader kicker="Messages" title="Chat with Luke" />
           {needsSignIn ? (
             <View style={styles.signInBlock}>
               <Text style={styles.loadError}>Sign in to chat with Luke.</Text>

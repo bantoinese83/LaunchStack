@@ -1,9 +1,7 @@
 import React, { useMemo } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { StyleSheet, Text, View } from 'react-native';
 import { partitionStudioBoardAppointments } from '@template/mystic';
-import { monoLabel, theme } from '@template/mobile-ui';
-import { NativeEmptyState } from '../mystic/NativeEmptyState';
+import { NativeButton, monoLabel, theme } from '@template/mobile-ui';
 import { NativeStudioOps, type StudioAppointment, type StudioClientRow } from './NativeStudioOps';
 
 type Props = {
@@ -13,6 +11,8 @@ type Props = {
   error: string | null;
   onRefresh: () => void;
   onChanged: () => void;
+  /** Parent owns empty-week copy (Road day brief) — render nothing when quiet. */
+  hideWhenEmpty?: boolean;
 };
 
 export function NativeStudioBoard({
@@ -22,8 +22,8 @@ export function NativeStudioBoard({
   error,
   onRefresh,
   onChanged,
+  hideWhenEmpty = false,
 }: Props) {
-  const router = useRouter();
   const { today, upcoming } = useMemo(
     () => partitionStudioBoardAppointments(appointments),
     [appointments]
@@ -38,33 +38,25 @@ export function NativeStudioBoard({
           Ensure the web app is running and EXPO_PUBLIC_APP_URL matches (simulator: localhost:3000;
           device: your Mac&apos;s LAN IP).
         </Text>
-        <Pressable onPress={onRefresh} style={styles.retry}>
-          <Text style={styles.retryText}>Try again</Text>
-        </Pressable>
+        <NativeButton title="Try again" onPress={onRefresh} style={styles.retryBtn} />
       </View>
     );
   }
 
   if (loading && appointments.length === 0) {
-    return <Text style={styles.loading}>Loading house calls…</Text>;
+    return (
+      <View style={styles.loadingCard} accessibilityLabel="Loading house calls">
+        <View style={styles.loadingBar} />
+        <View style={[styles.loadingBar, styles.loadingBarShort]} />
+        <Text style={styles.loading}>Loading this week’s house calls…</Text>
+      </View>
+    );
   }
 
   const hasAny = today.length > 0 || upcoming.length > 0;
-
   if (!hasAny) {
-    return (
-      <View>
-        <NativeEmptyState variant="studio-ops" compact />
-        <Pressable
-          onPress={() => router.push('/(app)/(tabs)/studio/calendar')}
-          style={styles.calendarLink}
-        >
-          <Text style={styles.calendarLinkText}>Open calendar (7-day view)</Text>
-        </Pressable>
-        <Pressable onPress={onRefresh} style={styles.retryOutline}>
-          <Text style={styles.retryOutlineText}>Refresh board</Text>
-        </Pressable>
-      </View>
+    return hideWhenEmpty ? null : (
+      <Text style={styles.mutedEmpty}>No stops this week — pull to refresh.</Text>
     );
   }
 
@@ -76,6 +68,7 @@ export function NativeStudioBoard({
           <NativeStudioOps appointments={today} clientsById={clientsById} onChanged={onChanged} />
         </View>
       ) : null}
+
       {upcoming.length > 0 ? (
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>Coming up · {upcoming.length}</Text>
@@ -95,7 +88,20 @@ const styles = StyleSheet.create({
   sections: { gap: 20 },
   section: { gap: 8 },
   sectionLabel: { ...monoLabel, color: theme.plum, fontSize: 11 },
-  loading: { color: theme.muted, fontSize: 14, marginBottom: 12 },
+  mutedEmpty: { fontSize: 13, color: theme.muted, paddingVertical: 8 },
+  loadingCard: {
+    paddingVertical: 20,
+    paddingHorizontal: 4,
+    gap: 10,
+  },
+  loadingBar: {
+    height: 10,
+    borderRadius: 6,
+    backgroundColor: theme.line,
+    opacity: 0.7,
+  },
+  loadingBarShort: { width: '55%' },
+  loading: { color: theme.muted, fontSize: 13, marginTop: 4 },
   banner: {
     paddingVertical: 16,
     borderBottomWidth: StyleSheet.hairlineWidth,
@@ -105,31 +111,5 @@ const styles = StyleSheet.create({
   errorTitle: { fontWeight: '600', color: theme.ink },
   errorBody: { fontSize: 14, color: theme.danger },
   errorHint: { fontSize: 12, color: theme.muted, lineHeight: 18 },
-  retry: {
-    marginTop: 8,
-    alignSelf: 'flex-start',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: theme.radii.lg,
-    backgroundColor: theme.accent,
-  },
-  retryText: { color: theme.paper, fontWeight: '600', fontSize: 14 },
-  retryOutline: {
-    marginTop: 12,
-    alignSelf: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-  },
-  retryOutlineText: { color: theme.accent, fontWeight: '600', fontSize: 14 },
-  calendarLink: {
-    marginTop: 12,
-    alignSelf: 'center',
-    paddingVertical: 8,
-  },
-  calendarLinkText: {
-    color: theme.accent,
-    fontWeight: '600',
-    fontSize: 14,
-    textDecorationLine: 'underline',
-  },
+  retryBtn: { marginTop: 8, alignSelf: 'stretch' },
 });

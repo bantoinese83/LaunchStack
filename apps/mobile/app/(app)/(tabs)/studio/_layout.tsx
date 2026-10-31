@@ -35,7 +35,7 @@ export default function StudioStackLayout() {
         headerShadowVisible: false,
       }}
     >
-      <Stack.Screen name="index" options={{ title: 'Studio' }} />
+      <Stack.Screen name="index" options={{ title: 'Studio', headerLargeTitle: false }} />
       <Stack.Screen name="calendar" options={{ title: 'Calendar' }} />
       <Stack.Screen name="clients" options={{ title: 'Clients' }} />
       <Stack.Screen name="thread/[clientUserId]" options={{ title: 'Message' }} />

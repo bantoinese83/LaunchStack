@@ -156,11 +156,7 @@ export default function VisitsTab() {
       }
     >
       <View style={nativeScreenStyles.stack}>
-        <NativeScreenHeader
-          kicker="Visits"
-          title="Your house calls"
-          lede="Live map when Luke is en route, inspo uploads, and messages."
-        />
+        <NativeScreenHeader kicker="Visits" title="Your house calls" />
         <View style={nativeSegmentStyles.shell}>
           {(
             [
@@ -186,8 +182,6 @@ export default function VisitsTab() {
         </View>
         {hasLiveTracking ? (
           <Text style={styles.liveHint}>Live updates while Luke is on the way</Text>
-        ) : hasPending ? (
-          <Text style={styles.liveHint}>Pending visits refresh automatically</Text>
         ) : null}
         {error ? <Text style={styles.error}>{error}</Text> : null}
         {uploadStatus ? <Text style={styles.feedback}>{uploadStatus}</Text> : null}

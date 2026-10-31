@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { formatUsd } from '@template/mystic';
 import { monoLabel, theme } from '@template/mobile-ui';
 import { useStudioAccess } from '../../../../hooks/useStudioAccess';
@@ -10,6 +11,7 @@ import {
 } from '../../../../lib/studioApi';
 
 export default function StudioMoreScreen() {
+  const router = useRouter();
   const { workspaceId } = useStudioAccess();
   const [analytics, setAnalytics] = useState<{
     bookingCount?: number;
@@ -58,7 +60,31 @@ export default function StudioMoreScreen() {
       </View>
 
       {message ? <Text style={styles.message}>{message}</Text> : null}
+
+      <Text style={styles.section}>Studio</Text>
+      <LinkRow label="Referrals" onPress={() => router.push('/(app)/(tabs)/studio/referrals')} />
+      <LinkRow
+        label="Deposits & surcharges"
+        onPress={() => router.push('/(app)/(tabs)/studio/settings')}
+      />
+      <LinkRow
+        label="Blocked travel days"
+        onPress={() => router.push('/(app)/(tabs)/studio/blocked')}
+      />
     </ScrollView>
+  );
+}
+
+function LinkRow({ label, onPress }: { label: string; onPress: () => void }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [styles.link, pressed && styles.linkPressed]}
+      accessibilityRole="button"
+    >
+      <Text style={styles.linkText}>{label}</Text>
+      <Text style={styles.chevron}>→</Text>
+    </Pressable>
   );
 }
 
@@ -87,4 +113,15 @@ const styles = StyleSheet.create({
   },
   rowLabel: { color: theme.ink, flex: 1, paddingRight: 12 },
   message: { marginTop: 16, color: theme.chalk },
+  link: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: theme.line,
+  },
+  linkPressed: { backgroundColor: theme.goldSoft },
+  linkText: { fontWeight: '500', color: theme.ink, flex: 1, fontSize: 15 },
+  chevron: { color: theme.muted, marginLeft: 8 },
 });
