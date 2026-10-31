@@ -5,29 +5,29 @@
       "type": "npm",
       "script": "dev",
       "problemMatcher": [],
-      "label": "LaunchStack: Dev All",
-      "detail": "Run Turbo dev server across web, mobile, and admin apps"
+      "label": "Mystic: Dev All",
+      "detail": "Turbo dev — web + mobile"
     },
     {
       "type": "npm",
       "script": "dev:web",
       "problemMatcher": [],
-      "label": "LaunchStack: Dev Web App Only",
-      "detail": "Run Next.js customer web app"
+      "label": "Mystic: Dev Web",
+      "detail": "Next.js web app"
     },
     {
       "type": "npm",
       "script": "dev:mobile",
       "problemMatcher": [],
-      "label": "LaunchStack: Dev Mobile App Only",
-      "detail": "Run Expo Router mobile bundler"
+      "label": "Mystic: Dev Mobile",
+      "detail": "Expo mobile app"
     },
     {
       "type": "npm",
       "script": "typecheck",
       "problemMatcher": ["$tsc"],
-      "label": "LaunchStack: Typecheck All",
-      "detail": "Run TypeScript typechecking across all workspaces"
+      "label": "Mystic: Typecheck",
+      "detail": "TypeScript across workspaces"
     }
   ]
 }

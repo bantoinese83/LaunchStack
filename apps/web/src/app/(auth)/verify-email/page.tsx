@@ -3,7 +3,9 @@
 import { Suspense, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Alert, BrandMark, Button, Card } from '@template/ui';
+import { Alert, Button } from '@template/ui';
+import { MysticAuthLogo } from '@/components/mystic/MysticAuthLogo';
+import { MysticAuthCard } from '@/components/mystic/MysticAuthCard';
 import { getErrorMessage } from '@template/validation';
 import { getAuthCallbackUrl, getBrowserSupabaseClient } from '@/lib/supabase/browser-session';
 
@@ -26,7 +28,7 @@ function VerifyEmailForm() {
       const { error: resendError } = await supabase.auth.resend({
         type: 'signup',
         email,
-        options: { emailRedirectTo: getAuthCallbackUrl('/onboarding') },
+        options: { emailRedirectTo: getAuthCallbackUrl('/account') },
       });
       if (resendError) throw resendError;
       setMessage('Verification email sent again.');
@@ -38,12 +40,10 @@ function VerifyEmailForm() {
   };
 
   return (
-    <Card className="w-full p-8">
+    <MysticAuthCard>
       <div className="mb-8 text-center">
-        <BrandMark className="mx-auto mb-4" />
-        <h1 className="font-display text-2xl font-medium tracking-tight text-ink">
-          Verify your email
-        </h1>
+        <MysticAuthLogo />
+        <h1 className="type-display-md text-ink">Verify your email</h1>
         <p className="mt-1.5 text-sm text-muted">
           {email
             ? `We sent a confirmation link to ${email}.`
@@ -73,7 +73,7 @@ function VerifyEmailForm() {
           Back to sign in
         </Link>
       </p>
-    </Card>
+    </MysticAuthCard>
   );
 }
 

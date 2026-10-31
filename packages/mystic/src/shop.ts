@@ -6,37 +6,40 @@ export type ShopProductId = (typeof SHOP_PRODUCT_IDS)[number];
 export type MysticShopProduct = {
   id: ShopProductId;
   name: string;
+  /** Short label under the title (e.g. category) */
+  category: string;
   description: string;
   priceCents: number;
   /** ISO date when Luke targets in-hand delivery */
   launchAt: string;
-  imagePath: string;
+  /** Optional hero photo — editorial SVG used in app when omitted */
+  imagePath?: string;
 };
 
 export const MYSTIC_SHOP_PRODUCTS: MysticShopProduct[] = [
   {
     id: 'volume_mist',
     name: 'Mystic Volume Mist',
+    category: 'Root lift',
     description: 'Lightweight root lift for blowout days — Luke’s house-call staple.',
     priceCents: 2800,
     launchAt: '2026-05-01',
-    imagePath: '/brand/mystic-hair-logo.jpeg',
   },
   {
     id: 'heat_shield',
     name: 'Heat Shield Spray',
+    category: 'Heat care',
     description: 'Protects through hot-tool styling on the go.',
     priceCents: 3200,
     launchAt: '2026-05-01',
-    imagePath: '/brand/mystic-hair-logo.jpeg',
   },
   {
     id: 'silk_serum',
     name: 'Silk Finish Serum',
+    category: 'Finish',
     description: 'Smooth, camera-ready shine without weight.',
-    priceCents: 3600,
+    priceCents: 3800,
     launchAt: '2026-05-15',
-    imagePath: '/brand/mystic-hair-logo.jpeg',
   },
 ];
 
@@ -49,4 +52,18 @@ export function getShopProductById(id: ShopProductId): MysticShopProduct {
 export function daysUntilLaunch(isoDate: string, now = new Date()): number {
   const launch = new Date(`${isoDate}T12:00:00`);
   return Math.max(0, Math.ceil((launch.getTime() - now.getTime()) / 86400000));
+}
+
+/** Human fulfillment line for shop cards (avoids awkward “~0 days”). */
+export function formatShopFulfillmentLabel(isoDate: string, now = new Date()): string {
+  const days = daysUntilLaunch(isoDate, now);
+  if (days > 45) {
+    const launch = new Date(`${isoDate}T12:00:00`);
+    const month = launch.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+    return `Pre-order · fulfills ${month}`;
+  }
+  if (days > 0) {
+    return `Pre-order · ships in ~${days} days`;
+  }
+  return 'Pre-order · ships in 5–7 business days';
 }

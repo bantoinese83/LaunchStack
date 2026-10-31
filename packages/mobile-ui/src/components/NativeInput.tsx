@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useId } from 'react';
 import { StyleSheet, Text, TextInput, TextInputProps, View } from 'react-native';
 import { monoLabel, theme } from '../theme';
 
@@ -7,17 +7,40 @@ export interface NativeInputProps extends TextInputProps {
   error?: string;
 }
 
-export const NativeInput: React.FC<NativeInputProps> = ({ label, error, style, ...props }) => (
-  <View style={styles.inputContainer}>
-    {label && <Text style={styles.label}>{label}</Text>}
-    <TextInput
-      style={[styles.input, error ? styles.inputError : null, style]}
-      placeholderTextColor={`${theme.muted}99`}
-      {...props}
-    />
-    {error && <Text style={styles.errorText}>{error}</Text>}
-  </View>
-);
+export const NativeInput: React.FC<NativeInputProps> = ({
+  label,
+  error,
+  style,
+  nativeID: nativeIDProp,
+  accessibilityLabel,
+  ...props
+}) => {
+  const autoId = useId().replace(/:/g, '');
+  const nativeID = nativeIDProp ?? autoId;
+
+  return (
+    <View style={styles.inputContainer}>
+      {label ? (
+        <Text nativeID={`${nativeID}-label`} style={styles.label}>
+          {label}
+        </Text>
+      ) : null}
+      <TextInput
+        nativeID={nativeID}
+        accessibilityLabel={accessibilityLabel ?? label}
+        accessibilityHint={error ?? props.placeholder}
+        style={[styles.input, error ? styles.inputError : null, style]}
+        placeholderTextColor={`${theme.muted}99`}
+        {...props}
+      />
+      {error ? (
+        <Text accessibilityRole="alert" style={styles.errorText}>
+          {error}
+        </Text>
+      ) : null}
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
   inputContainer: {

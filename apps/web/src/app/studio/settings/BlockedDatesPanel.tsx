@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { getMysticWorkspaceId } from '@/lib/mystic/config';
 
 type Blocked = { id: string; block_date: string; reason: string | null };
@@ -12,15 +12,15 @@ export function BlockedDatesPanel() {
   const [reason, setReason] = useState('');
   const [message, setMessage] = useState<string | null>(null);
 
-  function load() {
+  const load = useCallback(() => {
     void fetch(`/api/mystic/blocked-dates?workspaceId=${workspaceId}`)
       .then((r) => r.json())
       .then((data) => setRows(data.blockedDates ?? []));
-  }
+  }, [workspaceId]);
 
   useEffect(() => {
     load();
-  }, [workspaceId]);
+  }, [load]);
 
   async function add() {
     if (!date) return;

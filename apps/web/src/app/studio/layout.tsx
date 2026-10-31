@@ -3,18 +3,7 @@ import { redirect } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { getVerifiedServerUser } from '@/lib/supabase/server';
 import { userCanAccessMysticStudio } from '@/lib/mystic/studio-access';
-
-const links = [
-  { href: '/studio', label: 'Today' },
-  { href: '/studio/calendar', label: 'Calendar' },
-  { href: '/studio/clients', label: 'Clients' },
-  { href: '/studio/messages', label: 'Messages' },
-  { href: '/studio/blasts', label: 'Blasts' },
-  { href: '/studio/referrals', label: 'Referrals' },
-  { href: '/studio/analytics', label: 'Analytics' },
-  { href: '/studio/settings', label: 'Settings' },
-  { href: '/studio/instagram', label: 'Instagram' },
-] as const;
+import { StudioNav } from './components/StudioNav';
 
 export default async function StudioLayout({ children }: { children: ReactNode }) {
   const { userId } = await getVerifiedServerUser();
@@ -27,27 +16,25 @@ export default async function StudioLayout({ children }: { children: ReactNode }
   }
 
   return (
-    <div className="min-h-screen bg-paper text-ink">
-      <header className="border-b border-line bg-surface">
-        <div className="mx-auto flex max-w-6xl flex-col gap-4 px-6 py-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <p className="type-eyebrow text-accent">Mystic studio</p>
-            <h1 className="font-display text-xl font-medium">Luke&apos;s admin</h1>
+    <div className="min-h-screen mystic-studio-shell atlas-grain text-ink">
+      <header className="sticky top-0 z-40 border-b border-line/50 bg-paper/80 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-6xl flex-col gap-4 px-5 py-4 md:flex-row md:items-center md:justify-between md:px-8">
+          <div className="flex items-start justify-between gap-4 md:block">
+            <div>
+              <p className="type-eyebrow text-accent">Mystic studio</p>
+              <h1 className="font-display text-xl font-medium tracking-tight">Luke&apos;s admin</h1>
+            </div>
+            <Link
+              href="/"
+              className="rounded-full border border-line/80 px-3 py-1.5 text-xs text-muted transition hover:border-accent/35 md:hidden"
+            >
+              Site
+            </Link>
           </div>
-          <nav className="flex flex-wrap gap-2 text-sm">
-            {links.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="rounded-full border border-line px-3 py-1.5 hover:border-accent hover:bg-accent-soft"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
+          <StudioNav />
         </div>
       </header>
-      <div className="mx-auto max-w-6xl px-6 py-8">{children}</div>
+      <div className="mx-auto max-w-6xl px-5 py-8 md:px-8 md:py-10">{children}</div>
     </div>
   );
 }

@@ -6,7 +6,7 @@ import { authorizedFetch } from '@/lib/api/authorized-fetch';
 import { useI18n } from '@/lib/i18n/I18nProvider';
 import { requireBrowserSession } from '@/lib/supabase/browser-session';
 
-const STORAGE_KEY = 'launchstack-consent';
+const STORAGE_KEY = 'mystic-consent';
 const emptySubscribe = () => () => undefined;
 
 export function CookieConsent() {

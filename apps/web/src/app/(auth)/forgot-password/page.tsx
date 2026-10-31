@@ -2,7 +2,9 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Alert, BrandMark, Button, Card, Input } from '@template/ui';
+import { Alert, Button, Input } from '@template/ui';
+import { MysticAuthLogo } from '@/components/mystic/MysticAuthLogo';
+import { MysticAuthCard } from '@/components/mystic/MysticAuthCard';
 import { firstZodIssueMessage, forgotPasswordSchema, getErrorMessage } from '@template/validation';
 import { getAuthCallbackUrl, getBrowserSupabaseClient } from '@/lib/supabase/browser-session';
 
@@ -36,12 +38,10 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <Card className="w-full p-8">
+    <MysticAuthCard>
       <div className="mb-8 text-center">
-        <BrandMark className="mx-auto mb-4" />
-        <h1 className="font-display text-2xl font-medium tracking-tight text-ink">
-          Reset your password
-        </h1>
+        <MysticAuthLogo />
+        <h1 className="type-display-md text-ink">Reset your password</h1>
         <p className="mt-1.5 text-sm text-muted">
           We will email a recovery link if that account exists.
         </p>
@@ -78,6 +78,6 @@ export default function ForgotPasswordPage() {
           Back to sign in
         </Link>
       </p>
-    </Card>
+    </MysticAuthCard>
   );
 }

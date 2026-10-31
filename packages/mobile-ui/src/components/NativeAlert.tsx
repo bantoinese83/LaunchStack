@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { theme } from '../theme';
 
 export const NativeAlert: React.FC<{ message: string }> = ({ message }) => (
-  <View style={styles.alert}>
+  <View style={styles.alert} accessibilityRole="alert" accessibilityLiveRegion="assertive">
     <Text style={styles.alertText}>{message}</Text>
   </View>
 );

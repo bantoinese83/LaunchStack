@@ -9,7 +9,7 @@ import { getAuthCallbackUrl, getBrowserSupabaseClient } from '@/lib/supabase/bro
 export function useLogin() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get('next') || '/dashboard';
+  const next = searchParams.get('next') || '/account';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [mfaCode, setMfaCode] = useState('');
@@ -21,7 +21,7 @@ export function useLogin() {
   const [isLoading, setIsLoading] = useState(false);
 
   const redirectAfterAuth = () => {
-    const destination = next.startsWith('/') && !next.startsWith('//') ? next : '/dashboard';
+    const destination = next.startsWith('/') && !next.startsWith('//') ? next : '/account';
     router.push(destination as Parameters<typeof router.push>[0]);
     router.refresh();
   };

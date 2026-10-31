@@ -10,7 +10,7 @@ export default function PrivacyPage() {
           className="inline-flex items-center gap-2 text-sm text-muted transition-colors hover:text-ink"
         >
           <BrandMark size="sm" />
-          <span>Back to LaunchStack</span>
+          <span>Back to Mystic Hair Co.</span>
         </Link>
         <h1 className="mt-8 font-display text-3xl font-semibold tracking-tight text-ink">
           Privacy Policy
@@ -18,7 +18,7 @@ export default function PrivacyPage() {
         <p className="mt-2 text-sm text-muted">Last updated October 4, 2026</p>
         <Card className="mt-8 space-y-5 text-sm leading-relaxed text-muted">
           <p>
-            LaunchStack collects the minimum personal data needed to operate your account,
+            Mystic Hair Co. collects the minimum personal data needed to operate your account,
             workspace, billing, and support. We do not sell personal data.
           </p>
           <div>
@@ -68,8 +68,8 @@ export default function PrivacyPage() {
               5. Security
             </h2>
             <p className="mt-2">
-              Tenant data is isolated with PostgreSQL Row Level Security. Super-admin tools live on
-              a separate admin app and require a verified system role.
+              Tenant data is isolated with PostgreSQL Row Level Security. Platform super-admin tools
+              live in a separate admin app; Luke’s day-to-day ops use Studio on the main web app.
             </p>
           </div>
         </Card>

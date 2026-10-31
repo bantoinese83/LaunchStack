@@ -30,7 +30,6 @@ const nextConfig = {
     '@template/auth',
     '@template/email',
     '@template/analytics',
-    '@template/feature-flags',
     '@template/kv',
   ],
   output: 'standalone',
@@ -73,6 +72,6 @@ const nextConfig = {
 
 export default withSentryConfig(nextConfig, {
   silent: true,
-  org: 'launchstack',
+  org: 'mlabs-w2',
   project: 'web',
 });

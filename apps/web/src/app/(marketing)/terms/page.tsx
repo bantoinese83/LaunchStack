@@ -10,14 +10,14 @@ export default function TermsPage() {
           className="inline-flex items-center gap-2 text-sm text-muted transition-colors hover:text-ink"
         >
           <BrandMark size="sm" />
-          <span>Back to LaunchStack</span>
+          <span>Back to Mystic Hair Co.</span>
         </Link>
         <h1 className="mt-8 font-display text-3xl font-semibold tracking-tight text-ink">
           Terms of Service
         </h1>
         <p className="mt-2 text-sm text-muted">Last updated August 12, 2026</p>
         <Card className="mt-8 space-y-5 text-sm leading-relaxed text-muted">
-          <p>By using LaunchStack, you agree to these terms and conditions.</p>
+          <p>By using Mystic Hair Co., you agree to these terms and conditions.</p>
           <div>
             <h2 className="font-display text-lg font-semibold tracking-tight text-ink">
               1. Account Responsibility

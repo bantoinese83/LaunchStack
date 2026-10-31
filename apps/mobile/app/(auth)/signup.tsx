@@ -6,15 +6,16 @@ import { createSupabaseMobileClient } from '@template/api/mobile';
 import { firstZodIssueMessage, getErrorMessage, signupSchema } from '@template/validation';
 import {
   NativeAlert,
-  NativeBrandMark,
+  NativeAuthLogo,
   NativeButton,
   NativeCard,
   NativeInput,
   NativeScreen,
   displayTitle,
-  monoLabel,
   theme,
 } from '@template/mobile-ui';
+import { mysticLogoLight } from '../../constants/branding';
+import { OAuthButtons } from './components/OAuthButtons';
 
 export default function MobileSignupScreen() {
   const router = useRouter();
@@ -23,6 +24,8 @@ export default function MobileSignupScreen() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  const goToApp = () => router.replace('/(app)/(tabs)/book');
 
   const handleSignup = async () => {
     setError(null);
@@ -40,7 +43,7 @@ export default function MobileSignupScreen() {
         options: { data: { full_name: fullName } },
       });
       if (authError) throw new Error(authError.message);
-      router.replace('/(app)/(tabs)/home');
+      goToApp();
     } catch (err) {
       setError(getErrorMessage(err, 'Sign up failed'));
     } finally {
@@ -52,10 +55,14 @@ export default function MobileSignupScreen() {
     <NativeScreen background="shell" style={styles.container}>
       <StatusBar style="light" />
       <NativeCard style={styles.card}>
-        <NativeBrandMark />
-        <Text style={styles.kicker}>Mystic Hair Co.</Text>
+        <NativeAuthLogo source={mysticLogoLight} />
         <Text style={styles.title}>Create an account</Text>
+        <Text style={styles.subtitle}>Book house-call blowouts and manage your plan</Text>
+
         {error ? <NativeAlert message={error} /> : null}
+
+        <OAuthButtons onSuccess={goToApp} />
+
         <NativeInput label="Full name" value={fullName} onChangeText={setFullName} />
         <NativeInput
           label="Email Address"
@@ -77,7 +84,13 @@ export default function MobileSignupScreen() {
 const styles = StyleSheet.create({
   container: { justifyContent: 'center', padding: 20 },
   card: { width: '100%', alignItems: 'center' },
-  kicker: { ...monoLabel, color: theme.accent, marginTop: 16 },
-  title: { ...displayTitle, color: theme.ink, marginVertical: 8 },
+  title: { ...displayTitle, color: theme.ink, marginTop: 4 },
+  subtitle: {
+    color: theme.muted,
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 12,
+    marginTop: 6,
+  },
   link: { color: theme.accent, marginTop: 16, fontSize: 13 },
 });

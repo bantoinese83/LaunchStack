@@ -151,7 +151,7 @@ export async function POST(req: Request) {
           quantity: 1,
         },
       ],
-      success_url: `${appUrl}/book/success?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${appUrl}/book/success?session_id={CHECKOUT_SESSION_ID}&appointment_id=${appointment.id}`,
       cancel_url: `${appUrl}/book?canceled=1`,
       payment_intent_data: {
         capture_method: 'manual',

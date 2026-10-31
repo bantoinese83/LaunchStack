@@ -57,7 +57,7 @@ export async function requireBrowserSessionOrRedirect(
   return auth;
 }
 
-export function getAuthCallbackUrl(next = '/dashboard') {
+export function getAuthCallbackUrl(next = '/account') {
   const origin =
     typeof window !== 'undefined' ? window.location.origin : process.env.NEXT_PUBLIC_APP_URL || '';
   const url = new URL('/auth/callback', origin);

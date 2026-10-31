@@ -1,5 +1,9 @@
-import { BrevoEmailService } from '@template/email';
+import { BrevoEmailService, escapeHtml } from '@template/email';
 import { sendSms, SMS_TEMPLATES } from '@template/sms';
+
+function logNotifyWarning(channel: string, detail: string) {
+  console.warn(`[mystic.notify] ${channel}: ${detail}`);
+}
 
 export async function notifyBookingConfirmed(input: {
   email: string;
@@ -8,26 +12,59 @@ export async function notifyBookingConfirmed(input: {
   /** @deprecated use transactionalSms for house-call updates */
   smsOptIn?: boolean;
   transactionalSms?: boolean;
-}) {
+}): Promise<{ email: 'sent' | 'skipped' | 'failed'; sms: 'sent' | 'skipped' | 'failed' }> {
+  const result: { email: 'sent' | 'skipped' | 'failed'; sms: 'sent' | 'skipped' | 'failed' } = {
+    email: 'skipped',
+    sms: 'skipped',
+  };
   const email = new BrevoEmailService();
-  await email.sendEmail({
+  const emailResult = await email.sendEmail({
     to: input.email,
     subject: 'Mystic Hair Co. — booking confirmed',
-    htmlContent: `<p>You're confirmed for <strong>${input.whenLabel}</strong>.</p><p>House-call policies are in the app.</p>`,
+    htmlContent: `<p>You're confirmed for <strong>${escapeHtml(input.whenLabel)}</strong>.</p><p>House-call policies are in the app.</p>`,
   });
+  if (emailResult.success) result.email = 'sent';
+  else {
+    result.email = 'failed';
+    logNotifyWarning('email', emailResult.error ?? 'send failed');
+  }
 
   const sendText = input.phone && (input.transactionalSms === true || input.smsOptIn === true);
   if (sendText && input.phone) {
-    await sendSms({ to: input.phone, body: SMS_TEMPLATES.bookingConfirmed(input.whenLabel) });
+    const smsResult = await sendSms({
+      to: input.phone,
+      body: SMS_TEMPLATES.bookingConfirmed(input.whenLabel),
+    });
+    if (smsResult.status === 'sent') result.sms = 'sent';
+    else if (smsResult.status === 'error') {
+      result.sms = 'failed';
+      logNotifyWarning('sms', smsResult.message);
+    }
   }
+
+  return result;
 }
 
 export async function notifyEnRoute(input: { phone: string; etaMinutes: number }) {
-  await sendSms({ to: input.phone, body: SMS_TEMPLATES.onTheWay(input.etaMinutes) });
+  const smsResult = await sendSms({
+    to: input.phone,
+    body: SMS_TEMPLATES.onTheWay(input.etaMinutes),
+  });
+  if (smsResult.status === 'error') {
+    logNotifyWarning('sms', smsResult.message);
+  }
+  return smsResult;
 }
 
 export async function notifyDoorTimer(input: { phone: string; minutes: number }) {
-  await sendSms({ to: input.phone, body: SMS_TEMPLATES.doorTimer(input.minutes) });
+  const smsResult = await sendSms({
+    to: input.phone,
+    body: SMS_TEMPLATES.doorTimer(input.minutes),
+  });
+  if (smsResult.status === 'error') {
+    logNotifyWarning('sms', smsResult.message);
+  }
+  return smsResult;
 }
 
 export async function sendMarketingBlast(input: {
@@ -37,24 +74,36 @@ export async function sendMarketingBlast(input: {
   body: string;
 }) {
   const emailService = new BrevoEmailService();
-  let sent = 0;
+  const outcomes = await Promise.all(
+    input.recipients.flatMap((recipient) => {
+      const jobs: Promise<boolean>[] = [];
+      if ((input.channel === 'email' || input.channel === 'both') && recipient.email) {
+        jobs.push(
+          emailService
+            .sendEmail({
+              to: recipient.email,
+              toName: recipient.name,
+              subject: input.subject ?? 'Mystic Hair Co.',
+              htmlContent: `<p>${input.body.replace(/\n/g, '<br/>')}</p>`,
+              textContent: input.body,
+            })
+            .then((result) => {
+              if (!result.success) logNotifyWarning('email', result.error ?? 'blast failed');
+              return result.success;
+            })
+        );
+      }
+      if ((input.channel === 'sms' || input.channel === 'both') && recipient.phone) {
+        jobs.push(
+          sendSms({ to: recipient.phone, body: input.body }).then((result) => {
+            if (result.status === 'error') logNotifyWarning('sms', result.message);
+            return result.status === 'sent';
+          })
+        );
+      }
+      return jobs;
+    })
+  );
 
-  for (const recipient of input.recipients) {
-    if ((input.channel === 'email' || input.channel === 'both') && recipient.email) {
-      const result = await emailService.sendEmail({
-        to: recipient.email,
-        toName: recipient.name,
-        subject: input.subject ?? 'Mystic Hair Co.',
-        htmlContent: `<p>${input.body.replace(/\n/g, '<br/>')}</p>`,
-        textContent: input.body,
-      });
-      if (result.success) sent += 1;
-    }
-    if ((input.channel === 'sms' || input.channel === 'both') && recipient.phone) {
-      const result = await sendSms({ to: recipient.phone, body: input.body });
-      if (result.status === 'sent') sent += 1;
-    }
-  }
-
-  return sent;
+  return outcomes.filter(Boolean).length;
 }

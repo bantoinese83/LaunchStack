@@ -14,6 +14,7 @@
     "@template/config": "workspace:*"
   },
   "devDependencies": {
+    "@types/node": "^20.12.12",
     "@template/config": "workspace:*",
     "typescript": "^5.9.3"
   }

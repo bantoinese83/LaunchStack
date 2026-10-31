@@ -1,5 +1,14 @@
 import { z } from 'zod';
-import { APPOINTMENT_TAG_IDS, PACKAGE_IDS, MEMBERSHIP_IDS, SERVICE_IDS } from '@template/mystic';
+import {
+  APPOINTMENT_TAG_IDS,
+  MYSTIC_DEFAULT_WORKSPACE_ID,
+  PACKAGE_IDS,
+  MEMBERSHIP_IDS,
+  SERVICE_IDS,
+} from '@template/mystic';
+
+/** Seed Mystic workspace id is not RFC-4122; accept it plus standard UUIDs. */
+export const mysticWorkspaceIdSchema = z.union([z.literal(MYSTIC_DEFAULT_WORKSPACE_ID), z.uuid()]);
 
 export const mysticAddressSchema = z.object({
   line1: z.string().min(3, 'Street address is required'),
@@ -45,7 +54,7 @@ export type MysticBookingDraftInput = z.infer<typeof mysticBookingDraftSchema>;
 export type MysticClientProfileInput = z.infer<typeof mysticClientProfileSchema>;
 
 export const mysticCreateAppointmentSchema = z.object({
-  workspaceId: z.uuid(),
+  workspaceId: mysticWorkspaceIdSchema,
   serviceId: z.enum(SERVICE_IDS),
   scheduledAt: z.iso.datetime(),
   address: mysticAddressSchema,
@@ -66,7 +75,7 @@ export const mysticCreateAppointmentSchema = z.object({
 });
 
 export const mysticBlockedDateSchema = z.object({
-  workspaceId: z.uuid(),
+  workspaceId: mysticWorkspaceIdSchema,
   blockDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   reason: z.string().max(200).optional(),
 });
@@ -81,7 +90,7 @@ export const mysticInspoUploadSchema = z.object({
 });
 
 export const mysticSendMessageSchema = z.object({
-  workspaceId: z.uuid(),
+  workspaceId: mysticWorkspaceIdSchema,
   /** Omit when the authenticated client is messaging Luke. */
   clientUserId: z.uuid().optional(),
   body: z.string().min(1).max(4000),
@@ -89,7 +98,7 @@ export const mysticSendMessageSchema = z.object({
 });
 
 export const mysticBlastSchema = z.object({
-  workspaceId: z.uuid(),
+  workspaceId: mysticWorkspaceIdSchema,
   channel: z.enum(['email', 'sms', 'both']),
   segment: z.enum(['all', 'members', 'packages', 'upcoming_week']),
   subject: z.string().max(120).optional(),
@@ -106,7 +115,7 @@ export const mysticDoorTimerSchema = z.object({
 });
 
 export const mysticStudioSettingsSchema = z.object({
-  workspaceId: z.uuid(),
+  workspaceId: mysticWorkspaceIdSchema,
   winterBufferEnabled: z.boolean().optional(),
   eveningSurchargeCents: z.number().int().optional(),
   includedMiles: z.number().optional(),

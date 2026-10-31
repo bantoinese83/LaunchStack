@@ -3,7 +3,9 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Alert, BrandMark, Button, Card, Input } from '@template/ui';
+import { Alert, Button, Input } from '@template/ui';
+import { MysticAuthLogo } from '@/components/mystic/MysticAuthLogo';
+import { MysticAuthCard } from '@/components/mystic/MysticAuthCard';
 import { getErrorMessage } from '@template/validation';
 import { getBrowserSupabaseClient } from '@/lib/supabase/browser-session';
 
@@ -25,7 +27,7 @@ export default function ResetPasswordPage() {
       const supabase = getBrowserSupabaseClient();
       const { error: updateError } = await supabase.auth.updateUser({ password });
       if (updateError) throw updateError;
-      router.push('/dashboard');
+      router.push('/account');
       router.refresh();
     } catch (err) {
       setError(getErrorMessage(err, 'Could not update password'));
@@ -35,12 +37,10 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <Card className="w-full p-8">
+    <MysticAuthCard>
       <div className="mb-8 text-center">
-        <BrandMark className="mx-auto mb-4" />
-        <h1 className="font-display text-2xl font-medium tracking-tight text-ink">
-          Choose a new password
-        </h1>
+        <MysticAuthLogo />
+        <h1 className="type-display-md text-ink">Choose a new password</h1>
       </div>
 
       {error && (
@@ -69,6 +69,6 @@ export default function ResetPasswordPage() {
           Back to sign in
         </Link>
       </p>
-    </Card>
+    </MysticAuthCard>
   );
 }

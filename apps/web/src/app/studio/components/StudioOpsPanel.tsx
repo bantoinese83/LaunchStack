@@ -2,6 +2,12 @@
 
 import { useState } from 'react';
 import { getMysticWorkspaceId } from '@/lib/mystic/config';
+import {
+  mysticCard,
+  mysticInput,
+  mysticStudioBtn,
+  mysticStudioBtnOutline,
+} from '@/components/mystic/mystic-styles';
 
 type Appointment = {
   id: string;
@@ -81,7 +87,7 @@ export function StudioOpsPanel({ initialAppointments }: { initialAppointments: A
 
   if (!workspaceId) {
     return (
-      <p className="rounded-xl border border-line bg-surface p-4 text-sm text-muted">
+      <p className={`${mysticCard} p-4 text-sm text-muted`}>
         Set <code className="text-ink">NEXT_PUBLIC_MYSTIC_WORKSPACE_ID</code> after your Mystic
         workspace is created in Supabase.
       </p>
@@ -97,10 +103,10 @@ export function StudioOpsPanel({ initialAppointments }: { initialAppointments: A
           type="number"
           value={eta}
           onChange={(e) => setEta(Number(e.target.value))}
-          className="w-20 rounded-lg border border-line px-2 py-1"
+          className={`${mysticInput} w-20 px-2 py-1`}
         />
       </label>
-      <ul className="divide-y divide-line rounded-2xl border border-line bg-surface">
+      <ul className={`${mysticCard} divide-y divide-line/80 overflow-hidden p-0`}>
         {appointments.length === 0 ? (
           <li className="p-6 text-sm text-muted">
             No appointments loaded — apply migrations & book.
@@ -118,24 +124,20 @@ export function StudioOpsPanel({ initialAppointments }: { initialAppointments: A
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => enRoute(row.id)}
-                  className="rounded-full bg-accent px-4 py-2 text-xs font-medium text-white"
-                >
+                <button type="button" onClick={() => enRoute(row.id)} className={mysticStudioBtn}>
                   On the way
                 </button>
                 <button
                   type="button"
                   onClick={() => doorTimer(row.id)}
-                  className="rounded-full border border-line px-4 py-2 text-xs"
+                  className={mysticStudioBtnOutline}
                 >
                   Door timer
                 </button>
                 <button
                   type="button"
                   onClick={() => completeVisit(row.id)}
-                  className="rounded-full border border-line px-4 py-2 text-xs"
+                  className={mysticStudioBtnOutline}
                 >
                   Complete
                 </button>

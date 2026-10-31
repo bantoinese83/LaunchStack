@@ -6,15 +6,15 @@ import { createSupabaseMobileClient } from '@template/api/mobile';
 import { firstZodIssueMessage, forgotPasswordSchema, getErrorMessage } from '@template/validation';
 import {
   NativeAlert,
-  NativeBrandMark,
+  NativeAuthLogo,
   NativeButton,
   NativeCard,
   NativeInput,
   NativeScreen,
   displayTitle,
-  monoLabel,
   theme,
 } from '@template/mobile-ui';
+import { mysticLogoLight } from '../../constants/branding';
 
 export default function MobileForgotScreen() {
   const router = useRouter();
@@ -47,8 +47,7 @@ export default function MobileForgotScreen() {
     <NativeScreen background="shell" style={styles.container}>
       <StatusBar style="light" />
       <NativeCard style={styles.card}>
-        <NativeBrandMark />
-        <Text style={styles.kicker}>Mystic Hair Co.</Text>
+        <NativeAuthLogo source={mysticLogoLight} />
         <Text style={styles.title}>Reset password</Text>
         {error ? <NativeAlert message={error} /> : null}
         {sent ? <Text style={styles.success}>Check your inbox for a reset link.</Text> : null}
@@ -71,7 +70,6 @@ export default function MobileForgotScreen() {
 const styles = StyleSheet.create({
   container: { justifyContent: 'center', padding: 20 },
   card: { width: '100%', alignItems: 'center' },
-  kicker: { ...monoLabel, color: theme.accent, marginTop: 16 },
   title: { ...displayTitle, color: theme.ink, marginVertical: 8 },
   success: { color: theme.muted, marginBottom: 12 },
   link: { color: theme.accent, marginTop: 16, fontSize: 13 },

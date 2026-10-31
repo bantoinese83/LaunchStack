@@ -6,22 +6,34 @@ After code is built, you only need **environment variables**, **Stripe products*
 
 ```bash
 cp .env.example apps/web/.env.local
+# Optional Pixabay assets (set PIXABAY_API_KEY in .env.local):
+# pnpm fetch:marketing-images && pnpm fetch:auth-video
 cp .env.example apps/mobile/.env
 ```
 
 Fill every value marked **required** below.
 
+**Helpers**
+
+```bash
+node scripts/write-local-env.mjs          # Supabase anon + service role
+node scripts/stripe-create-mystic-prices.mjs # after STRIPE_SECRET_KEY is set
+node scripts/push-env-to-vercel.mjs       # sync apps/web/.env.local → Vercel
+```
+
 ## 2. Required variables
 
-| Variable                          | Where                                                   |
-| --------------------------------- | ------------------------------------------------------- |
-| `NEXT_PUBLIC_SUPABASE_URL`        | `https://ipwubzqckiubrvrouzye.supabase.co`              |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY`   | Supabase → Settings → API                               |
-| `SUPABASE_SERVICE_ROLE_KEY`       | Same (server only — never commit)                       |
-| `EXPO_PUBLIC_SUPABASE_*`          | Same anon URL/key for mobile                            |
-| `NEXT_PUBLIC_APP_URL`             | Production URL (e.g. Vercel) or `http://localhost:3000` |
-| `EXPO_PUBLIC_APP_URL`             | Must match web URL mobile calls for API                 |
-| `NEXT_PUBLIC_MYSTIC_WORKSPACE_ID` | `33333333-3333-3333-3333-333333333333` (seed)           |
+| Variable                          | Where                                                                    |
+| --------------------------------- | ------------------------------------------------------------------------ |
+| `NEXT_PUBLIC_SUPABASE_URL`        | `https://ipwubzqckiubrvrouzye.supabase.co`                               |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY`   | Supabase → Settings → API                                                |
+| `SUPABASE_SERVICE_ROLE_KEY`       | Same (server only — never commit)                                        |
+| `EXPO_PUBLIC_SUPABASE_*`          | Same anon URL/key for mobile                                             |
+| `NEXT_PUBLIC_APP_URL`             | Production URL (e.g. Vercel) or `http://localhost:3000`                  |
+| `EXPO_PUBLIC_APP_URL`             | Must match web URL mobile calls for API                                  |
+| Google sign-in                    | [GOOGLE-OAUTH.md](./GOOGLE-OAUTH.md) — Google Cloud + Supabase Providers |
+| Supabase redirect URLs            | `{APP_URL}/auth/callback`, `mystichair://auth/callback`                  |
+| `NEXT_PUBLIC_MYSTIC_WORKSPACE_ID` | `33333333-3333-3333-3333-333333333333` (seed)                            |
 
 ## 3. Stripe
 
@@ -78,7 +90,24 @@ Link repo, set all `NEXT_PUBLIC_*` and server env vars, deploy `apps/web`.
 
 ## 9. Verify
 
+````bash
+pnpm verify:integrations   # Supabase, Upstash, Brevo, Twilio, Stripe, PostHog
+pnpm typecheck && pnpm test && pnpm build   # web + mobile + admin + packages
+
+Per app:
+
+```bash
+pnpm build:web      # Next.js → apps/web/.next
+pnpm build:mobile   # expo export ios + android → apps/mobile/dist
+pnpm build:admin    # Next.js super-admin → apps/admin/.next (port 3002)
+````
+
+```
+
+Manual smoke:
+
 - `/` marketing → `/book` → checkout (Stripe test card)
 - `/studio` ops (Complete / No-show)
 - Mobile: Book tab → checkout in browser
 - `/shop` pre-order (optional)
+```

@@ -2,7 +2,7 @@
 
 export const MYSTIC_BRAND = {
   name: 'Mystic Hair Co.',
-  tagline: 'Luxury hair, delivered to you.',
+  tagline: 'House-call hair in Chicago.',
   instagram: '@mystichair21',
   serviceAreaLabel: 'Chicago · River North & nearby',
 } as const;

@@ -3,7 +3,6 @@ import { MysticAppointmentService, createSupabaseAdminClient } from '@template/a
 import { firstZodIssueMessage, mysticCreateAppointmentSchema } from '@template/validation';
 import { requireAuthenticatedUser, routeErrorResponse } from '@/lib/api/route-auth';
 import { requireStudioManager } from '@/lib/mystic/studio-auth';
-import { notifyBookingConfirmed } from '@/lib/mystic/notifications';
 import { getServiceById } from '@template/mystic';
 import { z } from 'zod';
 
@@ -69,26 +68,7 @@ export async function POST(req: Request) {
       clientNotes: parsed.data.clientNotes,
     });
 
-    const { data: profile } = await admin
-      .from('profiles')
-      .select('email')
-      .eq('id', auth.user.id)
-      .single();
-
-    const { data: clientProfile } = await admin
-      .from('mystic_client_profiles')
-      .select('phone, marketing_sms')
-      .eq('user_id', auth.user.id)
-      .maybeSingle();
-
-    if (profile?.email) {
-      await notifyBookingConfirmed({
-        email: profile.email,
-        phone: clientProfile?.phone ?? undefined,
-        whenLabel: new Date(parsed.data.scheduledAt).toLocaleString(),
-        smsOptIn: clientProfile?.marketing_sms ?? false,
-      });
-    }
+    // Confirmation email/SMS runs in onMysticAppointmentConfirmed after payment or credit booking.
 
     return NextResponse.json({ appointment }, { status: 201 });
   } catch (err) {

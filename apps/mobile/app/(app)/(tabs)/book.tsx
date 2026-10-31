@@ -1,17 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import {
-  Linking,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MYSTIC_SERVICES, computeBookingQuote, formatUsd, type ServiceId } from '@template/mystic';
 import { NativeButton, displayTitle, monoLabel, theme } from '@template/mobile-ui';
+import { NativeBookDateStrip } from '../../../components/book/NativeBookDateStrip';
 import { fetchAvailability, startBookingCheckout } from '../../../lib/mysticApi';
 
 function tomorrowIsoDate() {
@@ -110,6 +102,9 @@ export default function BookTab() {
           <Pressable
             key={service.id}
             onPress={() => setServiceId(service.id)}
+            accessibilityRole="button"
+            accessibilityState={{ selected }}
+            accessibilityLabel={`${service.name}, ${service.durationMinutes} minutes, ${formatUsd(service.priceCents)}`}
             style={[styles.card, selected && styles.cardSelected]}
           >
             <Text style={styles.cardTitle}>{service.name}</Text>
@@ -120,13 +115,8 @@ export default function BookTab() {
         );
       })}
 
-      <Text style={styles.sectionLabel}>Date (YYYY-MM-DD)</Text>
-      <TextInput
-        value={date}
-        onChangeText={setDate}
-        style={styles.input}
-        placeholder="2026-11-01"
-      />
+      <Text style={styles.sectionLabel}>Date</Text>
+      <NativeBookDateStrip value={date} onChange={setDate} />
 
       <Text style={styles.sectionLabel}>Time</Text>
       <View style={styles.slotRow}>
@@ -137,6 +127,9 @@ export default function BookTab() {
             <Pressable
               key={time}
               onPress={() => setSlot(time)}
+              accessibilityRole="button"
+              accessibilityState={{ selected: slot === time }}
+              accessibilityLabel={`Time ${time}`}
               style={[styles.slot, slot === time && styles.slotActive]}
             >
               <Text style={[styles.slotText, slot === time && styles.slotTextActive]}>{time}</Text>
@@ -151,6 +144,9 @@ export default function BookTab() {
           <Pressable
             key={plan}
             onPress={() => setEntitlement(plan)}
+            accessibilityRole="button"
+            accessibilityState={{ selected: entitlement === plan }}
+            accessibilityLabel={`Booking type ${plan}`}
             style={[styles.slot, entitlement === plan && styles.slotActive]}
           >
             <Text style={[styles.slotText, entitlement === plan && styles.slotTextActive]}>
@@ -162,6 +158,7 @@ export default function BookTab() {
 
       <TextInput
         placeholder="Street address"
+        accessibilityLabel="Street address"
         value={address.line1}
         onChangeText={(line1) => setAddress({ ...address, line1 })}
         style={styles.input}
@@ -176,13 +173,18 @@ export default function BookTab() {
         </View>
       ) : null}
 
+      <Text style={styles.secure}>Secure booking · encrypted checkout via Stripe</Text>
       <NativeButton
-        title={submitting ? 'Booking…' : 'Continue to checkout'}
+        title="Continue to checkout"
         onPress={checkout}
-        disabled={submitting}
+        isLoading={submitting}
         style={styles.cta}
       />
-      {status ? <Text style={styles.muted}>{status}</Text> : null}
+      {status ? (
+        <Text style={styles.muted} accessibilityRole="alert" accessibilityLiveRegion="polite">
+          {status}
+        </Text>
+      ) : null}
     </ScrollView>
   );
 }
@@ -194,24 +196,34 @@ const styles = StyleSheet.create({
   heading: { ...displayTitle, color: theme.ink, marginBottom: 16 },
   card: {
     backgroundColor: theme.surface,
-    padding: 16,
-    marginBottom: 10,
-    borderRadius: theme.radii.lg,
+    padding: 18,
+    marginBottom: 12,
+    borderRadius: theme.radii.xl,
     borderWidth: 1,
     borderColor: theme.line,
+    shadowColor: '#1F1E1E',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.06,
+    shadowRadius: 16,
+    elevation: 2,
   },
-  cardSelected: { borderColor: theme.accent, backgroundColor: theme.accentSoft },
+  cardSelected: {
+    borderColor: theme.accent,
+    backgroundColor: theme.accentSoft,
+    shadowOpacity: 0.1,
+  },
   cardTitle: { fontSize: 17, fontWeight: '600', color: theme.ink },
   cardMeta: { marginTop: 4, color: theme.muted, fontSize: 13 },
   sectionLabel: { ...monoLabel, color: theme.muted, marginTop: 12, marginBottom: 8 },
   input: {
     borderWidth: 1,
     borderColor: theme.line,
-    borderRadius: theme.radii.md,
-    padding: 12,
-    marginBottom: 8,
+    borderRadius: theme.radii.lg,
+    padding: 14,
+    marginBottom: 10,
     color: theme.ink,
     backgroundColor: theme.surface,
+    fontSize: 16,
   },
   slotRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
   slot: {
@@ -225,12 +237,21 @@ const styles = StyleSheet.create({
   slotText: { color: theme.ink, fontSize: 12 },
   slotTextActive: { color: theme.paper },
   summary: {
-    marginTop: 12,
-    padding: 16,
+    marginTop: 16,
+    padding: 18,
     backgroundColor: theme.goldSoft,
-    borderRadius: theme.radii.lg,
+    borderRadius: theme.radii.xl,
+    borderWidth: 1,
+    borderColor: 'rgba(196, 169, 98, 0.25)',
   },
-  summaryTotal: { fontSize: 22, fontWeight: '600' },
+  summaryTotal: { fontSize: 26, fontWeight: '600', letterSpacing: -0.5, color: theme.ink },
   muted: { color: theme.muted, fontSize: 13, marginTop: 8 },
-  cta: { marginTop: 16 },
+  secure: {
+    marginTop: 14,
+    textAlign: 'center',
+    fontSize: 11,
+    lineHeight: 16,
+    color: theme.muted,
+  },
+  cta: { marginTop: 10 },
 });

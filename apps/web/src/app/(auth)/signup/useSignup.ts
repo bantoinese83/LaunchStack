@@ -47,17 +47,6 @@ export function useSignup() {
           },
           data.user.id
         );
-        const accessToken = data.session?.access_token;
-        if (accessToken) {
-          void fetch('/api/email/welcome', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${accessToken}`,
-            },
-            body: JSON.stringify({ to: email, name: fullName }),
-          }).catch((err) => console.error('[welcome email]', err));
-        }
       }
 
       if (!data.session) {
@@ -65,7 +54,7 @@ export function useSignup() {
         return;
       }
 
-      router.push('/onboarding');
+      router.push('/account');
     } catch (err: unknown) {
       setError(getErrorMessage(err, 'Failed to sign up'));
     } finally {

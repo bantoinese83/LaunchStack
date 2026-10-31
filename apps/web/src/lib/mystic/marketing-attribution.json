@@ -1,0 +1,70 @@
+{
+  "source": "Pixabay",
+  "license": "Pixabay Content License",
+  "fetchedAt": "2026-10-31T16:04:24.575Z",
+  "items": [
+    {
+      "id": 4556486,
+      "pageURL": "https://pixabay.com/photos/hair-hairdresser-maintenance-design-4556486/",
+      "user": "Engin_Akyurt",
+      "tags": "hair, hairdresser, maintenance, design, woman, cutting, fashion, portrait, girl, beauty, living room, people, beautiful, scan, style, human, model, make-up, hairdresser, hairdresser, hairdresser, hairdresser, hairdresser",
+      "role": "hero"
+    },
+    {
+      "id": 4043096,
+      "pageURL": "https://pixabay.com/photos/beauty-salon-barber-nail-salon-4043096/",
+      "user": "Sunriseforever",
+      "tags": "beauty salon, barber, nail salon, salon, hairdresser, fashion, beauty, interior, 3 d, interior design, interior designer, beauty salon, beauty salon, beauty salon, nail salon, salon, salon, salon, salon, salon",
+      "role": "hero_bg"
+    },
+    {
+      "id": 1007891,
+      "pageURL": "https://pixabay.com/photos/haircut-barber-salon-barber-shop-1007891/",
+      "user": "Renee_Olmsted_Photography",
+      "tags": "haircut, barber, salon, barber shop, hair, scissors, grooming, comb, hairstyling, hair cut, black and white, man, hairstylist, hairdresser, cut, hairstyle, gray shopping, gray shop, gray hair, haircut, barber, barber, barber, barber, salon, barber shop, hair cut, hair cut, hair cut, hair cut, hair cut",
+      "role": "stylist"
+    },
+    {
+      "id": 4743984,
+      "pageURL": "https://pixabay.com/photos/lipstick-cosmetics-woman-makeup-4743984/",
+      "user": "lubovlisitsa",
+      "tags": "lipstick, cosmetics, woman, makeup, hands, beauty, application, closeup, cosmetics, cosmetics, makeup, makeup, makeup, makeup, makeup",
+      "role": "auth_poster"
+    },
+    {
+      "id": 586185,
+      "pageURL": "https://pixabay.com/photos/woman-hair-drying-girl-female-586185/",
+      "user": "RyanMcGuire",
+      "tags": "woman, hair drying, girl, female, model, adult, brunette, hair, studio photography, hairstyling, hair dryer, morning, robe, blow dryer, long hair, hair, hair, hair, hair, hair",
+      "role": "icon_blowout"
+    },
+    {
+      "id": 4564265,
+      "pageURL": "https://pixabay.com/photos/hairdresser-woman-russian-gorgeous-4564265/",
+      "user": "andrey_braynsk",
+      "tags": "hairdresser, woman, russian, gorgeous, person, portrait, femininity, beautiful, beauty salon, salon, female, master, hairstyle, dye, a haircut, boy, hairdresser, hairdresser, hairdresser, hairdresser, hairdresser, beauty salon, beauty salon, beauty salon, salon",
+      "role": "icon_haircut"
+    },
+    {
+      "id": 4040677,
+      "pageURL": "https://pixabay.com/photos/bride-hair-wedding-woman-white-4040677/",
+      "user": "YodahAnn",
+      "tags": "bride, hair, flower background, wedding, flower wallpaper, beautiful flowers, nature, woman, white, flowers",
+      "role": "icon_updo"
+    },
+    {
+      "id": 5562970,
+      "pageURL": "https://pixabay.com/photos/black-model-girl-black-model-5562970/",
+      "user": "yogendras31",
+      "tags": "black, model, girl, black model, black woman, woman, portrait, style, wardrobe, fashion, face, dark, young woman, modeling, pose, posing, accessories, accessorize, storiesofdiversity, black woman, black woman, black woman, black woman, black woman, woman, woman, woman, face",
+      "role": "icon_dry_style"
+    },
+    {
+      "id": 21147,
+      "pageURL": "https://pixabay.com/videos/id-21147/",
+      "user": "Art-Production",
+      "tags": "model, beauty, beauty salon, care, client, fashion, women, hair, hairstyle, lady, makeup, salon, style, stylist, beautiful, woman, eyelash, eyelashes, haircut",
+      "role": "auth_video"
+    }
+  ]
+}

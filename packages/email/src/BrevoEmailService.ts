@@ -9,8 +9,8 @@ export class BrevoEmailService {
 
   constructor(apiKey?: string, senderEmail?: string, senderName?: string) {
     this.apiKey = apiKey || process.env.BREVO_API_KEY || '';
-    this.senderEmail = senderEmail || process.env.SENDER_EMAIL || 'noreply@launchstack.com';
-    this.senderName = senderName || process.env.SENDER_NAME || 'LaunchStack';
+    this.senderEmail = senderEmail || process.env.SENDER_EMAIL || 'hello@mystichair.co';
+    this.senderName = senderName || process.env.SENDER_NAME || 'Mystic Hair Co.';
   }
 
   async sendEmail(
@@ -65,12 +65,12 @@ export class BrevoEmailService {
     return this.sendEmail({
       to,
       toName: name,
-      subject: 'Welcome to LaunchStack!',
+      subject: 'Welcome to Mystic Hair Co.',
       htmlContent: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
-          <h2 style="color: #0f172a;">Welcome aboard, ${safeName}! 👋</h2>
-          <p style="color: #475569; line-height: 1.6;">Thank you for joining LaunchStack. You can now create your workspace, invite team members, and get started.</p>
-          <a href="https://launchstack.com/dashboard" style="display: inline-block; background: #2563eb; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; margin-top: 16px;">Go to Dashboard</a>
+          <h2 style="color: #0f172a;">Welcome, ${safeName}!</h2>
+          <p style="color: #475569; line-height: 1.6;">Your account is ready. Book a house-call blowout or explore memberships anytime.</p>
+          <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://mystic-hair-co.vercel.app'}/book" style="display: inline-block; background: #7A8F6E; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; margin-top: 16px;">Book now</a>
         </div>
       `,
     });
@@ -87,7 +87,7 @@ export class BrevoEmailService {
     const safeUrl = escapeHtml(inviteUrl);
     return this.sendEmail({
       to,
-      subject: `You've been invited to join ${workspaceName} on LaunchStack`,
+      subject: `You've been invited to join ${workspaceName} on Mystic Hair Co.`,
       htmlContent: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
           <h2 style="color: #0f172a;">Workspace Invitation</h2>

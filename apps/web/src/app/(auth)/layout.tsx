@@ -1,9 +1,19 @@
-import React from 'react';
+import type { ReactNode } from 'react';
+import { MysticAuthBackgroundVideo } from '@/components/mystic/MysticAuthBackgroundVideo';
+import { MysticAuthMediaCredit } from '@/components/mystic/MysticAuthMediaCredit';
 
-export default function AuthLayout({ children }: { children: React.ReactNode }) {
+export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-shell p-4 sm:p-6">
-      <div className="w-full max-w-md animate-[rise_400ms_ease-out]">{children}</div>
+    <div className="relative isolate flex min-h-screen items-center justify-center overflow-hidden p-4 sm:p-6">
+      <MysticAuthBackgroundVideo />
+      <main
+        id="main-content"
+        tabIndex={-1}
+        className="relative z-10 w-full max-w-md outline-none animate-[rise_400ms_ease-out]"
+      >
+        {children}
+      </main>
+      <MysticAuthMediaCredit />
     </div>
   );
 }

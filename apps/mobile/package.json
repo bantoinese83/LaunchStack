@@ -12,18 +12,18 @@
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "build": "FORCE_COLOR= NO_COLOR= expo export --platform ios --output-dir dist --clear"
+    "build": "FORCE_COLOR= NO_COLOR= expo export --platform ios --platform android --output-dir dist --clear"
   },
   "dependencies": {
     "@expo/metro-runtime": "~57.0.16",
     "@supabase/supabase-js": "^2.116.0",
-    "@template/analytics": "workspace:*",
     "@template/api": "workspace:*",
     "@template/mobile-ui": "workspace:*",
     "@template/mystic": "workspace:*",
     "@template/types": "workspace:*",
     "@template/validation": "workspace:*",
     "expo": "~57.0.26",
+    "expo-auth-session": "~57.0.16",
     "expo-constants": "~57.0.20",
     "expo-device": "~57.0.2",
     "expo-linking": "~57.0.11",
@@ -33,6 +33,7 @@
     "expo-splash-screen": "~57.0.9",
     "expo-status-bar": "~57.0.1",
     "expo-updates": "~57.0.24",
+    "expo-web-browser": "~57.0.3",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-native": "0.86.3",

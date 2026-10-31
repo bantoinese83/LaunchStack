@@ -1,0 +1,9 @@
+docs/client/**
+.git
+**/.next
+**/node_modules
+**/.turbo
+**/*.pt
+**/*.wav
+**/*.m4a
+.launchstack-clone

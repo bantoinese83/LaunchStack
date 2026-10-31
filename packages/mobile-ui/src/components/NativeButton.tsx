@@ -39,6 +39,9 @@ export const NativeButton: React.FC<NativeButtonProps> = ({
       style={buttonStyle}
       disabled={disabled || isLoading}
       activeOpacity={0.88}
+      accessibilityRole="button"
+      accessibilityState={{ disabled: Boolean(disabled || isLoading), busy: Boolean(isLoading) }}
+      accessibilityLabel={isLoading ? `${title}, loading` : title}
       {...props}
     >
       {isLoading ? (

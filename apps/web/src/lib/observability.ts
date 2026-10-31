@@ -1,7 +1,7 @@
 export async function withRouteSpan<T>(name: string, fn: () => Promise<T>): Promise<T> {
   try {
     const otel = await import('@opentelemetry/api');
-    const tracer = otel.trace.getTracer('launchstack-web');
+    const tracer = otel.trace.getTracer('mystic-hair-web');
     return tracer.startActiveSpan(name, async (span) => {
       try {
         return await fn();

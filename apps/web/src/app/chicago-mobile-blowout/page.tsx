@@ -6,7 +6,7 @@ import { MysticFooter } from '@/app/(marketing)/components/mystic/MysticFooter';
 export const metadata: Metadata = {
   title: 'Chicago mobile blowout — house call hairstylist',
   description:
-    'Book a luxury blowout at your home in Chicago and River North. Mystic Hair Co. — memberships, packages, and house-call styling with Luke.',
+    'Book a blowout at your home in Chicago and River North. Mystic Hair Co. — memberships, packages, and house-call styling with Luke.',
   keywords: [
     'Chicago mobile blowout',
     'house call hairstylist Chicago',
@@ -24,7 +24,7 @@ export default function ChicagoSeoPage() {
           Chicago mobile blowout — at your door
         </h1>
         <p className="mt-4 text-lg text-muted leading-relaxed">
-          Mystic Hair Co. brings salon-quality blowouts, cuts, and updos to your home in Chicago,
+          Mystic Hair Co. brings professional blowouts, cuts, and updos to your home in Chicago,
           River North, and nearby neighborhoods. Book online, pick a time that works, and Luke
           arrives with pro tools — no Drybar lines, no Uber to a salon.
         </p>

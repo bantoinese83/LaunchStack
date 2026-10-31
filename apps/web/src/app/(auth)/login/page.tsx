@@ -2,7 +2,9 @@
 
 import React, { Suspense } from 'react';
 import Link from 'next/link';
-import { Alert, BrandMark, Button, Card, Input } from '@template/ui';
+import { Alert, Button, Input } from '@template/ui';
+import { MysticAuthCard } from '@/components/mystic/MysticAuthCard';
+import { MysticAuthLogo } from '@/components/mystic/MysticAuthLogo';
 import { useI18n } from '@/lib/i18n/I18nProvider';
 import { useLogin } from './useLogin';
 import { OAuthButtons } from '../components/OAuthButtons';
@@ -31,13 +33,11 @@ function LoginForm() {
   } = useLogin();
 
   return (
-    <Card className="w-full p-8">
+    <MysticAuthCard>
       <div className="mb-8 text-center">
-        <BrandMark className="mx-auto mb-4" />
-        <h1 className="font-display text-2xl font-medium tracking-tight text-ink">
-          {t.welcomeBack}
-        </h1>
-        <p className="mt-1.5 text-sm text-muted">Sign in to your LaunchStack workspace</p>
+        <MysticAuthLogo />
+        <h1 className="type-display-md text-ink">{t.welcomeBack}</h1>
+        <p className="type-caption mt-2">Sign in to book and manage your visits</p>
       </div>
 
       {error && (
@@ -111,7 +111,7 @@ function LoginForm() {
       {needsMfa ? (
         <button
           type="button"
-          className="mt-4 w-full text-center text-xs font-semibold text-accent"
+          className="mystic-link-focus mt-4 w-full rounded-lg py-2 text-center text-xs font-semibold text-accent"
           onClick={() => setUseRecovery((value) => !value)}
         >
           {useRecovery ? 'Use authenticator code' : t.recoveryCode}
@@ -122,6 +122,7 @@ function LoginForm() {
             type="button"
             variant="outline"
             className="w-full"
+            isLoading={isLoading}
             onClick={() => void sendMagicLink()}
           >
             {t.magicLink}
@@ -130,6 +131,7 @@ function LoginForm() {
             type="button"
             variant="ghost"
             className="w-full"
+            isLoading={isLoading}
             onClick={() => void signInWithPasskey()}
           >
             {t.passkey}
@@ -138,18 +140,24 @@ function LoginForm() {
       )}
 
       <p className="mt-6 text-center text-xs text-muted">
-        <Link href="/forgot-password" className="font-semibold text-accent hover:text-accent-hover">
+        <Link
+          href="/forgot-password"
+          className="mystic-link-focus font-semibold text-accent hover:text-accent-hover"
+        >
           {t.forgotPassword}
         </Link>
       </p>
 
       <p className="mt-3 text-center text-xs text-muted">
         Don&apos;t have an account?{' '}
-        <Link href="/signup" className="font-semibold text-accent hover:text-accent-hover">
+        <Link
+          href="/signup"
+          className="mystic-link-focus font-semibold text-accent hover:text-accent-hover"
+        >
           {t.createAccount}
         </Link>
       </p>
-    </Card>
+    </MysticAuthCard>
   );
 }
 

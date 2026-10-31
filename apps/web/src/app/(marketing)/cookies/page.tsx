@@ -10,7 +10,7 @@ export default function CookiePolicyPage() {
           className="inline-flex items-center gap-2 text-sm text-muted transition-colors hover:text-ink"
         >
           <BrandMark size="sm" />
-          <span>Back to LaunchStack</span>
+          <span>Back to Mystic Hair Co.</span>
         </Link>
         <h1 className="mt-8 font-display text-3xl font-semibold tracking-tight text-ink">
           Cookie policy
@@ -18,7 +18,7 @@ export default function CookiePolicyPage() {
         <p className="mt-2 text-sm text-muted">Last updated October 4, 2026</p>
         <Card className="mt-8 space-y-5 text-sm leading-relaxed text-muted">
           <p>
-            LaunchStack stores a <code>launchstack-consent</code> cookie after you choose analytics
+            Mystic Hair Co. stores a <code>mystic-consent</code> cookie after you choose analytics
             and marketing preferences. Session cookies from Supabase Auth are required to keep you
             signed in.
           </p>

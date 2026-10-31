@@ -43,7 +43,7 @@ export class AnalyticsTracker {
 
   track<T extends AnalyticsEvent>(event: T, userId?: string): void {
     if (typeof window !== 'undefined') {
-      const raw = window.localStorage.getItem('launchstack-consent');
+      const raw = window.localStorage.getItem('mystic-consent');
       if (raw) {
         try {
           const consent = JSON.parse(raw) as { analytics?: boolean };

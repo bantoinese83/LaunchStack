@@ -51,16 +51,23 @@ export const envSchema = z.object({
   // Required: Stripe redirect URLs are built from this value, never from the
   // client-controlled Origin header (IDOR / open-redirect prevention).
   NEXT_PUBLIC_APP_URL: httpUrl('NEXT_PUBLIC_APP_URL must be a valid http(s) URL'),
-  // Optional: the dashboard sidebar falls back to http://localhost:3002.
-  NEXT_PUBLIC_ADMIN_URL: optional(httpUrl('NEXT_PUBLIC_ADMIN_URL must be a valid http(s) URL')),
-
   // ── Stripe ──────────────────────────────────────────────────────────────────
   // Request-time secrets: the checkout/webhook routes fail closed (5xx) when
   // they are unset, and unsigned fixtures are only tolerated outside production.
   STRIPE_SECRET_KEY: optional(z.string()),
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: optional(z.string()),
-  NEXT_PUBLIC_STRIPE_PRICE_ID: optional(z.string()),
   STRIPE_WEBHOOK_SECRET: optional(z.string()),
+  STRIPE_PRICE_MYSTIC_GLOW: optional(z.string()),
+  STRIPE_PRICE_MYSTIC_LUXE: optional(z.string()),
+  STRIPE_PRICE_MYSTIC_PACK_4: optional(z.string()),
+  STRIPE_PRICE_MYSTIC_PACK_6: optional(z.string()),
+  STRIPE_PRICE_MYSTIC_PACK_10: optional(z.string()),
+  NEXT_PUBLIC_MYSTIC_WORKSPACE_ID: optional(z.string()),
+
+  // ── Twilio (SMS) ────────────────────────────────────────────────────────────
+  TWILIO_ACCOUNT_SID: optional(z.string()),
+  TWILIO_AUTH_TOKEN: optional(z.string()),
+  TWILIO_MESSAGING_FROM: optional(z.string()),
 
   // ── Email (Brevo) ───────────────────────────────────────────────────────────
   BREVO_API_KEY: optional(z.string()),

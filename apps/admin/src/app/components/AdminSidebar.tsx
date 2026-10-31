@@ -29,12 +29,12 @@ export function AdminSidebar({ activeTab, setActiveTab }: AdminSidebarProps) {
     <aside className="flex w-[17.5rem] shrink-0 flex-col justify-between border-r border-white/8 bg-shell p-5 text-paper">
       <div>
         <div className="mb-8 flex items-center gap-3 px-1">
-          <BrandMark size="sm" tone="paper" />
+          <BrandMark size="sm" framed className="text-paper" />
           <div>
             <span className="block font-display text-lg font-medium leading-none tracking-tight">
               Admin
             </span>
-            <span className="type-eyebrow mt-1.5 block text-accent">LaunchStack</span>
+            <span className="type-eyebrow mt-1.5 block text-accent">Mystic Hair Co.</span>
           </div>
         </div>
 

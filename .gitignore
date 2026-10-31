@@ -28,6 +28,9 @@ storybook-static/
 *.aab
 *.ipa
 
+# Google OAuth client downloads (never commit)
+client_secret*.json
+
 # Environment files
 .env
 .env.local
@@ -54,3 +57,5 @@ docs/client/*.pt
 !.vscode/launch.json
 !.vscode/extensions.json
 .idea
+.vercel
+.env*.local

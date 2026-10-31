@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
-const PROTECTED_PREFIXES = ['/dashboard', '/feedback', '/onboarding', '/settings'];
+const PROTECTED_PREFIXES = ['/studio', '/account', '/visits', '/messages'];
 
 const CACHE_HEADERS = ['cache-control', 'expires', 'pragma'] as const;
 

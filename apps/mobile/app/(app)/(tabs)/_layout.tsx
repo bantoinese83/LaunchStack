@@ -27,7 +27,7 @@ export default function TabsLayout() {
         },
         tabBarLabelStyle: {
           ...monoLabel,
-          fontSize: isIos ? 9 : 10,
+          fontSize: isIos ? 10 : 11,
           letterSpacing: isIos ? 1.2 : 0.5,
           textTransform: isIos ? 'uppercase' : 'none',
         },
@@ -41,8 +41,6 @@ export default function TabsLayout() {
       <Tabs.Screen name="shop" options={{ title: 'Shop' }} />
       <Tabs.Screen name="messages" options={{ title: 'Messages' }} />
       <Tabs.Screen name="account" options={{ title: 'Account' }} />
-      <Tabs.Screen name="home" options={{ href: null }} />
-      <Tabs.Screen name="feedback" options={{ href: null }} />
     </Tabs>
   );
 }

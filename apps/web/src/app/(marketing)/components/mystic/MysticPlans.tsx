@@ -1,66 +1,25 @@
-import Link from 'next/link';
-import { MYSTIC_MEMBERSHIPS, MYSTIC_PACKAGES, formatUsd } from '@template/mystic';
+import { MYSTIC_MEMBERSHIPS, MYSTIC_PACKAGES } from '@template/mystic';
+import { MysticMagneticLink } from '@/components/mystic/MysticMagneticButton';
+import { MysticPricingTiers } from '@/components/mystic/MysticPricingTiers';
+import { mysticEyebrow, mysticSectionTitle } from './mystic-styles';
 
 export function MysticPlans() {
   return (
-    <section id="memberships" className="border-t border-line px-5 py-14 md:px-8">
+    <section id="memberships" className="border-t border-line/50 px-5 py-16 md:px-8 md:py-24">
       <div className="mx-auto max-w-5xl">
-        <p className="type-eyebrow text-gold">Glow & Luxe</p>
-        <h2 className="font-display mt-2 text-3xl font-medium tracking-tight text-ink">
-          Memberships & packages
-        </h2>
-        <div className="mt-10 grid gap-6 lg:grid-cols-2">
-          <div className="space-y-4">
-            <h3 className="text-sm font-medium uppercase tracking-wider text-muted">Monthly</h3>
-            {MYSTIC_MEMBERSHIPS.map((plan) => (
-              <article
-                key={plan.id}
-                className="rounded-2xl border border-accent/30 bg-accent-soft/40 p-6"
-              >
-                <div className="flex items-baseline justify-between">
-                  <h4 className="font-display text-2xl text-ink">{plan.name}</h4>
-                  <p className="text-lg font-medium text-ink">
-                    {formatUsd(plan.priceCentsMonthly)}
-                    <span className="text-sm font-normal text-muted">/mo</span>
-                  </p>
-                </div>
-                <p className="mt-2 text-sm text-muted">
-                  {plan.blowoutsPerMonth} blowouts · extra blowouts{' '}
-                  {formatUsd(plan.extraBlowoutCents)}
-                </p>
-                <ul className="mt-4 space-y-1 text-sm text-ink/90">
-                  {plan.perks.map((perk) => (
-                    <li key={perk}>· {perk}</li>
-                  ))}
-                </ul>
-              </article>
-            ))}
-          </div>
-          <div className="space-y-4">
-            <h3 className="text-sm font-medium uppercase tracking-wider text-muted">
-              Blowout packages
-            </h3>
-            {MYSTIC_PACKAGES.map((pack) => (
-              <article key={pack.id} className="rounded-2xl border border-line bg-surface p-6">
-                <div className="flex items-baseline justify-between">
-                  <h4 className="font-display text-2xl text-ink">{pack.blowoutCount} blowouts</h4>
-                  <p className="text-lg font-medium text-ink">{formatUsd(pack.priceCents)}</p>
-                </div>
-                <p className="mt-2 text-sm text-muted">
-                  {formatUsd(pack.pricePerBlowoutCents)} each · {pack.savingsLabel} · expires in{' '}
-                  {pack.expiresMonths} months
-                </p>
-              </article>
-            ))}
-          </div>
+        <p className={mysticEyebrow}>Glow & Luxe</p>
+        <h2 className={`${mysticSectionTitle} mt-3`}>Memberships & packages</h2>
+        <p className="mt-4 max-w-2xl text-muted">
+          Monthly Glow & Luxe memberships and prepaid blowout packages — house-call only, with
+          travel and evening surcharges waived for members.
+        </p>
+
+        <div className="mt-14">
+          <MysticPricingTiers memberships={MYSTIC_MEMBERSHIPS} packages={MYSTIC_PACKAGES} />
         </div>
-        <div className="mt-10 text-center">
-          <Link
-            href="/book"
-            className="inline-flex rounded-full bg-accent px-8 py-3 text-sm font-medium text-white hover:bg-accent-hover"
-          >
-            Start booking
-          </Link>
+
+        <div className="mt-14">
+          <MysticMagneticLink href="/book">Start booking</MysticMagneticLink>
         </div>
       </div>
     </section>
