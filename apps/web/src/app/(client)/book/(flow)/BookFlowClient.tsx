@@ -9,6 +9,8 @@ import {
   MYSTIC_RIVER_NORTH,
   MYSTIC_SERVICES,
   computeBookingQuote,
+  distanceFromRiverNorthMiles,
+  type AddressSuggestion,
   formatUsd,
   formatVisitWhen,
   type AppointmentTagId,
@@ -21,6 +23,7 @@ import { MysticBookStepProgress } from '@/components/mystic/book/MysticBookStepP
 import { fetchGeocodedDistance } from '@/lib/mystic/client-geocode';
 import { uploadInspoPhotosForAppointment } from '@/lib/mystic/inspo-upload';
 import { MysticMagneticButton } from '@/components/mystic/MysticMagneticButton';
+import { MysticAddressLookup } from '@/components/mystic/book/MysticAddressLookup';
 import { MysticBookDateStrip } from '@/components/mystic/book/MysticBookDateStrip';
 import { mysticCard, mysticInput, mysticTimeChip } from '@/components/mystic/mystic-styles';
 import { MysticSecureBookingLine } from '@/components/mystic/MysticSecureBookingLine';
@@ -65,8 +68,21 @@ export function BookFlowClient() {
       .catch(() => setSurchargeRules(null));
   }, []);
 
+  function applyGeocodeResult(geo: { distanceMiles: number; formattedAddress?: string }) {
+    setDistanceMiles(geo.distanceMiles);
+    const suffix = geo.formattedAddress ? ` · ${geo.formattedAddress}` : '';
+    setDistanceNote(
+      `${geo.distanceMiles.toFixed(1)} mi from ${MYSTIC_RIVER_NORTH.label} (auto)${suffix}`
+    );
+  }
+
+  function onAddressSuggestion(s: AddressSuggestion) {
+    const miles = distanceFromRiverNorthMiles(s.latitude, s.longitude);
+    applyGeocodeResult({ distanceMiles: miles, formattedAddress: s.label });
+  }
+
   useEffect(() => {
-    if (!address.line1 || address.postalCode.length < 5) return;
+    if (!address.line1 || address.state.length !== 2 || address.postalCode.length < 5) return;
     const timer = setTimeout(() => {
       setGeocodeBusy(true);
       void fetchGeocodedDistance({
@@ -76,12 +92,7 @@ export function BookFlowClient() {
         postalCode: address.postalCode,
         notes: address.notes,
       })
-        .then((geo) => {
-          setDistanceMiles(geo.distanceMiles);
-          setDistanceNote(
-            `${geo.distanceMiles.toFixed(1)} mi from ${MYSTIC_RIVER_NORTH.label} (auto)`
-          );
-        })
+        .then((geo) => applyGeocodeResult(geo))
         .catch((err: Error) => setDistanceNote(err.message))
         .finally(() => setGeocodeBusy(false));
     }, 600);
@@ -275,26 +286,11 @@ export function BookFlowClient() {
 
       {step === 'location' && (
         <section className="mt-8 space-y-4">
-          <input
-            placeholder="Street address"
-            value={address.line1}
-            onChange={(e) => setAddress({ ...address, line1: e.target.value })}
-            className="w-full rounded-xl border border-line px-4 py-3"
+          <MysticAddressLookup
+            address={address}
+            onChange={setAddress}
+            onSuggestionSelected={onAddressSuggestion}
           />
-          <div className="grid grid-cols-2 gap-3">
-            <input
-              placeholder="City"
-              value={address.city}
-              onChange={(e) => setAddress({ ...address, city: e.target.value })}
-              className="rounded-xl border border-line px-4 py-3"
-            />
-            <input
-              placeholder="ZIP"
-              value={address.postalCode}
-              onChange={(e) => setAddress({ ...address, postalCode: e.target.value })}
-              className="rounded-xl border border-line px-4 py-3"
-            />
-          </div>
           <p className="text-sm font-medium">Travel distance</p>
           <p className="text-sm text-muted">
             {geocodeBusy
@@ -320,7 +316,13 @@ export function BookFlowClient() {
             </MysticMagneticButton>
             <MysticMagneticButton
               type="button"
-              disabled={!address.line1 || !address.postalCode}
+              disabled={
+                !address.line1 ||
+                address.state.length !== 2 ||
+                address.postalCode.length < 5 ||
+                geocodeBusy ||
+                Boolean(distanceNote?.includes('not found'))
+              }
               className="min-w-0 flex-1"
               fullWidth
               onClick={() => setStep('details')}

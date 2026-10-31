@@ -19,6 +19,8 @@ import {
   MYSTIC_RIVER_NORTH,
   MYSTIC_SERVICES,
   computeBookingQuote,
+  distanceFromRiverNorthMiles,
+  type AddressSuggestion,
   formatUsd,
   formatVisitWhen,
   type AppointmentTagId,
@@ -27,6 +29,7 @@ import {
   type SurchargeRules,
 } from '@template/mystic';
 import { NativeButton, displayTitle, monoLabel, theme } from '@template/mobile-ui';
+import { NativeAddressLookup } from './NativeAddressLookup';
 import { NativeBookDateStrip } from './NativeBookDateStrip';
 import { NativeEmptyState } from '../mystic/NativeEmptyState';
 import { NativeBookStepProgress } from './NativeBookStepProgress';
@@ -82,8 +85,14 @@ export function NativeBookFlow() {
       .catch(() => undefined);
   }, []);
 
+  function onAddressSuggestion(s: AddressSuggestion) {
+    const miles = distanceFromRiverNorthMiles(s.latitude, s.longitude);
+    setDistanceMiles(String(miles.toFixed(1)));
+    setDistanceNote(`${miles.toFixed(1)} mi from ${MYSTIC_RIVER_NORTH.label}`);
+  }
+
   useEffect(() => {
-    if (!address.line1 || address.postalCode.length < 5) return;
+    if (!address.line1 || address.state.length !== 2 || address.postalCode.length < 5) return;
     const timer = setTimeout(() => {
       setGeocodeBusy(true);
       void fetchGeocodedDistance({
@@ -233,7 +242,14 @@ export function NativeBookFlow() {
   }
 
   const canContinueDatetime = Boolean(date && slot);
-  const canContinueLocation = Boolean(address.line1.trim() && address.postalCode.length >= 5);
+  const canContinueLocation = Boolean(
+    address.line1.trim() &&
+    address.state.length === 2 &&
+    address.postalCode.length >= 5 &&
+    !geocodeBusy &&
+    distanceNote &&
+    !distanceNote.toLowerCase().includes('not found')
+  );
 
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.container}>
@@ -314,18 +330,10 @@ export function NativeBookFlow() {
 
       {step === 'location' && (
         <>
-          <TextInput
-            placeholder="Street address"
-            value={address.line1}
-            onChangeText={(line1) => setAddress({ ...address, line1 })}
-            style={styles.input}
-          />
-          <TextInput
-            placeholder="ZIP"
-            value={address.postalCode}
-            onChangeText={(postalCode) => setAddress({ ...address, postalCode })}
-            style={styles.input}
-            keyboardType="number-pad"
+          <NativeAddressLookup
+            address={address}
+            onChange={setAddress}
+            onSuggestionSelected={onAddressSuggestion}
           />
           <Text style={styles.sectionLabel}>Travel distance</Text>
           <Text style={styles.muted}>

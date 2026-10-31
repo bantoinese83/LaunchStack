@@ -16,5 +16,10 @@ export async function fetchGeocodedDistance(address: AddressInput) {
   if (!res.ok) {
     throw new Error(data.error ?? 'Could not calculate distance');
   }
-  return data as { distanceMiles: number; latitude: number; longitude: number };
+  return data as {
+    distanceMiles: number;
+    latitude: number;
+    longitude: number;
+    formattedAddress?: string;
+  };
 }

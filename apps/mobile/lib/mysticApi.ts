@@ -36,6 +36,19 @@ export async function fetchGeocodedDistance(address: {
   return res.json();
 }
 
+export async function fetchAddressAutocomplete(q: string): Promise<{
+  suggestions?: import('@template/mystic').AddressSuggestion[];
+  error?: string;
+}> {
+  if (!appUrl) throw new Error('EXPO_PUBLIC_APP_URL not set');
+  const res = await fetch(`${appUrl}/api/mystic/geocode/autocomplete?q=${encodeURIComponent(q)}`, {
+    headers: await authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) return { error: data.error ?? 'Lookup failed' };
+  return data;
+}
+
 export async function fetchBookingSettings(): Promise<{
   rules?: SurchargeRules;
   depositCents?: number;
