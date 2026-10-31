@@ -1,17 +1,31 @@
 import React from 'react';
-import { Platform } from 'react-native';
+import { Platform, type ColorValue } from 'react-native';
 import { Tabs } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { monoLabel, theme } from '@template/mobile-ui';
+import { NativeAccountTabIcon } from '../../../components/navigation/NativeAccountTabIcon';
+import { mysticTabBarIcon } from '../../../components/navigation/mysticTabBarIcon';
 import { useStudioAccess } from '../../../hooks/useStudioAccess';
+
+function tabIcon(name: string) {
+  return ({ focused, color, size }: { focused: boolean; color: ColorValue; size: number }) =>
+    mysticTabBarIcon(name, focused, color, size);
+}
 
 export default function TabsLayout() {
   const isIos = Platform.OS === 'ios';
-  const { isManager, loading } = useStudioAccess();
+  const insets = useSafeAreaInsets();
+  const { isManager } = useStudioAccess();
+  const tabBarHeight = (isIos ? 50 : 54) + insets.bottom;
 
   return (
     <Tabs
       screenOptions={{
-        headerStyle: { backgroundColor: theme.paper },
+        sceneStyle: { backgroundColor: theme.paper },
+        headerStyle: {
+          backgroundColor: theme.paper,
+          borderBottomWidth: 0,
+        },
         headerTintColor: theme.ink,
         headerTitleStyle: {
           fontWeight: isIos ? '600' : '500',
@@ -19,38 +33,85 @@ export default function TabsLayout() {
           fontSize: 17,
         },
         headerShadowVisible: false,
+        tabBarHideOnKeyboard: true,
+        tabBarAllowFontScaling: false,
         tabBarStyle: {
-          backgroundColor: isIos ? theme.shell : theme.surface,
-          borderTopColor: isIos ? 'rgba(255,255,255,0.08)' : theme.line,
-          height: isIos ? 84 : 64,
-          paddingBottom: isIos ? 24 : 10,
-          paddingTop: 8,
-          elevation: isIos ? 0 : 8,
+          backgroundColor: theme.paper,
+          borderTopWidth: 2,
+          borderTopColor: theme.gold,
+          height: tabBarHeight,
+          paddingBottom: Math.max(insets.bottom, isIos ? 18 : 8),
+          paddingTop: 6,
+          elevation: 0,
+          shadowOpacity: 0,
+        },
+        tabBarItemStyle: {
+          paddingVertical: 2,
         },
         tabBarLabelStyle: {
           ...monoLabel,
-          fontSize: isIos ? 10 : 11,
-          letterSpacing: isIos ? 1.2 : 0.5,
-          textTransform: isIos ? 'uppercase' : 'none',
+          fontSize: 9,
+          letterSpacing: 1,
+          textTransform: 'uppercase',
+          color: theme.muted,
         },
-        tabBarActiveTintColor: isIos ? theme.gold : theme.accent,
-        tabBarInactiveTintColor: isIos ? 'rgba(255,255,255,0.45)' : theme.muted,
+        tabBarActiveTintColor: theme.plum,
+        tabBarInactiveTintColor: theme.muted,
       }}
     >
-      <Tabs.Screen name="book" options={{ title: 'Book' }} />
-      <Tabs.Screen name="visits" options={{ title: 'Visits' }} />
-      <Tabs.Screen name="membership" options={{ title: 'Plans' }} />
-      <Tabs.Screen name="shop" options={{ title: 'Shop' }} />
-      <Tabs.Screen name="messages" options={{ title: 'Messages' }} />
+      <Tabs.Screen
+        name="book"
+        options={{
+          title: 'Book',
+          tabBarIcon: tabIcon('book'),
+        }}
+      />
+      <Tabs.Screen
+        name="visits"
+        options={{
+          title: 'Visits',
+          tabBarIcon: tabIcon('visits'),
+        }}
+      />
+      <Tabs.Screen
+        name="membership"
+        options={{
+          title: 'Plans',
+          href: isManager ? null : undefined,
+          tabBarIcon: tabIcon('membership'),
+        }}
+      />
+      <Tabs.Screen
+        name="shop"
+        options={{
+          title: 'Shop',
+          href: null,
+          tabBarIcon: tabIcon('shop'),
+        }}
+      />
+      <Tabs.Screen
+        name="messages"
+        options={{
+          title: 'Inbox',
+          tabBarIcon: tabIcon('messages'),
+        }}
+      />
       <Tabs.Screen
         name="studio"
         options={{
           title: 'Studio',
           headerShown: false,
-          href: !loading && isManager ? undefined : null,
+          href: isManager ? undefined : null,
+          tabBarIcon: tabIcon('studio'),
         }}
       />
-      <Tabs.Screen name="account" options={{ title: 'Account' }} />
+      <Tabs.Screen
+        name="account"
+        options={{
+          title: 'Profile',
+          tabBarIcon: (props) => <NativeAccountTabIcon {...props} />,
+        }}
+      />
     </Tabs>
   );
 }

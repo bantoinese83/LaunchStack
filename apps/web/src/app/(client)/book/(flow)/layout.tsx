@@ -1,8 +1,11 @@
 import type { ReactNode } from 'react';
+import { mysticPageEnter, mysticPageStack } from '@/components/mystic/mystic-styles';
 
 export default function BookLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="mx-auto max-w-xl mystic-book-shell rounded-[1.75rem] border border-line/50 bg-surface/50 p-5 md:p-8">
+    <div
+      className={`mx-auto w-full max-w-xl mystic-book-shell ${mysticPageStack} ${mysticPageEnter} px-0 py-2 sm:py-4 md:py-6`}
+    >
       {children}
     </div>
   );

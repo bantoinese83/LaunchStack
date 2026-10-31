@@ -18,7 +18,7 @@ export function MysticBookStepProgress({ step, onStepChange }: Props) {
   const currentIndex = bookingFlowStepIndex(step);
 
   return (
-    <div className="mt-8">
+    <div className="w-full">
       <ol className="flex items-start justify-between gap-1 sm:gap-2" aria-label="Booking steps">
         {BOOKING_FLOW_STEPS.map((id, index) => {
           const done = index < currentIndex;

@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { Linking, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Linking, Platform, StyleSheet, Text, View } from 'react-native';
 import { MYSTIC_MEMBERSHIPS, MYSTIC_PACKAGES, formatUsd } from '@template/mystic';
-import { NativeButton, displayTitle, monoLabel, theme } from '@template/mobile-ui';
+import { NativeButton, monoLabel, theme } from '@template/mobile-ui';
+import { NativeScreenHeader } from '../../../components/mystic/NativeScreenHeader';
+import { NativeScreenShell } from '../../../components/mystic/NativeScreenShell';
 import { startMembershipCheckout, startPackageCheckout } from '../../../lib/mysticApi';
 
 export default function MembershipTab() {
@@ -28,9 +30,12 @@ export default function MembershipTab() {
   }
 
   return (
-    <ScrollView style={styles.scroll} contentContainerStyle={styles.container}>
-      <Text style={styles.kicker}>Membership</Text>
-      <Text style={styles.heading}>Glow & Luxe</Text>
+    <NativeScreenShell>
+      <NativeScreenHeader
+        kicker="Plans"
+        title="Memberships & packages"
+        lede="Monthly Glow & Luxe and prepaid blowout packs — credits apply at checkout."
+      />
       {MYSTIC_MEMBERSHIPS.map((plan) => (
         <View key={plan.id} style={[styles.card, Platform.OS === 'android' && styles.cardAndroid]}>
           <Text style={styles.planName}>{plan.name}</Text>
@@ -62,15 +67,11 @@ export default function MembershipTab() {
         />
       ))}
       {status ? <Text style={styles.status}>{status}</Text> : null}
-    </ScrollView>
+    </NativeScreenShell>
   );
 }
 
 const styles = StyleSheet.create({
-  scroll: { flex: 1, backgroundColor: theme.paper },
-  container: { padding: 20, paddingBottom: 40 },
-  kicker: { ...monoLabel, color: theme.gold },
-  heading: { ...displayTitle, color: theme.ink, marginBottom: 16 },
   card: {
     backgroundColor: theme.accentSoft,
     borderRadius: theme.radii.lg,

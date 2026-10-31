@@ -31,6 +31,7 @@
     "db:seed:remote": "supabase db query --linked --file supabase/seed.sql",
     "test": "turbo run test",
     "test:e2e": "pnpm --filter @template/web test:e2e",
+    "test:e2e:mystic": "pnpm --filter @template/web test:e2e:mystic",
     "verify:integrations": "node scripts/verify-integrations.mjs",
     "storybook": "pnpm --filter @template/ui storybook",
     "quality": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build",
@@ -50,6 +51,12 @@
     "turbo": "^2.10.13",
     "typescript": "^5.9.3",
     "vitest": "^4.1.10"
+  },
+  "pnpm": {
+    "overrides": {
+      "expo-constants": "~57.0.22",
+      "expo-linking": "~57.0.13"
+    }
   },
   "packageManager": "pnpm@9.0.6",
   "engines": {

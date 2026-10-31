@@ -3,6 +3,8 @@ import {
   normalizeAddressFields,
   type AddressSuggestion,
 } from '@template/mystic';
+import { getGoogleMapsServerKey } from '@/lib/mystic/google-maps-server-key';
+import { shouldUseGoogleGeocoding } from '@/lib/mystic/mystic-maps-config';
 
 export type GeocodeResult = {
   latitude: number;
@@ -81,7 +83,7 @@ export async function searchAddressSuggestions(query: string): Promise<AddressSu
   const q = query.trim();
   if (q.length < 3) return [];
 
-  const googleKey = process.env.GOOGLE_MAPS_GEOCODING_KEY;
+  const googleKey = shouldUseGoogleGeocoding() ? getGoogleMapsServerKey() : null;
   if (googleKey) {
     const url = new URL('https://maps.googleapis.com/maps/api/place/autocomplete/json');
     url.searchParams.set('input', q);
@@ -161,7 +163,7 @@ export async function geocodeHouseCallAddress(input: {
   postalCode: string;
 }): Promise<GeocodeResult> {
   const normalized = normalizeAddressFields(input);
-  const googleKey = process.env.GOOGLE_MAPS_GEOCODING_KEY;
+  const googleKey = shouldUseGoogleGeocoding() ? getGoogleMapsServerKey() : null;
   if (googleKey) {
     const q = `${normalized.line1}, ${normalized.city}, ${normalized.state} ${normalized.postalCode}`;
     const url = new URL('https://maps.googleapis.com/maps/api/geocode/json');

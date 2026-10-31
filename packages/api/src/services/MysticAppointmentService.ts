@@ -57,15 +57,39 @@ export class MysticAppointmentService {
     return (data ?? []) as MysticAppointmentRow[];
   }
 
+  /** Upcoming + past visits (~18 months) for My visits tabs. */
   async listForClient(clientUserId: string) {
+    const lookbackMs = 548 * 86400000;
     const { data, error } = await this.supabase
       .from('mystic_appointments')
       .select('*')
       .eq('client_user_id', clientUserId)
-      .gte('starts_at', new Date(Date.now() - 86400000).toISOString())
+      .gte('starts_at', new Date(Date.now() - lookbackMs).toISOString())
       .order('starts_at', { ascending: true });
     if (error) throw error;
     return (data ?? []) as MysticAppointmentRow[];
+  }
+
+  /** Drop unpaid checkout holds so slots reopen (Stripe abandon or timeout). */
+  async cancelStalePending(workspaceId: string, maxAgeMinutes = 90) {
+    const cutoff = new Date(Date.now() - maxAgeMinutes * 60_000).toISOString();
+    const { error } = await this.supabase
+      .from('mystic_appointments')
+      .update({ status: 'canceled', updated_at: new Date().toISOString() })
+      .eq('workspace_id', workspaceId)
+      .eq('status', 'pending')
+      .lt('created_at', cutoff);
+    if (error) throw error;
+  }
+
+  async cancelPendingForClient(workspaceId: string, clientUserId: string) {
+    const { error } = await this.supabase
+      .from('mystic_appointments')
+      .update({ status: 'canceled', updated_at: new Date().toISOString() })
+      .eq('workspace_id', workspaceId)
+      .eq('client_user_id', clientUserId)
+      .eq('status', 'pending');
+    if (error) throw error;
   }
 
   async create(input: CreateAppointmentInput) {

@@ -1,35 +1,71 @@
 import { NextResponse } from 'next/server';
-import {
-  MysticAppointmentService,
-  MysticReferralService,
-  createSupabaseAdminClient,
-} from '@template/api';
+import { MysticAppointmentService, createSupabaseAdminClient } from '@template/api';
 import { computeBookingQuote, getServiceById } from '@template/mystic';
 import { onMysticAppointmentConfirmed } from '@/lib/mystic/confirm-appointment';
 import { assertEntitlementForBooking } from '@/lib/mystic/entitlement';
+import {
+  claimCheckoutIdempotency,
+  completeCheckoutIdempotency,
+  readCheckoutIdempotencyKey,
+  releaseCheckoutIdempotency,
+} from '@/lib/mystic/checkout-idempotency';
 import { firstZodIssueMessage, mysticCreateAppointmentSchema } from '@template/validation';
 import { requireAuthenticatedUser, routeErrorResponse } from '@/lib/api/route-auth';
 import { getStripeClient } from '@/lib/stripe';
 import { getMysticWorkspaceId } from '@/lib/mystic/config';
+import { recordReferralOnBookingConfirmed } from '@/lib/mystic/record-referral-on-confirm';
 import { resolveReferrerUserIdByCode, resolveReferrerUserIdByName } from '@/lib/mystic/referrals';
 import { loadStudioSurchargeRules } from '@/lib/mystic/studio-surcharge-rules';
 import { geocodeHouseCallAddress } from '@/lib/mystic/geocode';
 
 export async function POST(req: Request) {
-  try {
-    const auth = await requireAuthenticatedUser(req);
-    if (auth.response) return auth.response;
+  const auth = await requireAuthenticatedUser(req);
+  if (auth.response) return auth.response;
 
-    const body = await req.json();
+  let idempotencyKey: string | undefined;
+  let admin: ReturnType<typeof createSupabaseAdminClient> | undefined;
+  let idempotencyClaimed = false;
+  const clientUserId = auth.user.id;
+
+  async function abortCheckout(status: number, error: string) {
+    if (idempotencyClaimed && idempotencyKey && admin) {
+      await releaseCheckoutIdempotency(admin, clientUserId, idempotencyKey).catch(() => undefined);
+    }
+    return NextResponse.json({ error }, { status });
+  }
+
+  try {
+    const rawBody = (await req.json()) as Record<string, unknown>;
+    idempotencyKey = readCheckoutIdempotencyKey(req, rawBody);
+    const useMobileCancelDeepLink = rawBody.useMobileCancelDeepLink === true;
+    const { idempotencyKey: _drop, useMobileCancelDeepLink: _mobile, ...bodyWithoutKey } = rawBody;
+
     const parsed = mysticCreateAppointmentSchema.safeParse({
-      ...body,
-      workspaceId: body.workspaceId ?? getMysticWorkspaceId(),
+      ...bodyWithoutKey,
+      workspaceId: bodyWithoutKey.workspaceId ?? getMysticWorkspaceId(),
     });
     if (!parsed.success) {
       return NextResponse.json({ error: firstZodIssueMessage(parsed.error) }, { status: 400 });
     }
 
-    const admin = createSupabaseAdminClient();
+    admin = createSupabaseAdminClient();
+
+    if (idempotencyKey) {
+      const claim = await claimCheckoutIdempotency(admin, clientUserId, idempotencyKey);
+      if (claim.action === 'replay') {
+        return NextResponse.json(claim.body);
+      }
+      if (claim.action === 'conflict') {
+        return NextResponse.json(
+          { error: 'Checkout already in progress — wait a moment and refresh if needed' },
+          { status: 409 }
+        );
+      }
+      idempotencyClaimed = true;
+    }
+
+    await new MysticAppointmentService(admin).cancelStalePending(parsed.data.workspaceId, 90);
+
     const { data: studioSettings } = await admin
       .from('mystic_studio_settings')
       .select('deposit_cents')
@@ -39,12 +75,12 @@ export async function POST(req: Request) {
 
     const entitlementCheck = await assertEntitlementForBooking(admin, {
       workspaceId: parsed.data.workspaceId,
-      userId: auth.user.id,
+      userId: clientUserId,
       entitlement: parsed.data.entitlement,
       serviceId: parsed.data.serviceId,
     });
     if (!entitlementCheck.ok) {
-      return NextResponse.json({ error: entitlementCheck.error }, { status: 400 });
+      return abortCheckout(400, entitlementCheck.error);
     }
 
     const service = getServiceById(parsed.data.serviceId);
@@ -70,11 +106,11 @@ export async function POST(req: Request) {
       ? 0
       : serverQuote.totalCents - (parsed.data.tipCents ?? 0);
     if (Math.abs(parsed.data.quoteCents - expectedQuoteCents) > 1) {
-      return NextResponse.json({ error: 'Quote expired — refresh and try again' }, { status: 400 });
+      return abortCheckout(400, 'Quote expired — refresh and try again');
     }
     const appointment = await new MysticAppointmentService(admin).create({
       workspaceId: parsed.data.workspaceId,
-      clientUserId: auth.user.id,
+      clientUserId,
       serviceId: parsed.data.serviceId,
       startsAt: parsed.data.scheduledAt,
       durationMinutes: service.durationMinutes,
@@ -101,40 +137,51 @@ export async function POST(req: Request) {
       referrerUserId = await resolveReferrerUserIdByName(admin, parsed.data.referredByName);
     }
 
-    if (referrerUserId && referrerUserId !== auth.user.id) {
-      const { data: clientProfile } = await admin
-        .from('profiles')
-        .select('full_name')
-        .eq('id', auth.user.id)
-        .maybeSingle();
-      const referredName =
-        clientProfile?.full_name?.trim() || auth.user.email?.split('@')[0] || 'New client';
-
-      await new MysticReferralService(admin).recordReferral({
-        workspaceId: parsed.data.workspaceId,
-        referrerUserId,
-        referredName,
-        referredUserId: auth.user.id,
-        appointmentId: appointment.id,
-      });
-      // Rewards run after payment confirms (webhook / mock confirm → onMysticAppointmentConfirmed).
-    }
+    const { data: clientProfile } = await admin
+      .from('profiles')
+      .select('full_name')
+      .eq('id', clientUserId)
+      .maybeSingle();
+    const referredName =
+      clientProfile?.full_name?.trim() || auth.user.email?.split('@')[0] || 'New client';
 
     const totalCents = expectedQuoteCents + (parsed.data.tipCents ?? 0);
     const appUrl = process.env.NEXT_PUBLIC_APP_URL;
     if (!appUrl) {
-      return NextResponse.json({ error: 'NEXT_PUBLIC_APP_URL not configured' }, { status: 500 });
+      return abortCheckout(500, 'NEXT_PUBLIC_APP_URL not configured');
     }
 
-    const stripe = getStripeClient({ allowDevMock: true });
+    const workspaceId = parsed.data.workspaceId;
+
+    async function respond(payload: Record<string, unknown>) {
+      if (idempotencyKey) {
+        await completeCheckoutIdempotency(
+          admin!,
+          clientUserId,
+          idempotencyKey,
+          appointment.id,
+          payload
+        );
+      }
+      return NextResponse.json(payload);
+    }
 
     async function confirmWithoutStripe() {
-      await admin
+      await admin!
         .from('mystic_appointments')
         .update({ status: 'confirmed', payment_captured: totalCents === 0 })
         .eq('id', appointment.id);
-      await onMysticAppointmentConfirmed(admin, appointment.id);
-      return NextResponse.json({
+      if (referrerUserId) {
+        await recordReferralOnBookingConfirmed(admin!, {
+          workspaceId,
+          appointmentId: appointment.id,
+          clientUserId,
+          referrerUserId,
+          referredName,
+        });
+      }
+      await onMysticAppointmentConfirmed(admin!, appointment.id);
+      return respond({
         url: `${appUrl}/book/success?appointment_id=${appointment.id}`,
         appointmentId: appointment.id,
         mock: true,
@@ -149,6 +196,7 @@ export async function POST(req: Request) {
       return confirmWithoutStripe();
     }
 
+    const stripe = getStripeClient({ allowDevMock: true });
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       customer_email: auth.user.email ?? undefined,
@@ -166,7 +214,9 @@ export async function POST(req: Request) {
         },
       ],
       success_url: `${appUrl}/book/success?session_id={CHECKOUT_SESSION_ID}&appointment_id=${appointment.id}`,
-      cancel_url: `${appUrl}/book?canceled=1`,
+      cancel_url: useMobileCancelDeepLink
+        ? 'mystichair://book?canceled=1'
+        : `${appUrl}/book?canceled=1`,
       payment_intent_data: {
         capture_method: 'manual',
         metadata: {
@@ -180,11 +230,21 @@ export async function POST(req: Request) {
         appointment_id: appointment.id,
         workspace_id: parsed.data.workspaceId,
         deposit_cents: String(depositCents),
+        client_user_id: clientUserId,
+        ...(referrerUserId
+          ? {
+              referrer_user_id: referrerUserId,
+              referred_name: referredName.slice(0, 120),
+            }
+          : {}),
       },
     });
 
-    return NextResponse.json({ url: session.url, appointmentId: appointment.id });
+    return respond({ url: session.url, appointmentId: appointment.id });
   } catch (err) {
+    if (idempotencyClaimed && idempotencyKey && admin) {
+      await releaseCheckoutIdempotency(admin, clientUserId, idempotencyKey).catch(() => undefined);
+    }
     return routeErrorResponse(err, 'mystic.checkout.booking');
   }
 }

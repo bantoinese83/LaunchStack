@@ -1,13 +1,17 @@
+import { MysticStudioPageHeader } from '@/components/mystic/MysticStudioPageHeader';
+import { MysticStudioSection } from '@/components/mystic/MysticStudioSection';
 import { StudioCalendar } from './StudioCalendar';
 
 export default function StudioCalendarPage() {
   return (
     <div>
-      <h2 className="font-display text-2xl font-medium">Calendar</h2>
-      <p className="mt-1 text-sm text-muted">Next 7 days of house calls.</p>
-      <div className="mt-6">
+      <MysticStudioPageHeader
+        title="Calendar"
+        description="Next 7 days — reschedule, cancel, or message clients from each visit."
+      />
+      <MysticStudioSection>
         <StudioCalendar />
-      </div>
+      </MysticStudioSection>
     </div>
   );
 }

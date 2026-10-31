@@ -1,58 +1,78 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
 import {
   formatRelativeUpdatedAt,
+  googleMapsDirectionsUrl,
   isLocationUpdateFresh,
-  mapRegionFromCenter,
   stylistLiveMapUrl,
+  type LatLng,
 } from '@template/mystic';
 import { theme } from '@template/mobile-ui';
+import { NativeMysticMap, type NativeMapMarker } from '../maps/NativeMysticMap';
 
 type Props = {
   latitude: number;
   longitude: number;
   updatedAt?: string | null;
+  /** Client house-call pin when en route. */
+  destination?: LatLng | null;
 };
 
-export function NativeLiveMap({ latitude, longitude, updatedAt }: Props) {
-  const mapRef = useRef<MapView>(null);
-  const region = mapRegionFromCenter(latitude, longitude);
+export function NativeLiveMap({ latitude, longitude, updatedAt, destination }: Props) {
   const [now, setNow] = useState(() => Date.now());
   const fresh = isLocationUpdateFresh(updatedAt);
-
-  useEffect(() => {
-    mapRef.current?.animateToRegion(mapRegionFromCenter(latitude, longitude), 450);
-  }, [latitude, longitude]);
 
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 15_000);
     return () => clearInterval(id);
   }, []);
 
+  const markers = useMemo((): NativeMapMarker[] => {
+    const rows: NativeMapMarker[] = [
+      {
+        id: 'stylist',
+        latitude,
+        longitude,
+        title: 'Luke',
+        description: fresh ? 'On the way' : 'Last known location',
+        pinColor: theme.accent,
+      },
+    ];
+    if (destination) {
+      rows.push({
+        id: 'client',
+        latitude: destination.lat,
+        longitude: destination.lng,
+        title: 'Your visit',
+        description: 'House call',
+        pinColor: theme.plum,
+      });
+    }
+    return rows;
+  }, [destination, fresh, latitude, longitude]);
+
+  const externalUrl = destination
+    ? googleMapsDirectionsUrl(destination, { lat: latitude, lng: longitude })
+    : stylistLiveMapUrl(latitude, longitude);
+
   return (
     <View style={styles.wrap}>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           {fresh ? <View style={styles.liveDot} /> : null}
-          <Text style={styles.headerTitle}>Luke on the map</Text>
+          <Text style={styles.headerTitle}>
+            {destination ? 'Luke · en route to you' : 'Luke on the map'}
+          </Text>
         </View>
         {updatedAt ? (
           <Text style={styles.headerMeta}>{formatRelativeUpdatedAt(updatedAt, now)}</Text>
         ) : null}
       </View>
-      <MapView ref={mapRef} style={styles.map} initialRegion={region} showsUserLocation={false}>
-        <Marker
-          coordinate={{ latitude, longitude }}
-          title="Luke"
-          description="On the way to your house call"
-        />
-      </MapView>
-      <Pressable
-        onPress={() => void Linking.openURL(stylistLiveMapUrl(latitude, longitude))}
-        style={styles.external}
-      >
-        <Text style={styles.externalText}>Open in Google Maps</Text>
+      <NativeMysticMap markers={markers} height={200} />
+      <Pressable onPress={() => void Linking.openURL(externalUrl)} style={styles.external}>
+        <Text style={styles.externalText}>
+          {destination ? 'Directions in Google Maps' : 'Open in Google Maps'}
+        </Text>
       </Pressable>
     </View>
   );
@@ -61,36 +81,32 @@ export function NativeLiveMap({ latitude, longitude, updatedAt }: Props) {
 const styles = StyleSheet.create({
   wrap: {
     marginTop: 12,
-    borderRadius: theme.radii.lg,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: theme.line,
-    backgroundColor: theme.surface,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: theme.line,
+    backgroundColor: theme.paper,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 12,
+    paddingHorizontal: 0,
     paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.line,
   },
   headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   liveDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: theme.accent,
+    backgroundColor: theme.gold,
   },
   headerTitle: { fontSize: 12, fontWeight: '600', color: theme.ink },
   headerMeta: { fontSize: 11, color: theme.muted },
-  map: { width: '100%', height: 200 },
   external: {
     paddingVertical: 10,
     alignItems: 'center',
-    borderTopWidth: 1,
+    borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: theme.line,
   },
-  externalText: { fontSize: 12, color: theme.accent, fontWeight: '600' },
+  externalText: { fontSize: 12, color: theme.plum, fontWeight: '600' },
 });

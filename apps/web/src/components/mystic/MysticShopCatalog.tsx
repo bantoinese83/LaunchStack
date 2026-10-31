@@ -5,6 +5,7 @@ import {
   formatUsd,
   type ShopProductId,
 } from '@template/mystic';
+import { MysticClientPage } from '@/components/mystic/MysticClientPage';
 import { MysticPageIntro } from '@/components/mystic/MysticPageIntro';
 import { MysticMagneticLink } from '@/components/mystic/MysticMagneticButton';
 import { MysticShopProductIllustration } from '@/components/mystic/illustrations/MysticShopProductIllustration';
@@ -15,7 +16,7 @@ const TRUST = ['Pro styling products', 'Stripe secure checkout', 'Pre-order for 
 
 export function MysticShopCatalog() {
   return (
-    <div className="mx-auto max-w-5xl">
+    <MysticClientPage width="wide" loose>
       <MysticPageIntro
         eyebrow="Shop"
         title="At-home essentials"
@@ -23,7 +24,7 @@ export function MysticShopCatalog() {
         className="max-w-2xl"
       />
 
-      <ul className="mt-8 flex flex-wrap gap-x-8 gap-y-2 border-y border-line/60 py-4">
+      <ul className="flex flex-wrap gap-x-8 gap-y-2 border-y border-line/60 py-4">
         {TRUST.map((item) => (
           <li key={item} className={`${mysticEyebrow} text-muted`}>
             {item}
@@ -97,6 +98,6 @@ export function MysticShopCatalog() {
           View orders in your account →
         </Link>
       </p>
-    </div>
+    </MysticClientPage>
   );
 }

@@ -14,7 +14,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#F3F4F1"
+        "backgroundColor": "#F7F4ED"
       },
       "package": "co.mystichair.app"
     },
@@ -35,18 +35,19 @@
     },
     "plugins": [
       "expo-router",
+      "expo-font",
       "expo-secure-store",
       "expo-notifications",
       "expo-updates",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/splash.png",
-          "imageWidth": 200,
+          "image": "./assets/mystic-hair-logo-light.png",
+          "imageWidth": 240,
           "resizeMode": "contain",
-          "backgroundColor": "#F3F4F1",
+          "backgroundColor": "#F7F4ED",
           "dark": {
-            "backgroundColor": "#F3F4F1"
+            "backgroundColor": "#F7F4ED"
           }
         }
       ],

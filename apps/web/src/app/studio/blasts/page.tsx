@@ -1,13 +1,17 @@
+import { MysticStudioPageHeader } from '@/components/mystic/MysticStudioPageHeader';
+import { MysticStudioSection } from '@/components/mystic/MysticStudioSection';
 import { BlastComposer } from './BlastComposer';
 
 export default function StudioBlastsPage() {
   return (
     <div>
-      <h2 className="font-display text-2xl font-medium">Blasts</h2>
-      <p className="mt-1 text-sm text-muted">Promos, out-of-town notices — Brevo + Twilio.</p>
-      <div className="mt-6">
+      <MysticStudioPageHeader
+        title="Blasts"
+        description="Promos and out-of-town notices — Brevo email + Twilio SMS."
+      />
+      <MysticStudioSection>
         <BlastComposer />
-      </div>
+      </MysticStudioSection>
     </div>
   );
 }

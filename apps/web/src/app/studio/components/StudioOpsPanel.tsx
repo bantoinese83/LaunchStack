@@ -1,15 +1,25 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
+import { useMemo, useState } from 'react';
 import {
+  addressLatLng,
+  chunkIds,
+  formatAddressLine,
+  formatAppointmentTagLabels,
   formatVisitWhen,
+  googleMapsDirectionsUrl,
   getServiceById,
-  visitStatusLabel,
+  isVisitLiveTracking,
   type ServiceId,
 } from '@template/mystic';
 import { getMysticWorkspaceId } from '@/lib/mystic/config';
+import { useDeferredEffect } from '@/lib/react/useDeferredEffect';
 import { MysticEmptyState } from '@/components/mystic/MysticEmptyState';
+import { StudioWorkspaceNotice } from '@/components/mystic/studio/StudioWorkspaceNotice';
 import { MysticInspoGallery, type InspoPhoto } from '@/components/mystic/MysticInspoGallery';
+import { MysticVisitStatusBadge } from '@/components/mystic/MysticVisitStatusBadge';
+import { MysticUserAvatar } from '@/components/mystic/MysticUserAvatar';
 import {
   mysticCard,
   mysticInput,
@@ -23,6 +33,16 @@ type Appointment = {
   service_id: string;
   status: string;
   client_user_id: string;
+  address?: Record<string, unknown>;
+  tags?: string[];
+  client_notes?: string | null;
+};
+
+type ClientRow = {
+  user_id: string;
+  full_name: string | null;
+  email: string | null;
+  avatar_url?: string | null;
 };
 
 async function readBrowserCoords(): Promise<{ latitude: number; longitude: number } | null> {
@@ -40,34 +60,74 @@ async function readBrowserCoords(): Promise<{ latitude: number; longitude: numbe
   }
 }
 
-export function StudioOpsPanel({ initialAppointments }: { initialAppointments: Appointment[] }) {
+export function StudioOpsPanel({
+  initialAppointments,
+  onRefreshBoard,
+  boardLoading,
+}: {
+  initialAppointments: Appointment[];
+  onRefreshBoard?: () => void;
+  boardLoading?: boolean;
+}) {
   const workspaceId = getMysticWorkspaceId();
   const [appointments, setAppointments] = useState(initialAppointments);
+  const [clientById, setClientById] = useState<Record<string, ClientRow>>({});
   const [eta, setEta] = useState(20);
   const [message, setMessage] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [busyAction, setBusyAction] = useState<string | null>(null);
   const [inspoByAppointment, setInspoByAppointment] = useState<Record<string, InspoPhoto[]>>({});
 
+  useDeferredEffect(() => {
+    setAppointments(initialAppointments);
+  }, [initialAppointments]);
+
+  useDeferredEffect(() => {
+    if (!workspaceId) return;
+    void fetch(`/api/mystic/clients?workspaceId=${workspaceId}`)
+      .then((r) => r.json())
+      .then((data) => {
+        const map: Record<string, ClientRow> = {};
+        for (const c of (data.clients ?? []) as ClientRow[]) map[c.user_id] = c;
+        setClientById(map);
+      });
+  }, [workspaceId]);
+
+  const sortedAppointments = useMemo(() => {
+    return [...appointments].sort((a, b) => {
+      const liveA = isVisitLiveTracking(a.status) ? 0 : 1;
+      const liveB = isVisitLiveTracking(b.status) ? 0 : 1;
+      if (liveA !== liveB) return liveA - liveB;
+      return new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime();
+    });
+  }, [appointments]);
+
   const appointmentIds = useMemo(() => appointments.map((a) => a.id).join(','), [appointments]);
 
-  useEffect(() => {
+  useDeferredEffect(() => {
     if (!appointmentIds) {
       setInspoByAppointment({});
       return;
     }
-    const ids = appointmentIds.split(',');
+    // One request per batch of visits — previously one request per visit, each of
+    // which re-authenticated, and it re-ran on every 45s board refresh.
     void Promise.all(
-      ids.map(async (id) => {
-        const res = await fetch(`/api/mystic/appointments/inspo?appointmentId=${id}`);
+      chunkIds(appointmentIds.split(',')).map(async (batch) => {
+        const res = await fetch(`/api/mystic/appointments/inspo?appointmentIds=${batch.join(',')}`);
+        if (!res.ok) return null;
         const data = await res.json();
-        return { id, photos: (data.photos ?? []) as InspoPhoto[] };
+        return (data.photosByAppointment ?? {}) as Record<string, InspoPhoto[]>;
       })
-    ).then((rows) => {
-      const next: Record<string, InspoPhoto[]> = {};
-      for (const row of rows) next[row.id] = row.photos;
-      setInspoByAppointment(next);
-    });
+    )
+      .then((results) => {
+        const parts = results.filter((r): r is Record<string, InspoPhoto[]> => r !== null);
+        // Any failed batch: keep the last known thumbnails rather than blanking them.
+        if (parts.length !== results.length) return;
+        setInspoByAppointment(Object.assign({}, ...parts));
+      })
+      .catch(() => {
+        /* keep the last known thumbnails */
+      });
   }, [appointmentIds]);
 
   async function enRoute(appointmentId: string) {
@@ -100,6 +160,7 @@ export function StudioOpsPanel({ initialAppointments }: { initialAppointments: A
         ? 'Client notified — on the way with live map'
         : 'Client notified — allow location to share live map'
     );
+    onRefreshBoard?.();
   }
 
   async function shareLive(appointmentId: string) {
@@ -152,6 +213,7 @@ export function StudioOpsPanel({ initialAppointments }: { initialAppointments: A
       rows.map((row) => (row.id === appointmentId ? { ...row, status: 'completed' } : row))
     );
     setMessage('Visit complete — payment captured');
+    onRefreshBoard?.();
   }
 
   async function noShow(appointmentId: string) {
@@ -171,6 +233,7 @@ export function StudioOpsPanel({ initialAppointments }: { initialAppointments: A
       return;
     }
     setMessage('Marked no-show — deposit capture attempted');
+    onRefreshBoard?.();
   }
 
   async function doorTimer(appointmentId: string) {
@@ -195,34 +258,46 @@ export function StudioOpsPanel({ initialAppointments }: { initialAppointments: A
     setMessage(`Door timer started (${data.doorTimerMinutes} min)`);
   }
 
+  function clientLabel(clientUserId: string) {
+    const c = clientById[clientUserId];
+    return c?.full_name ?? c?.email ?? `Client ${clientUserId.slice(0, 8)}`;
+  }
+
   if (!workspaceId) {
-    return (
-      <p className={`${mysticCard} p-4 text-sm text-muted`}>
-        Set <code className="text-ink">NEXT_PUBLIC_MYSTIC_WORKSPACE_ID</code> after your Mystic
-        workspace is created in Supabase.
-      </p>
-    );
+    return <StudioWorkspaceNotice />;
   }
 
   return (
     <div className="space-y-4">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <label className="flex items-center gap-2 text-sm">
+          ETA (minutes)
+          <input
+            type="number"
+            value={eta}
+            onChange={(e) => setEta(Number(e.target.value))}
+            className={`${mysticInput} w-20 px-2 py-1`}
+          />
+        </label>
+        {onRefreshBoard ? (
+          <button
+            type="button"
+            onClick={onRefreshBoard}
+            disabled={boardLoading}
+            className="text-sm text-accent underline disabled:opacity-50"
+          >
+            {boardLoading ? 'Syncing…' : 'Refresh board'}
+          </button>
+        ) : null}
+      </div>
       {message ? <p className="text-sm text-chalk">{message}</p> : null}
-      <label className="flex items-center gap-2 text-sm">
-        ETA (minutes)
-        <input
-          type="number"
-          value={eta}
-          onChange={(e) => setEta(Number(e.target.value))}
-          className={`${mysticInput} w-20 px-2 py-1`}
-        />
-      </label>
       <ul className={`${mysticCard} divide-y divide-line/80 overflow-hidden p-0`}>
-        {appointments.length === 0 ? (
+        {sortedAppointments.length === 0 ? (
           <li className="list-none p-2">
             <MysticEmptyState variant="studio-ops" compact />
           </li>
         ) : (
-          appointments.map((row) => {
+          sortedAppointments.map((row) => {
             let serviceName = row.service_id.replace(/_/g, ' ');
             try {
               serviceName = getServiceById(row.service_id as ServiceId).name;
@@ -230,23 +305,71 @@ export function StudioOpsPanel({ initialAppointments }: { initialAppointments: A
               /* keep id */
             }
             const isEnRoute = row.status === 'stylist_en_route';
+            const live = isVisitLiveTracking(row.status);
             const rowBusy = busyId === row.id;
+            const addressLine = formatAddressLine(row.address);
+            const addressCoords = addressLatLng(row.address);
+            const directionsUrl = addressCoords
+              ? googleMapsDirectionsUrl(addressCoords)
+              : addressLine
+                ? googleMapsDirectionsUrl(addressLine)
+                : null;
             return (
               <li
                 key={row.id}
-                className="flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between"
+                className={`flex flex-col gap-3 p-4 md:flex-row md:items-start md:justify-between ${
+                  live ? 'bg-accent-soft/30' : ''
+                }`}
               >
                 <div className="min-w-0 flex-1">
-                  <p className="font-medium">{serviceName}</p>
-                  <p className="text-sm text-muted">
-                    {formatVisitWhen(row.starts_at)} · {visitStatusLabel(row.status)}
-                  </p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="font-medium">{serviceName}</p>
+                    <MysticVisitStatusBadge status={row.status} />
+                  </div>
+                  <div className="mt-1 flex items-center gap-2">
+                    <MysticUserAvatar
+                      url={clientById[row.client_user_id]?.avatar_url}
+                      name={clientLabel(row.client_user_id)}
+                      size={28}
+                    />
+                    <p className="text-sm font-medium text-ink">
+                      {clientLabel(row.client_user_id)}
+                    </p>
+                  </div>
+                  <p className="text-sm text-muted">{formatVisitWhen(row.starts_at)}</p>
+                  {addressLine ? <p className="mt-1 text-xs text-muted">{addressLine}</p> : null}
+                  {row.tags?.length ? (
+                    <p className="mt-1 text-xs text-chalk">
+                      {formatAppointmentTagLabels(row.tags).join(' · ')}
+                    </p>
+                  ) : null}
+                  {row.client_notes?.trim() ? (
+                    <p className="mt-1 text-xs text-muted">
+                      <span className="font-medium text-ink">Notes:</span> {row.client_notes.trim()}
+                    </p>
+                  ) : null}
+                  {directionsUrl ? (
+                    <a
+                      href={directionsUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-1 inline-block text-xs font-medium text-accent underline"
+                    >
+                      Directions in Google Maps
+                    </a>
+                  ) : null}
+                  <Link
+                    href={`/studio/messages?client=${row.client_user_id}`}
+                    className="mt-2 inline-block text-xs font-medium text-accent underline"
+                  >
+                    Message client
+                  </Link>
                   <MysticInspoGallery
                     photos={inspoByAppointment[row.id] ?? []}
                     label="Client inspo"
                   />
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2 md:max-w-md md:justify-end">
                   <button
                     type="button"
                     disabled={rowBusy}

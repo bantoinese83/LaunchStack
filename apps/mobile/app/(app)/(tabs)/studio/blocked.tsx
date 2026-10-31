@@ -15,7 +15,15 @@ export default function StudioBlockedScreen() {
 
   const load = useCallback(() => {
     if (!workspaceId) return;
-    void fetchBlockedDates(workspaceId).then((data) => setRows(data.blockedDates ?? []));
+    void fetchBlockedDates(workspaceId).then((data) => {
+      if (data.error) {
+        setMessage(data.error);
+        setRows([]);
+        return;
+      }
+      setMessage(null);
+      setRows((data.blockedDates ?? []) as Blocked[]);
+    });
   }, [workspaceId]);
 
   useEffect(() => {

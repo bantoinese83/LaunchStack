@@ -31,8 +31,11 @@ export function MysticEmptyState({
       className={`${mysticCard} flex flex-col items-center px-6 py-8 text-center ${compact ? 'py-6' : ''} ${className}`}
       role="status"
     >
+      {content.eyebrow ? (
+        <p className={`type-eyebrow text-plum ${compact ? 'mb-3' : 'mb-4'}`}>{content.eyebrow}</p>
+      ) : null}
       <div
-        className={`relative overflow-hidden rounded-2xl bg-accent-soft/40 ${compact ? 'h-36 w-36' : 'h-44 w-44 sm:h-52 sm:w-52'}`}
+        className={`relative overflow-hidden rounded-2xl border border-line/80 bg-accent-soft/40 ${compact ? 'h-36 w-36' : 'h-44 w-44 sm:h-52 sm:w-52'}`}
       >
         <Image
           src={src}
@@ -43,11 +46,13 @@ export function MysticEmptyState({
         />
       </div>
       <h2
-        className={`font-display font-medium text-ink ${compact ? 'mt-4 text-lg' : 'mt-6 text-xl'}`}
+        className={`font-display font-medium text-ink ${compact ? 'mt-4' : 'mt-6'} ${compact ? 'text-lg' : 'text-xl'}`}
       >
         {heading}
       </h2>
-      <p className={`mt-2 max-w-sm text-muted ${compact ? 'text-xs' : 'text-sm'}`}>{body}</p>
+      <p className={`mt-2 max-w-sm text-muted ${compact ? 'text-xs' : 'text-sm'}`}>
+        {compact && content.compactDescription && !description ? content.compactDescription : body}
+      </p>
       {action ? <div className="mt-6 w-full max-w-xs">{action}</div> : null}
     </div>
   );

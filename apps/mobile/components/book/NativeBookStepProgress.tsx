@@ -78,8 +78,8 @@ const styles = StyleSheet.create({
   },
   fill: {
     height: '100%',
-    backgroundColor: theme.accent,
-    borderRadius: 2,
+    backgroundColor: theme.gold,
+    borderRadius: 0,
   },
   steps: {
     flexDirection: 'row',
@@ -98,17 +98,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  dotActive: { backgroundColor: theme.accent, borderColor: theme.accent },
-  dotDone: { backgroundColor: `${theme.accent}33`, borderColor: theme.accent },
+  dotActive: { backgroundColor: theme.plum, borderColor: theme.plum },
+  dotDone: { backgroundColor: theme.goldSoft, borderColor: theme.gold },
   dotText: { fontSize: 11, fontWeight: '600', color: theme.muted },
   dotTextOn: { color: theme.paper },
-  dotTextDone: { color: theme.accent },
+  dotTextDone: { color: theme.plum },
   stepLabel: {
     marginTop: 4,
     fontSize: 9,
     color: theme.muted,
     textAlign: 'center',
   },
-  stepLabelActive: { color: theme.ink, fontWeight: '600' },
-  hint: { ...monoLabel, color: theme.muted, marginTop: 10, fontSize: 12 },
+  stepLabelActive: { color: theme.plum, fontWeight: '600' },
+  hint: { ...monoLabel, color: theme.plum, marginTop: 10, fontSize: 12 },
 });

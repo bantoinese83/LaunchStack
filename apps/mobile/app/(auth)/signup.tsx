@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { StatusBar } from 'expo-status-bar';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { createSupabaseMobileClient } from '@template/api/mobile';
 import { firstZodIssueMessage, getErrorMessage, signupSchema } from '@template/validation';
@@ -8,14 +7,13 @@ import {
   NativeAlert,
   NativeAuthLogo,
   NativeButton,
-  NativeCard,
   NativeInput,
-  NativeScreen,
   displayTitle,
   theme,
 } from '@template/mobile-ui';
 import { mysticLogoLight } from '../../constants/branding';
-import { OAuthButtons } from './components/OAuthButtons';
+import { AuthScreenFrame } from '../../components/auth/AuthScreenFrame';
+import { OAuthButtons } from '../../components/auth/OAuthButtons';
 
 export default function MobileSignupScreen() {
   const router = useRouter();
@@ -52,45 +50,42 @@ export default function MobileSignupScreen() {
   };
 
   return (
-    <NativeScreen background="shell" style={styles.container}>
-      <StatusBar style="light" />
-      <NativeCard style={styles.card}>
+    <AuthScreenFrame>
+      <View style={styles.authHeader}>
         <NativeAuthLogo source={mysticLogoLight} />
         <Text style={styles.title}>Create an account</Text>
         <Text style={styles.subtitle}>Book house-call blowouts and manage your plan</Text>
+      </View>
 
-        {error ? <NativeAlert message={error} /> : null}
+      {error ? <NativeAlert message={error} /> : null}
 
-        <OAuthButtons onSuccess={goToApp} />
+      <OAuthButtons onSuccess={goToApp} />
 
-        <NativeInput label="Full name" value={fullName} onChangeText={setFullName} />
-        <NativeInput
-          label="Email Address"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
-        <NativeInput label="Password" value={password} onChangeText={setPassword} secureTextEntry />
-        <NativeButton title="Create account" onPress={handleSignup} isLoading={isLoading} />
-        <Pressable onPress={() => router.replace('/(auth)/login')}>
-          <Text style={styles.link}>Already have an account? Sign in</Text>
-        </Pressable>
-      </NativeCard>
-    </NativeScreen>
+      <NativeInput label="Full name" value={fullName} onChangeText={setFullName} />
+      <NativeInput
+        label="Email Address"
+        value={email}
+        onChangeText={setEmail}
+        keyboardType="email-address"
+        autoCapitalize="none"
+      />
+      <NativeInput label="Password" value={password} onChangeText={setPassword} secureTextEntry />
+      <NativeButton title="Create account" onPress={handleSignup} isLoading={isLoading} />
+      <Pressable onPress={() => router.replace('/(auth)/login')}>
+        <Text style={styles.link}>Already have an account? Sign in</Text>
+      </Pressable>
+    </AuthScreenFrame>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { justifyContent: 'center', padding: 20 },
-  card: { width: '100%', alignItems: 'center' },
-  title: { ...displayTitle, color: theme.ink, marginTop: 4 },
+  authHeader: { width: '100%', alignItems: 'center', marginBottom: 8 },
+  title: { ...displayTitle, color: theme.ink, textAlign: 'center' },
   subtitle: {
     color: theme.muted,
     fontSize: 14,
     textAlign: 'center',
-    marginBottom: 12,
-    marginTop: 6,
+    marginTop: 8,
   },
-  link: { color: theme.accent, marginTop: 16, fontSize: 13 },
+  link: { color: theme.plum, marginTop: 16, fontSize: 13, textAlign: 'center' },
 });

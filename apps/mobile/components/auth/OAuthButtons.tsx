@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { getErrorMessage } from '@template/validation';
 import { NativeAlert, NativeButton, monoLabel, theme } from '@template/mobile-ui';
-import { startGoogleOAuth } from '../../../lib/auth/oauth';
+import { startGoogleOAuth } from '../../lib/auth/oauth';
 
 export function OAuthButtons({ onSuccess }: { onSuccess: () => void }) {
   const [error, setError] = useState<string | null>(null);

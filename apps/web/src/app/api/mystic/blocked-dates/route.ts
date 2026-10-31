@@ -1,14 +1,36 @@
 import { NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@template/api';
-import { firstZodIssueMessage, mysticBlockedDateSchema } from '@template/validation';
+import {
+  firstZodIssueMessage,
+  mysticBlockedDateSchema,
+  mysticWorkspaceIdSchema,
+} from '@template/validation';
 import { z } from 'zod';
 import { requireAuthenticatedUser, routeErrorResponse } from '@/lib/api/route-auth';
 import { requireStudioManager } from '@/lib/mystic/studio-auth';
 import { getMysticWorkspaceId } from '@/lib/mystic/config';
 
+const listQuerySchema = z.object({
+  workspaceId: mysticWorkspaceIdSchema,
+});
+
 export async function GET(req: Request) {
   try {
-    const workspaceId = new URL(req.url).searchParams.get('workspaceId') ?? getMysticWorkspaceId();
+    const auth = await requireAuthenticatedUser(req);
+    if (auth.response) return auth.response;
+
+    const params = Object.fromEntries(new URL(req.url).searchParams);
+    const parsed = listQuerySchema.safeParse({
+      workspaceId: params.workspaceId ?? getMysticWorkspaceId(),
+    });
+    if (!parsed.success) {
+      return NextResponse.json({ error: firstZodIssueMessage(parsed.error) }, { status: 400 });
+    }
+
+    const forbidden = await requireStudioManager(auth.user, parsed.data.workspaceId);
+    if (forbidden) return forbidden;
+
+    const workspaceId = parsed.data.workspaceId;
     const admin = createSupabaseAdminClient();
     const { data, error } = await admin
       .from('mystic_blocked_dates')

@@ -1,11 +1,13 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { CalendarPlus, Sparkles } from 'lucide-react';
+import { CalendarPlus } from 'lucide-react';
+import { MysticIcon } from '@/components/mystic/icons/MysticIcon';
 import {
   MYSTIC_PACKAGES,
   MYSTIC_SERVICES,
   formatUsd,
+  formatVisitWhen,
   type PackageId,
   type ServiceId,
 } from '@template/mystic';
@@ -16,7 +18,9 @@ import {
   MysticMagneticButton,
   MysticMagneticLink,
 } from '@/components/mystic/MysticMagneticButton';
+import { MysticClientPage } from '@/components/mystic/MysticClientPage';
 import { mysticCard } from '@/components/mystic/mystic-styles';
+import { MysticSummaryRowGroup } from '@/components/mystic/MysticSummaryRowGroup';
 
 type Props = {
   appointment: BookSuccessAppointment | null;
@@ -77,7 +81,7 @@ export function BookSuccessClient({ appointment, refShort }: Props) {
   }
 
   return (
-    <div className="mx-auto max-w-lg py-4 md:py-6">
+    <MysticClientPage className="py-4 md:py-6">
       <div className="text-center">
         <p className="type-eyebrow text-success">Confirmed</p>
         <h1 className="font-display mt-3 text-3xl font-medium tracking-tight text-ink md:text-4xl">
@@ -95,21 +99,21 @@ export function BookSuccessClient({ appointment, refShort }: Props) {
       </div>
 
       {appointment && serviceName ? (
-        <div className={`${mysticCard} mt-10 p-6 text-left`}>
-          <p className="font-medium text-ink">{serviceName}</p>
-          <p className="mt-1 text-sm text-muted">
-            {new Date(appointment.startsAt).toLocaleString(undefined, {
-              weekday: 'long',
-              month: 'long',
-              day: 'numeric',
-              hour: 'numeric',
-              minute: '2-digit',
-            })}
-          </p>
-          <p className="mt-1 text-sm text-muted">{appointment.addressLine}</p>
+        <div className="mt-10 space-y-4 text-left">
+          <MysticSummaryRowGroup
+            rows={[
+              { id: 'service', label: 'Service', value: serviceName },
+              {
+                id: 'when',
+                label: 'When',
+                value: formatVisitWhen(appointment.startsAt),
+              },
+              { id: 'where', label: 'Where', value: appointment.addressLine },
+            ]}
+          />
 
           {calendar ? (
-            <div className="mt-6 flex flex-col gap-2 sm:flex-row">
+            <div className={`${mysticCard} flex flex-col gap-2 p-5 sm:flex-row`}>
               <MysticMagneticAnchor
                 href={calendar.googleUrl}
                 variant="primary"
@@ -130,8 +134,8 @@ export function BookSuccessClient({ appointment, refShort }: Props) {
 
       <section className="mt-10 overflow-hidden rounded-2xl border border-line bg-gradient-to-br from-gold-soft via-surface to-accent-soft p-6 text-left shadow-[0_20px_50px_-32px_rgba(26,31,24,0.25)]">
         <div className="flex items-start gap-3">
-          <span className="rounded-full bg-gold/15 p-2 text-gold">
-            <Sparkles className="h-5 w-5" aria-hidden />
+          <span className="rounded-full bg-gold/15 p-2.5 text-gold">
+            <MysticIcon name="packageOffer" className="h-5 w-5" strokeWidth={1.85} />
           </span>
           <div>
             <p className="type-eyebrow text-plum">Save on your next visits</p>
@@ -161,6 +165,6 @@ export function BookSuccessClient({ appointment, refShort }: Props) {
           Message Luke
         </MysticMagneticLink>
       </div>
-    </div>
+    </MysticClientPage>
   );
 }

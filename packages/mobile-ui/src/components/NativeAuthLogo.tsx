@@ -4,6 +4,7 @@ import {
   type ImageSourcePropType,
   Pressable,
   StyleSheet,
+  View,
   type ImageStyle,
   type StyleProp,
 } from 'react-native';
@@ -25,24 +26,26 @@ export function NativeAuthLogo({ source, onPress, style }: NativeAuthLogoProps) 
     />
   );
 
-  if (onPress) {
-    return (
-      <Pressable onPress={onPress} style={styles.wrap} accessibilityRole="button">
-        {image}
-      </Pressable>
-    );
-  }
+  const mark = onPress ? (
+    <Pressable onPress={onPress} accessibilityRole="button">
+      {image}
+    </Pressable>
+  ) : (
+    image
+  );
 
-  return image;
+  return <View style={styles.wrap}>{mark}</View>;
 }
 
 const styles = StyleSheet.create({
   wrap: {
-    marginBottom: 4,
+    width: '100%',
+    alignItems: 'center',
+    marginBottom: 16,
   },
   logo: {
     width: 240,
-    height: 48,
-    maxWidth: '100%',
+    height: 72,
+    maxWidth: '88%',
   },
 });

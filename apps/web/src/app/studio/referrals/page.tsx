@@ -1,12 +1,17 @@
+import { MysticStudioPageHeader } from '@/components/mystic/MysticStudioPageHeader';
+import { MysticStudioSection } from '@/components/mystic/MysticStudioSection';
 import { ReferralsPanel } from './ReferralsPanel';
 
 export default function StudioReferralsPage() {
   return (
-    <div className="max-w-2xl">
-      <h2 className="font-display text-2xl font-medium">Referrals</h2>
-      <div className="mt-6">
+    <div>
+      <MysticStudioPageHeader
+        title="Referrals"
+        description="Track who referred whom and issued credits."
+      />
+      <MysticStudioSection>
         <ReferralsPanel />
-      </div>
+      </MysticStudioSection>
     </div>
   );
 }

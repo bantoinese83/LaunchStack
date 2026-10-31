@@ -72,7 +72,7 @@ pnpm db:types:remote
 ## 8. Geocoding & live map
 
 - Run migration `20261031160000_mystic_stylist_location.sql` (`pnpm db:push`).
-- Booking distance is **auto-calculated** from address (Nominatim; optional `GOOGLE_MAPS_GEOCODING_KEY`).
+- Booking distance is **auto-calculated** from address (Nominatim; optional Google — see [GOOGLE-MAPS.md](./GOOGLE-MAPS.md)).
 - Luke shares GPS on **On the way** (web studio or mobile Studio tab); clients see an **embedded map** on My visits (web: OpenStreetMap embed; mobile: native map) that refreshes every ~20s while en route.
 
 ## 9. Luke studio on mobile

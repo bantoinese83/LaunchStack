@@ -1,4 +1,4 @@
-import { Lock } from 'lucide-react';
+import { MysticIcon } from '@/components/mystic/icons/MysticIcon';
 
 type Props = {
   className?: string;
@@ -10,7 +10,7 @@ export function MysticSecureBookingLine({ className = '' }: Props) {
     <p
       className={`flex items-center justify-center gap-2 text-center text-xs text-muted ${className}`}
     >
-      <Lock className="h-3.5 w-3.5 shrink-0 text-accent" aria-hidden />
+      <MysticIcon name="secure" className="h-3.5 w-3.5 shrink-0 text-accent" strokeWidth={2.25} />
       <span>
         <span className="font-medium text-ink/80">Secure booking</span>
         {' · '}

@@ -1,0 +1,7 @@
+appId: co.mystichair.app
+---
+- launchApp
+- extendedWaitUntil:
+    visible: 'Book'
+    timeout: 45000
+- assertVisible: 'Book'

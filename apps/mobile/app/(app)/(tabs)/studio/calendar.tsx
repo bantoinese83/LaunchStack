@@ -26,6 +26,7 @@ export default function StudioCalendarScreen() {
     const to = new Date(from);
     to.setDate(to.getDate() + 14);
     void fetchStudioAppointments(workspaceId, from.toISOString(), to.toISOString()).then((data) => {
+      if (!data.ok) return;
       const list = (data.appointments ?? []) as Row[];
       setRows(list);
       setRescheduleAt(Object.fromEntries(list.map((r) => [r.id, toLocalInput(r.starts_at)])));

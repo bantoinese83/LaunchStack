@@ -18,12 +18,20 @@ function requireAppUrl() {
   return appUrl.replace(/\/$/, '');
 }
 
-export async function fetchStudioAccess(): Promise<{ allowed?: boolean; workspaceId?: string }> {
+export async function fetchStudioAccess(): Promise<{
+  allowed?: boolean;
+  workspaceId?: string;
+  error?: string;
+}> {
   const base = requireAppUrl();
   const res = await fetch(`${base}/api/mystic/studio/access`, {
     headers: await authHeaders(),
   });
-  if (res.status === 401) return { allowed: false };
+  if (res.status === 401) return { allowed: false, error: 'Sign in required' };
+  if (!res.ok) {
+    const data = (await res.json().catch(() => ({}))) as { error?: string };
+    return { allowed: false, error: data.error ?? `Studio access failed (${res.status})` };
+  }
   return res.json();
 }
 
@@ -33,7 +41,16 @@ export async function fetchStudioAppointments(workspaceId: string, from: string,
     `${base}/api/mystic/appointments?workspaceId=${encodeURIComponent(workspaceId)}&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,
     { headers: await authHeaders() }
   );
-  return res.json();
+  const data = (await res.json()) as {
+    appointments?: unknown[];
+    error?: string;
+  };
+  return {
+    ok: res.ok,
+    status: res.status,
+    appointments: data.appointments,
+    error: data.error,
+  };
 }
 
 export async function studioPost(path: string, body: Record<string, unknown>) {
@@ -160,7 +177,11 @@ export async function fetchBlockedDates(workspaceId: string) {
     `${base}/api/mystic/blocked-dates?workspaceId=${encodeURIComponent(workspaceId)}`,
     { headers: await authHeaders() }
   );
-  return res.json();
+  const data = (await res.json()) as { blockedDates?: unknown[]; error?: string };
+  if (!res.ok) {
+    return { ...data, error: data.error ?? `Could not load blocked dates (${res.status})` };
+  }
+  return data;
 }
 
 export async function addBlockedDate(workspaceId: string, blockDate: string, reason?: string) {
@@ -181,6 +202,25 @@ export async function removeBlockedDate(workspaceId: string, id: string) {
     body: JSON.stringify({ workspaceId, id }),
   });
   return res.json();
+}
+
+export async function fetchGeocodeBatch(
+  workspaceId: string,
+  stops: { id: string; address: Record<string, unknown>; label?: string }[]
+): Promise<{ id: string; lat: number; lng: number; label?: string }[]> {
+  if (stops.length === 0) return [];
+  const base = requireAppUrl();
+  const res = await fetch(`${base}/api/mystic/geocode/batch`, {
+    method: 'POST',
+    headers: await authHeaders(),
+    body: JSON.stringify({ workspaceId, stops }),
+  });
+  const data = (await res.json()) as {
+    markers?: { id: string; lat: number; lng: number; label?: string }[];
+    error?: string;
+  };
+  if (!res.ok) throw new Error(data.error ?? 'Geocode batch failed');
+  return data.markers ?? [];
 }
 
 export async function fetchReferralDashboard(workspaceId: string, month: string) {

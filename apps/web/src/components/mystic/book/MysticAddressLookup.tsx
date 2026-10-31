@@ -10,6 +10,8 @@ export type HouseCallAddress = {
   state: string;
   postalCode: string;
   notes: string;
+  latitude?: number;
+  longitude?: number;
 };
 
 type Props = {
@@ -26,11 +28,11 @@ export function MysticAddressLookup({ address, onChange, onSuggestionSelected }:
   const [busy, setBusy] = useState(false);
   const blurTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const lookupReady = lookup.trim().length >= 3;
+  const visibleSuggestions = lookupReady ? suggestions : [];
+
   useEffect(() => {
-    if (lookup.trim().length < 3) {
-      setSuggestions([]);
-      return;
-    }
+    if (!lookupReady) return;
     const timer = setTimeout(() => {
       setBusy(true);
       void fetch(`/api/mystic/geocode/autocomplete?q=${encodeURIComponent(lookup.trim())}`)
@@ -43,7 +45,7 @@ export function MysticAddressLookup({ address, onChange, onSuggestionSelected }:
         .finally(() => setBusy(false));
     }, 350);
     return () => clearTimeout(timer);
-  }, [lookup]);
+  }, [lookup, lookupReady]);
 
   function pick(s: AddressSuggestion) {
     onChange({
@@ -72,7 +74,7 @@ export function MysticAddressLookup({ address, onChange, onSuggestionSelected }:
           placeholder="Start typing street, city, or ZIP…"
           value={lookup}
           onChange={(e) => setLookup(e.target.value)}
-          onFocus={() => suggestions.length && setOpen(true)}
+          onFocus={() => visibleSuggestions.length && setOpen(true)}
           onBlur={() => {
             blurTimer.current = setTimeout(() => setOpen(false), 150);
           }}
@@ -83,16 +85,18 @@ export function MysticAddressLookup({ address, onChange, onSuggestionSelected }:
           aria-autocomplete="list"
         />
         {busy ? <p className="mt-1 text-xs text-muted">Looking up addresses…</p> : null}
-        {open && suggestions.length > 0 ? (
+        {open && visibleSuggestions.length > 0 ? (
           <ul
             id={`${listId}-listbox`}
             role="listbox"
             className="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-xl border border-line bg-surface py-1 shadow-md"
           >
-            {suggestions.map((s) => (
-              <li key={s.id} role="option">
+            {visibleSuggestions.map((s) => (
+              <li key={s.id}>
                 <button
                   type="button"
+                  role="option"
+                  aria-selected={false}
                   className="w-full px-4 py-2.5 text-left text-sm hover:bg-accent-soft"
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => pick(s)}
@@ -103,7 +107,7 @@ export function MysticAddressLookup({ address, onChange, onSuggestionSelected }:
             ))}
           </ul>
         ) : null}
-        {open && !busy && lookup.trim().length >= 3 && suggestions.length === 0 ? (
+        {open && !busy && lookupReady && visibleSuggestions.length === 0 ? (
           <p className="mt-1 text-xs text-muted">No matches — refine or enter fields below.</p>
         ) : null}
       </div>

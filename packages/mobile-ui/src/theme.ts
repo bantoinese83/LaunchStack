@@ -1,10 +1,12 @@
 /**
  * Mystic Hair Co. mobile tokens — keep in sync with apps/web/src/app/globals.css
+ * Road-trip palette: cream canvas, sage, gold pinstripe, plum ink accents.
  */
 export const theme = {
   shell: '#1A1F18',
   paper: '#F7F4ED',
-  surface: '#FFFFFF',
+  canvas: '#F7F4ED',
+  surface: '#FAF8F4',
   ink: '#1F1E1E',
   muted: '#5C5A55',
   line: '#E5E0D6',
@@ -19,10 +21,10 @@ export const theme = {
   danger: '#B42318',
   success: '#027A48',
   radii: {
-    sm: 8,
-    md: 12,
-    lg: 16,
-    xl: 22,
+    sm: 6,
+    md: 10,
+    lg: 14,
+    xl: 18,
     pill: 999,
   },
 } as const;

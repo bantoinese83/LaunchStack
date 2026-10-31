@@ -38,15 +38,16 @@
 :root {
   --background: 40 33% 97%;
   --foreground: 0 3% 12%;
-  --paper: #faf8f4;
-  --surface: #ffffff;
+  --paper: #f7f4ed;
+  --surface: #faf8f4;
   --shell: #141313;
   --ink: #1f1e1e;
   --muted: #666666;
-  --line: #ebebeb;
+  --line: #e5e0d6;
   --accent: #7a8f6e;
   --chalk: #8b7355;
   --gold: #c4a962;
+  --danger: #b42318;
   --display-soft: 32;
   --display-wonk: 0.65;
   --type-tracking-tight: -0.035em;
@@ -554,6 +555,15 @@ body {
   border-radius: inherit;
   background: linear-gradient(90deg, var(--accent), var(--gold));
   transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Door timer running out — same bar, warning palette. */
+.mystic-progress-fill--danger {
+  background: linear-gradient(
+    90deg,
+    var(--danger),
+    color-mix(in srgb, var(--danger) 65%, var(--gold))
+  );
 }
 
 .app-main-panel {
@@ -1099,7 +1109,8 @@ body {
     scroll-behavior: auto !important;
   }
 
-  .mystic-progress-fill {
+  .mystic-progress-fill,
+  .mystic-progress-fill--danger {
     transition: none !important;
   }
 

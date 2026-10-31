@@ -1,5 +1,22 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
+/**
+ * Group credit rows by user id, preserving the query order (expires_at ascending)
+ * inside each group — the same order `listForUser` returns. Pure, so it can be
+ * unit tested without a database.
+ */
+export function groupCreditsByUserId<T extends { user_id: string }>(
+  rows: readonly T[]
+): Record<string, T[]> {
+  const byUser: Record<string, T[]> = {};
+  for (const row of rows) {
+    const existing = byUser[row.user_id];
+    if (existing) existing.push(row);
+    else byUser[row.user_id] = [row];
+  }
+  return byUser;
+}
+
 export type GrantCreditInput = {
   workspaceId: string;
   userId: string;
@@ -127,6 +144,24 @@ export class MysticCreditsService {
       .select('*')
       .eq('workspace_id', workspaceId)
       .eq('user_id', userId)
+      .gt('blowouts_remaining', 0)
+      .order('expires_at', { ascending: true });
+    if (error) throw error;
+    return data ?? [];
+  }
+
+  /**
+   * Every active credit in a workspace in a SINGLE query.
+   *
+   * `listForUser` costs one round trip per user, so enriching a client list with
+   * it is O(clients) queries (up to the 500-row cap). Studio screens always want
+   * the whole workspace, so fetch it once and group in memory instead.
+   */
+  async listForWorkspace(workspaceId: string) {
+    const { data, error } = await this.supabase
+      .from('mystic_client_credits')
+      .select('*')
+      .eq('workspace_id', workspaceId)
       .gt('blowouts_remaining', 0)
       .order('expires_at', { ascending: true });
     if (error) throw error;

@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { parseDiceBearAvatarUrl } from '@template/mystic';
 import { MysticDiceBearPicker } from '@/components/mystic/MysticDiceBearPicker';
 
@@ -22,10 +22,8 @@ export function MysticProfileAvatar({
 }: Props) {
   const uploadRef = useRef<HTMLInputElement>(null);
   const cameraRef = useRef<HTMLInputElement>(null);
-  const [url, setUrl] = useState<string | null>(avatarUrl);
-  useEffect(() => {
-    setUrl(avatarUrl);
-  }, [avatarUrl]);
+  const [uploadedUrl, setUploadedUrl] = useState<string | null>(null);
+  const url = uploadedUrl ?? avatarUrl;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [diceOpen, setDiceOpen] = useState(false);
@@ -44,7 +42,7 @@ export function MysticProfileAvatar({
         setError(data.error ?? 'Upload failed');
         return;
       }
-      setUrl(data.url);
+      setUploadedUrl(data.url);
       onUploaded?.(data.url);
     } catch {
       setError('Upload failed');
@@ -79,7 +77,7 @@ export function MysticProfileAvatar({
         setError(data.error ?? 'Could not save avatar');
         return;
       }
-      setUrl(data.url);
+      setUploadedUrl(data.url);
       onUploaded?.(data.url);
       setDiceOpen(false);
     } catch {

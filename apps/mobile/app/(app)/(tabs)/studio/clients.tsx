@@ -44,7 +44,11 @@ export default function StudioClientsScreen() {
               onPress={() =>
                 router.push({
                   pathname: '/(app)/(tabs)/studio/thread/[clientUserId]',
-                  params: { clientUserId: client.user_id, clientName: name },
+                  params: {
+                    clientUserId: client.user_id,
+                    clientName: name,
+                    clientAvatarUrl: client.avatar_url ?? '',
+                  },
                 })
               }
             >

@@ -3,6 +3,7 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { MysticCreditsService } from '@template/api';
 import type { MembershipId, PackageId } from '@template/mystic';
 import { onMysticAppointmentConfirmed } from '@/lib/mystic/confirm-appointment';
+import { recordReferralOnBookingConfirmed } from '@/lib/mystic/record-referral-on-confirm';
 import { creditGrantForMembership, creditGrantForPackage } from '@/lib/mystic/credits';
 import { resolveStripeExpandableId } from '@/lib/stripe';
 
@@ -28,6 +29,17 @@ export const checkoutSessionCompleted: WebhookHandler = async (event, _stripe, s
         updated_at: new Date().toISOString(),
       })
       .eq('id', session.metadata.appointment_id);
+    const referrerUserId = session.metadata.referrer_user_id?.trim();
+    const clientUserId = session.metadata.client_user_id?.trim();
+    if (referrerUserId && clientUserId && session.metadata.workspace_id) {
+      await recordReferralOnBookingConfirmed(supabaseAdmin, {
+        workspaceId: session.metadata.workspace_id,
+        appointmentId: session.metadata.appointment_id,
+        clientUserId,
+        referrerUserId,
+        referredName: session.metadata.referred_name?.trim() || 'New client',
+      });
+    }
     await onMysticAppointmentConfirmed(supabaseAdmin, session.metadata.appointment_id);
     return;
   }

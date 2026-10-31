@@ -1,0 +1,15 @@
+appId: co.mystichair.app
+---
+- launchApp
+- extendedWaitUntil:
+    visible: 'Book'
+    timeout: 45000
+- tapOn: 'Visits'
+- extendedWaitUntil:
+    visible: 'Your house calls'
+    timeout: 15000
+- tapOn: 'Inbox'
+- extendedWaitUntil:
+    visible: 'Chat with Luke'
+    timeout: 15000
+- tapOn: 'Book'

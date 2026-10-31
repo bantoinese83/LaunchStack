@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Linking,
   Pressable,
@@ -24,12 +24,17 @@ import {
   formatUsd,
   formatVisitWhen,
   type AppointmentTagId,
+  createCheckoutIdempotencyKey,
+  toggleAppointmentTag,
   type BookingFlowStep,
   type ServiceId,
   type SurchargeRules,
 } from '@template/mystic';
-import { NativeButton, displayTitle, monoLabel, theme } from '@template/mobile-ui';
-import { NativeAddressLookup } from './NativeAddressLookup';
+import { NativeButton, roadTrip, theme } from '@template/mobile-ui';
+import { NativeServiceIllustration } from '../mystic/NativeServiceIllustration';
+import { NativeScreenHeader } from '../mystic/NativeScreenHeader';
+import { NativeAddressMapPreview } from '../maps/NativeAddressMapPreview';
+import { NativeAddressLookup, type HouseCallAddress } from './NativeAddressLookup';
 import { NativeBookDateStrip } from './NativeBookDateStrip';
 import { NativeEmptyState } from '../mystic/NativeEmptyState';
 import { NativeBookStepProgress } from './NativeBookStepProgress';
@@ -37,6 +42,8 @@ import {
   fetchAvailability,
   fetchBookingSettings,
   fetchGeocodedDistance,
+  isMysticApiConfigured,
+  releaseBookingCheckout,
   startBookingCheckout,
   uploadInspoPhoto,
 } from '../../lib/mysticApi';
@@ -68,13 +75,34 @@ export function NativeBookFlow() {
   const [inspoUris, setInspoUris] = useState<{ uri: string; name: string }[]>([]);
   const [status, setStatus] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [address, setAddress] = useState({
+  const checkoutIdempotencyKey = useRef<string | null>(null);
+  const [address, setAddress] = useState<HouseCallAddress>({
     line1: '',
     city: 'Chicago',
     state: 'IL',
     postalCode: '',
     notes: '',
   });
+
+  const handleCheckoutCanceledDeepLink = useCallback(async (url: string | null) => {
+    if (!url || !url.includes('canceled=1')) return;
+    checkoutIdempotencyKey.current = null;
+    const released = await releaseBookingCheckout();
+    setStatus(
+      released.ok
+        ? 'Checkout canceled — your hold was released. Pick a time and try again when ready.'
+        : 'Checkout canceled — we could not release your hold automatically. Pull to refresh Visits or message Luke if the slot still looks taken.'
+    );
+  }, []);
+
+  useEffect(() => {
+    void Linking.getInitialURL().then((url) => void handleCheckoutCanceledDeepLink(url));
+    const sub = Linking.addEventListener(
+      'url',
+      ({ url }) => void handleCheckoutCanceledDeepLink(url)
+    );
+    return () => sub.remove();
+  }, [handleCheckoutCanceledDeepLink]);
 
   useEffect(() => {
     void fetchBookingSettings()
@@ -89,6 +117,11 @@ export function NativeBookFlow() {
     const miles = distanceFromRiverNorthMiles(s.latitude, s.longitude);
     setDistanceMiles(String(miles.toFixed(1)));
     setDistanceNote(`${miles.toFixed(1)} mi from ${MYSTIC_RIVER_NORTH.label}`);
+    setAddress((prev) => ({
+      ...prev,
+      latitude: s.latitude,
+      longitude: s.longitude,
+    }));
   }
 
   useEffect(() => {
@@ -108,6 +141,13 @@ export function NativeBookFlow() {
           }
           setDistanceMiles(String(data.distanceMiles));
           setDistanceNote(`${data.distanceMiles} mi from ${MYSTIC_RIVER_NORTH.label}`);
+          if (typeof data.latitude === 'number' && typeof data.longitude === 'number') {
+            setAddress((prev) => ({
+              ...prev,
+              latitude: data.latitude,
+              longitude: data.longitude,
+            }));
+          }
         })
         .catch(() => setDistanceNote('Could not calculate distance'))
         .finally(() => setGeocodeBusy(false));
@@ -118,11 +158,20 @@ export function NativeBookFlow() {
   useEffect(() => {
     void fetchAvailability(date, serviceId)
       .then((data) => {
+        if (data.error) {
+          setStatus(data.error);
+          setSlots([]);
+          setSlot('');
+          return;
+        }
         const list = data.slots ?? [];
         setSlots(list);
         setSlot(list[0] ?? '');
       })
-      .catch(() => setSlots([]));
+      .catch(() => {
+        setStatus('Could not load availability');
+        setSlots([]);
+      });
   }, [date, serviceId]);
 
   const scheduledAt = useMemo(() => {
@@ -144,13 +193,8 @@ export function NativeBookFlow() {
     });
   }, [scheduledAt, serviceId, miles, entitlement, tipCents, surchargeRules]);
 
-  const quoteCents =
-    entitlement !== 'none' && serviceId === 'blowout' ? 0 : (quote?.totalCents ?? 0);
-
   function toggleTag(id: AppointmentTagId) {
-    setTags((current) =>
-      current.includes(id) ? current.filter((t) => t !== id) : [...current, id]
-    );
+    setTags((current) => toggleAppointmentTag(current, id));
   }
 
   async function pickInspo() {
@@ -187,6 +231,9 @@ export function NativeBookFlow() {
     setSubmitting(true);
     setStatus(null);
     try {
+      if (!checkoutIdempotencyKey.current) {
+        checkoutIdempotencyKey.current = createCheckoutIdempotencyKey();
+      }
       const result = await startBookingCheckout({
         serviceId,
         scheduledAt: scheduledAt.toISOString(),
@@ -196,6 +243,9 @@ export function NativeBookFlow() {
           state: address.state,
           postalCode: address.postalCode,
           notes: address.notes || undefined,
+          ...(address.latitude != null && address.longitude != null
+            ? { latitude: address.latitude, longitude: address.longitude }
+            : {}),
         },
         distanceMiles: miles,
         entitlement,
@@ -208,19 +258,31 @@ export function NativeBookFlow() {
         referralCode: referralCode.trim() || undefined,
         clientNotes: address.notes || undefined,
         policiesAccepted: true,
+        idempotencyKey: checkoutIdempotencyKey.current,
+        useMobileCancelDeepLink: true,
       });
       if (result.status === 401) {
         router.push('/(auth)/login');
         return;
       }
       if (!result.ok) {
-        setStatus(result.error ?? 'Booking failed');
+        setStatus(
+          result.status === 409
+            ? (result.error ?? 'Checkout already in progress')
+            : (result.error ?? 'Booking failed')
+        );
         return;
       }
+      checkoutIdempotencyKey.current = null;
       const appointmentId = result.appointmentId as string | undefined;
       if (appointmentId && inspoUris.length > 0) {
+        const failures: string[] = [];
         for (const photo of inspoUris) {
-          await uploadInspoPhoto(appointmentId, photo.uri, photo.name);
+          const up = await uploadInspoPhoto(appointmentId, photo.uri, photo.name);
+          if (!up.ok) failures.push(up.error ?? 'Inspo upload failed');
+        }
+        if (failures.length) {
+          setStatus(failures[0] ?? 'Some inspo photos did not upload');
         }
       }
       if (result.url) await Linking.openURL(result.url);
@@ -253,8 +315,17 @@ export function NativeBookFlow() {
 
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.container}>
-      <Text style={styles.kicker}>Book</Text>
-      <Text style={styles.heading}>House call</Text>
+      <NativeScreenHeader
+        kicker="Book"
+        title="House call"
+        lede="Chicago mobile styling — Luke rolls up with the full kit."
+      />
+      {!isMysticApiConfigured() ? (
+        <Text style={styles.configBanner} accessibilityRole="alert">
+          Set EXPO_PUBLIC_APP_URL to your Mystic web app (simulator: http://localhost:3000; device:
+          your Mac's LAN IP). Run pnpm dev:web before booking.
+        </Text>
+      ) : null}
       <NativeBookStepProgress step={step} onStepChange={setStep} />
 
       {step === 'service' && (
@@ -267,12 +338,18 @@ export function NativeBookFlow() {
                 onPress={() => setServiceId(service.id)}
                 accessibilityRole="button"
                 accessibilityState={{ selected }}
-                style={[styles.card, selected && styles.cardSelected]}
+                accessibilityLabel={`${service.name}, ${service.durationMinutes} minutes, ${formatUsd(service.priceCents)}`}
+                style={[styles.serviceRow, selected && styles.serviceRowSelected]}
               >
-                <Text style={styles.cardTitle}>{service.name}</Text>
-                <Text style={styles.cardMeta}>
-                  {service.durationMinutes} min · {formatUsd(service.priceCents)}
-                </Text>
+                <View style={styles.serviceRowInner}>
+                  <NativeServiceIllustration serviceId={service.id} />
+                  <View style={styles.serviceCopy}>
+                    <Text style={styles.cardTitle}>{service.name}</Text>
+                    <Text style={styles.cardMeta}>
+                      {service.durationMinutes} min · {formatUsd(service.priceCents)}
+                    </Text>
+                  </View>
+                </View>
               </Pressable>
             );
           })}
@@ -287,7 +364,21 @@ export function NativeBookFlow() {
           <Text style={styles.sectionLabel}>Time</Text>
           <View style={styles.slotRow}>
             {slots.length === 0 ? (
-              <NativeEmptyState variant="book-slots" compact />
+              <NativeEmptyState
+                variant="book-slots"
+                compact
+                action={
+                  <NativeButton
+                    title="Try tomorrow"
+                    variant="outline"
+                    onPress={() => {
+                      const d = new Date(`${date}T12:00:00`);
+                      d.setDate(d.getDate() + 1);
+                      setDate(d.toISOString().slice(0, 10));
+                    }}
+                  />
+                }
+              />
             ) : (
               slots.map((time) => (
                 <Pressable
@@ -342,6 +433,9 @@ export function NativeBookFlow() {
               : (distanceNote ??
                 `Enter street + ZIP to calculate from ${MYSTIC_RIVER_NORTH.label}.`)}
           </Text>
+          {address.latitude != null && address.longitude != null ? (
+            <NativeAddressMapPreview coords={{ lat: address.latitude, lng: address.longitude }} />
+          ) : null}
           <TextInput
             placeholder="Gate code, parking, pets…"
             value={address.notes}
@@ -466,50 +560,46 @@ export function NativeBookFlow() {
 
 const styles = StyleSheet.create({
   scroll: { flex: 1, backgroundColor: theme.paper },
-  container: { padding: 20, paddingBottom: 40 },
-  kicker: { ...monoLabel, color: theme.accent, marginBottom: 8 },
-  heading: { ...displayTitle, color: theme.ink, marginBottom: 4 },
-  card: {
-    backgroundColor: theme.surface,
-    padding: 18,
-    marginBottom: 12,
-    borderRadius: theme.radii.xl,
-    borderWidth: 1,
-    borderColor: theme.line,
+  container: { padding: 20, paddingBottom: 48 },
+  configBanner: {
+    marginBottom: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderLeftWidth: 3,
+    borderLeftColor: theme.plum,
+    backgroundColor: theme.chalkSoft,
+    color: theme.plum,
+    fontSize: 13,
+    lineHeight: 18,
   },
-  cardSelected: { borderColor: theme.accent, backgroundColor: theme.accentSoft },
+  serviceRow: {
+    ...roadTrip.flatRow,
+    paddingVertical: 16,
+  },
+  serviceRowSelected: roadTrip.flatRowSelected,
+  serviceRowInner: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  serviceCopy: { flex: 1, minWidth: 0 },
   cardTitle: { fontSize: 17, fontWeight: '600', color: theme.ink },
   cardMeta: { marginTop: 4, color: theme.muted, fontSize: 13 },
-  sectionLabel: { ...monoLabel, color: theme.muted, marginTop: 12, marginBottom: 8 },
+  sectionLabel: { ...roadTrip.kicker, color: theme.muted, marginTop: 16, marginBottom: 10 },
   input: {
-    borderWidth: 1,
-    borderColor: theme.line,
-    borderRadius: theme.radii.lg,
-    padding: 14,
-    marginBottom: 10,
-    color: theme.ink,
-    backgroundColor: theme.surface,
-    fontSize: 16,
+    ...roadTrip.flatInput,
+    marginBottom: 14,
   },
   notes: { minHeight: 80, textAlignVertical: 'top' },
   slotRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
-  slot: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: theme.radii.pill,
-    borderWidth: 1,
-    borderColor: theme.line,
-  },
-  slotActive: { backgroundColor: theme.shell, borderColor: theme.shell },
-  slotText: { color: theme.ink, fontSize: 12 },
-  slotTextActive: { color: theme.paper },
+  slot: roadTrip.chip,
+  slotActive: roadTrip.chipActive,
+  slotText: roadTrip.chipText,
+  slotTextActive: roadTrip.chipTextActive,
   summary: {
-    marginTop: 8,
-    padding: 18,
+    marginTop: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 0,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.gold,
     backgroundColor: theme.goldSoft,
-    borderRadius: theme.radii.xl,
-    borderWidth: 1,
-    borderColor: 'rgba(196, 169, 98, 0.25)',
   },
   summaryTitle: { fontWeight: '600', fontSize: 17 },
   summaryTotal: { fontSize: 26, fontWeight: '600', marginTop: 8 },

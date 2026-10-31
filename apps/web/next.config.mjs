@@ -33,6 +33,9 @@ const nextConfig = {
     '@template/kv',
   ],
   output: 'standalone',
+  async redirects() {
+    return [{ source: '/plans', destination: '/memberships', permanent: true }];
+  },
   images: {
     remotePatterns: [
       {

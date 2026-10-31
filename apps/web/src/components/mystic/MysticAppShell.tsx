@@ -14,7 +14,7 @@ export function MysticAppShell({ children, mainClassName = '' }: Props) {
       <main
         id="main-content"
         tabIndex={-1}
-        className={`mx-auto w-full max-w-6xl px-5 py-8 outline-none md:px-8 md:py-10 ${mainClassName}`}
+        className={`mx-auto w-full max-w-6xl px-4 py-6 pb-12 outline-none sm:px-5 md:px-8 md:py-8 md:pb-14 ${mainClassName}`}
       >
         {children}
       </main>

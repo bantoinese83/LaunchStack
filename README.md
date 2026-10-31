@@ -26,6 +26,8 @@ pnpm dev:admin                     # http://localhost:3002 (MLabs super-admin)
 
 See [docs/client/LAUNCH.md](docs/client/LAUNCH.md) for production env, Stripe products, and store setup.
 
+Quality checklist: [docs/client/QUALITY_AUDIT.md](docs/client/QUALITY_AUDIT.md).
+
 ## Production
 
 - **GitHub:** `bantoinese83/mystic-hair-co`

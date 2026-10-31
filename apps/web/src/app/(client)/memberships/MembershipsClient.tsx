@@ -10,6 +10,7 @@ import {
   type PackageId,
 } from '@template/mystic';
 import { Alert } from '@template/ui';
+import { MysticClientPage } from '@/components/mystic/MysticClientPage';
 import { MysticPageIntro } from '@/components/mystic/MysticPageIntro';
 import { MysticMagneticLink } from '@/components/mystic/MysticMagneticButton';
 import { MysticPricingTiers } from '@/components/mystic/MysticPricingTiers';
@@ -69,7 +70,7 @@ export function MembershipsClient() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl">
+    <MysticClientPage width="wide" loose>
       <MysticPageIntro
         eyebrow="Plans"
         title="Memberships & packages"
@@ -77,7 +78,7 @@ export function MembershipsClient() {
         className="max-w-2xl"
       />
 
-      <ul className="mt-8 flex flex-wrap gap-x-8 gap-y-2 border-y border-line/60 py-4">
+      <ul className="flex flex-wrap gap-x-8 gap-y-2 border-y border-line/60 py-4">
         {TRUST.map((item) => (
           <li key={item} className={`${mysticEyebrow} text-muted`}>
             {item}
@@ -128,6 +129,6 @@ export function MembershipsClient() {
           View billing in account →
         </Link>
       </p>
-    </div>
+    </MysticClientPage>
   );
 }

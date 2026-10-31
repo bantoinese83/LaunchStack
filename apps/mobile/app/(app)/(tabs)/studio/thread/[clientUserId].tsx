@@ -2,15 +2,20 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { NativeButton, theme } from '@template/mobile-ui';
+import { NativeUserAvatar } from '../../../../../components/mystic/NativeUserAvatar';
+import { MYSTIC_STYLIST, messageSenderLabel, mysticStylistPortraitUrl } from '@template/mystic';
 import { useStudioAccess } from '../../../../../hooks/useStudioAccess';
 import { fetchStudioThread, sendStudioMessage } from '../../../../../lib/studioApi';
 
 type Message = { id: string; body: string; sender_role: string };
 
+const lukePortraitUrl = mysticStylistPortraitUrl(process.env.EXPO_PUBLIC_APP_URL);
+
 export default function StudioThreadScreen() {
-  const { clientUserId, clientName } = useLocalSearchParams<{
+  const { clientUserId, clientName, clientAvatarUrl } = useLocalSearchParams<{
     clientUserId: string;
     clientName?: string;
+    clientAvatarUrl?: string;
   }>();
   const { workspaceId } = useStudioAccess();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -41,16 +46,29 @@ export default function StudioThreadScreen() {
 
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.container}>
-      {clientName ? <Text style={styles.heading}>{clientName}</Text> : null}
-      {messages.map((msg) => (
-        <View
-          key={msg.id}
-          style={[styles.bubble, msg.sender_role === 'stylist' ? styles.luke : styles.client]}
-        >
-          <Text style={styles.role}>{msg.sender_role}</Text>
-          <Text style={styles.body}>{msg.body}</Text>
+      {clientName ? (
+        <View style={styles.headingRow}>
+          <NativeUserAvatar url={clientAvatarUrl || null} name={clientName} size={36} />
+          <Text style={styles.heading}>{clientName}</Text>
         </View>
-      ))}
+      ) : null}
+      {messages.map((msg) => {
+        const isStylist = msg.sender_role === 'stylist';
+        const avatarUrl = isStylist ? lukePortraitUrl : clientAvatarUrl || null;
+        const avatarName = isStylist ? MYSTIC_STYLIST.name : (clientName ?? 'Client');
+        return (
+          <View
+            key={msg.id}
+            style={[styles.msgRow, isStylist ? styles.msgRowStylist : styles.msgRowClient]}
+          >
+            <NativeUserAvatar url={avatarUrl} name={avatarName} size={28} />
+            <View style={[styles.bubble, isStylist ? styles.luke : styles.client]}>
+              <Text style={styles.role}>{messageSenderLabel(msg.sender_role, 'studio')}</Text>
+              <Text style={styles.body}>{msg.body}</Text>
+            </View>
+          </View>
+        );
+      })}
       <TextInput
         value={body}
         onChangeText={setBody}
@@ -68,14 +86,17 @@ export default function StudioThreadScreen() {
 const styles = StyleSheet.create({
   scroll: { flex: 1, backgroundColor: theme.paper },
   container: { padding: 20 },
-  heading: { fontWeight: '600', marginBottom: 12, color: theme.ink },
-  bubble: { padding: 12, borderRadius: theme.radii.lg, marginBottom: 8 },
-  luke: { backgroundColor: theme.accentSoft, alignSelf: 'flex-end', maxWidth: '90%' },
+  headingRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 },
+  heading: { fontWeight: '600', color: theme.ink, flex: 1 },
+  msgRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, marginBottom: 10 },
+  msgRowStylist: { flexDirection: 'row-reverse' },
+  msgRowClient: { flexDirection: 'row' },
+  bubble: { padding: 12, borderRadius: theme.radii.lg, maxWidth: '82%' },
+  luke: { backgroundColor: theme.accentSoft },
   client: {
     backgroundColor: theme.surface,
     borderWidth: 1,
     borderColor: theme.line,
-    maxWidth: '90%',
   },
   role: { fontSize: 10, textTransform: 'uppercase', color: theme.muted },
   body: { marginTop: 4, color: theme.ink },

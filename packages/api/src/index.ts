@@ -13,7 +13,7 @@ export { MysticMessageService } from './services/MysticMessageService';
 export { MysticReferralService } from './services/MysticReferralService';
 export { MysticBlastService } from './services/MysticBlastService';
 export { MysticStudioService } from './services/MysticStudioService';
-export { MysticCreditsService } from './services/MysticCreditsService';
+export { MysticCreditsService, groupCreditsByUserId } from './services/MysticCreditsService';
 
 // CLIENT FACTORIES
 

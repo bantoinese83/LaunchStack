@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server';
-import { MysticCreditsService, createSupabaseAdminClient } from '@template/api';
+import {
+  MysticCreditsService,
+  createSupabaseAdminClient,
+  groupCreditsByUserId,
+} from '@template/api';
 import { requireAuthenticatedUser, routeErrorResponse } from '@/lib/api/route-auth';
 import { requireStudioManager } from '@/lib/mystic/studio-auth';
 import { getMysticWorkspaceId } from '@/lib/mystic/config';
@@ -9,22 +13,28 @@ export async function GET(req: Request) {
     const auth = await requireAuthenticatedUser(req);
     if (auth.response) return auth.response;
 
-    const workspaceId = new URL(req.url).searchParams.get('workspaceId') ?? getMysticWorkspaceId();
+    const url = new URL(req.url);
+    const workspaceId = url.searchParams.get('workspaceId') ?? getMysticWorkspaceId();
     const forbidden = await requireStudioManager(auth.user, workspaceId);
     if (forbidden) return forbidden;
 
     const admin = createSupabaseAdminClient();
-    const clients = await new MysticCreditsService(admin).listClientsForStudio(workspaceId);
+    const credits = new MysticCreditsService(admin);
+    const clients = await credits.listClientsForStudio(workspaceId);
 
-    const enriched = await Promise.all(
-      clients.map(async (client) => {
-        const credits = await new MysticCreditsService(admin).listForUser(
-          workspaceId,
-          client.user_id
-        );
-        return { ...client, credits };
-      })
-    );
+    // Credits are opt-in (`?credits=1`). Only the clients screen renders them —
+    // the today board, calendar, composer and mobile screens just need names, and
+    // the old per-client lookup cost one query per client (up to 500).
+    const wantsCredits = url.searchParams.get('credits') === '1';
+    const creditsByUser =
+      wantsCredits && clients.length
+        ? groupCreditsByUserId(await credits.listForWorkspace(workspaceId))
+        : null;
+
+    const enriched = clients.map((client) => ({
+      ...client,
+      credits: creditsByUser?.[client.user_id] ?? [],
+    }));
 
     return NextResponse.json({ clients: enriched });
   } catch (err) {

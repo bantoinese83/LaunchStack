@@ -1,30 +1,52 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   canUploadVisitInspo,
   DEFAULT_SURCHARGE_RULES,
+  formatAddressLine,
   formatUsd,
   formatVisitWhen,
   getServiceById,
   isVisitLiveTracking,
-  sortVisitsForDisplay,
+  partitionVisitsForTabs,
+  pickUpNextVisit,
   visitStatusLabel,
   type ServiceId,
 } from '@template/mystic';
+import { MysticVisitStatusBadge } from '@/components/mystic/MysticVisitStatusBadge';
 import { MysticDoorTimerBanner } from '@/components/mystic/MysticDoorTimerBanner';
-import { MysticLiveMapEmbed } from '@/components/mystic/MysticLiveMapEmbed';
+import {
+  MysticLiveMapEmbed,
+  visitAddressDestination,
+} from '@/components/mystic/MysticLiveMapEmbed';
 import { MysticPageIntro } from '@/components/mystic/MysticPageIntro';
 import { MysticEmptyState } from '@/components/mystic/MysticEmptyState';
 import { MysticMagneticLink } from '@/components/mystic/MysticMagneticButton';
 import { MysticInspoGallery } from '@/components/mystic/MysticInspoGallery';
-import { mysticCard, mysticInput } from '@/components/mystic/mystic-styles';
+import { MysticClientPage } from '@/components/mystic/MysticClientPage';
+import { useDeferredEffect } from '@/lib/react/useDeferredEffect';
+import { MysticVisitUpNext } from '@/components/mystic/MysticVisitUpNext';
+import { MysticServiceIllustration } from '@/components/mystic/illustrations/MysticServiceIllustration';
+import { MysticStylistChip } from '@/components/mystic/MysticStylistChip';
+import {
+  mysticFlatRow,
+  mysticInput,
+  mysticLiveHighlight,
+  mysticSegmentShell,
+  mysticSegmentTab,
+  mysticToolbarRow,
+} from '@/components/mystic/mystic-styles';
+
+type VisitTab = 'upcoming' | 'past';
 
 type Appointment = {
   id: string;
   service_id: string;
   starts_at: string;
   status: string;
+  address?: Record<string, unknown>;
   quote_cents: number;
   eta_minutes: number | null;
   door_timer_ends_at: string | null;
@@ -95,45 +117,66 @@ function InspoUpload({
 }
 
 export function VisitsClient() {
+  const router = useRouter();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [tab, setTab] = useState<VisitTab>('upcoming');
 
-  const load = useCallback((opts?: { silent?: boolean }) => {
-    if (!opts?.silent) setRefreshing(true);
-    void fetch('/api/mystic/appointments/mine')
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.error) setError(data.error);
-        else {
+  const load = useCallback(
+    (opts?: { silent?: boolean }) => {
+      if (!opts?.silent) setRefreshing(true);
+      void fetch('/api/mystic/appointments/mine')
+        .then(async (r) => {
+          const data = await r.json();
+          if (r.status === 401) {
+            router.push('/login?next=/visits');
+            return;
+          }
+          if (!r.ok || data.error) {
+            setError(data.error ?? 'Could not load visits');
+            return;
+          }
           setError(null);
           setAppointments(data.appointments ?? []);
-        }
-      })
-      .catch(() => setError('Sign in to see visits'))
-      .finally(() => {
-        setLoading(false);
-        setRefreshing(false);
-      });
-  }, []);
+        })
+        .catch(() => setError('Sign in to see visits'))
+        .finally(() => {
+          setLoading(false);
+          setRefreshing(false);
+        });
+    },
+    [router]
+  );
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  useDeferredEffect(() => load(), [load]);
 
-  const sorted = useMemo(() => sortVisitsForDisplay(appointments), [appointments]);
+  const { upcoming, past } = useMemo(() => partitionVisitsForTabs(appointments), [appointments]);
+  const visibleRows = tab === 'upcoming' ? upcoming : past;
+  const upNext = useMemo(
+    () => (tab === 'upcoming' ? pickUpNextVisit(upcoming) : null),
+    [tab, upcoming]
+  );
+  const listRows = useMemo(() => {
+    if (!upNext || tab !== 'upcoming') return visibleRows;
+    return visibleRows.filter((row) => row.id !== upNext.id);
+  }, [tab, upNext, visibleRows]);
   const hasLiveTracking = useMemo(
     () => appointments.some((a) => isVisitLiveTracking(a.status)),
     [appointments]
   );
+  const hasPending = useMemo(
+    () => appointments.some((a) => a.status === 'pending'),
+    [appointments]
+  );
 
   useEffect(() => {
-    if (!hasLiveTracking) return;
-    const pollMs = 12_000;
+    if (!hasLiveTracking && !hasPending) return;
+    const pollMs = hasLiveTracking ? 12_000 : 45_000;
     const id = setInterval(() => load({ silent: true }), pollMs);
     return () => clearInterval(id);
-  }, [hasLiveTracking, load]);
+  }, [hasLiveTracking, hasPending, load]);
 
   useEffect(() => {
     if (!hasLiveTracking) return;
@@ -145,15 +188,36 @@ export function VisitsClient() {
   }, [hasLiveTracking, load]);
 
   return (
-    <div className="mx-auto max-w-lg">
+    <MysticClientPage>
       <MysticPageIntro
         eyebrow="My visits"
         title="Your house calls"
         description="Live map when Luke is en route, inspo uploads, and messages."
       />
-      <div className="mt-4 flex items-center justify-between gap-3 text-xs text-muted">
+      <div className={mysticSegmentShell} role="tablist" aria-label="Visit timeframe">
+        {(
+          [
+            ['upcoming', `Upcoming (${upcoming.length})`],
+            ['past', `Past (${past.length})`],
+          ] as const
+        ).map(([key, label]) => (
+          <button
+            key={key}
+            type="button"
+            role="tab"
+            aria-selected={tab === key}
+            onClick={() => setTab(key)}
+            className={mysticSegmentTab(tab === key)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      <div className={`${mysticToolbarRow} text-xs text-muted`}>
         {hasLiveTracking ? (
           <span className="text-chalk">Live updates while Luke is on the way</span>
+        ) : hasPending ? (
+          <span>Pending visits refresh automatically</span>
         ) : (
           <span />
         )}
@@ -166,18 +230,17 @@ export function VisitsClient() {
           {refreshing ? 'Refreshing…' : 'Refresh'}
         </button>
       </div>
-      {error ? <p className="mt-4 text-sm text-muted">{error}</p> : null}
+      {error ? <p className="text-sm text-muted">{error}</p> : null}
       {loading ? (
-        <ul className="mt-8 space-y-4" aria-busy="true">
+        <ul className="flex flex-col gap-4" aria-busy="true">
           {[0, 1].map((i) => (
-            <li key={i} className={`${mysticCard} h-36 animate-pulse p-5`} />
+            <li key={i} className={`${mysticFlatRow} h-36 animate-pulse`} />
           ))}
         </ul>
       ) : null}
-      {!loading && sorted.length === 0 && !error ? (
+      {!loading && appointments.length === 0 && !error ? (
         <MysticEmptyState
           variant="visits"
-          className="mt-8"
           action={
             <MysticMagneticLink href="/book" fullWidth>
               Book a house call
@@ -185,8 +248,19 @@ export function VisitsClient() {
           }
         />
       ) : null}
-      <ul className="mt-8 space-y-4">
-        {sorted.map((row) => {
+      {!loading && appointments.length > 0 && visibleRows.length === 0 ? (
+        <p className="text-center text-sm text-muted">
+          {tab === 'upcoming'
+            ? 'No upcoming visits — book your next house call.'
+            : 'No past visits yet.'}
+        </p>
+      ) : null}
+      {tab === 'upcoming' && upNext ? <MysticVisitUpNext visit={upNext} /> : null}
+      {tab === 'upcoming' && listRows.length > 0 ? (
+        <h2 className="type-eyebrow text-muted">All upcoming</h2>
+      ) : null}
+      <ul className="flex flex-col divide-y divide-line/80 border-y border-line/80">
+        {listRows.map((row) => {
           let serviceName = row.service_id;
           try {
             serviceName = getServiceById(row.service_id as ServiceId).name;
@@ -194,16 +268,34 @@ export function VisitsClient() {
             /* unknown service id */
           }
           const live = isVisitLiveTracking(row.status);
+          const addressLine = formatAddressLine(row.address);
           return (
-            <li key={row.id} className={`${mysticCard} p-5 ${live ? 'ring-2 ring-accent/40' : ''}`}>
-              <p className="font-medium">{serviceName}</p>
-              <p className="text-sm text-muted">{formatVisitWhen(row.starts_at)}</p>
+            <li
+              key={row.id}
+              id={row.id}
+              className={`${mysticFlatRow} ${live ? mysticLiveHighlight : ''}`}
+            >
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div className="flex min-w-0 flex-1 items-center gap-3">
+                  <MysticServiceIllustration serviceId={row.service_id as ServiceId} size="sm" />
+                  <p className="font-medium">{serviceName}</p>
+                </div>
+                <MysticVisitStatusBadge status={row.status} />
+              </div>
+              <p className="mt-2 text-sm text-muted">{formatVisitWhen(row.starts_at)}</p>
+              {tab === 'upcoming' ? <MysticStylistChip className="mt-2" size={24} /> : null}
+              {addressLine ? <p className="mt-1 text-xs text-muted">{addressLine}</p> : null}
               <p className="mt-2 text-sm text-chalk">
                 {visitStatusLabel(row.status)}
                 {row.eta_minutes && row.status === 'stylist_en_route'
                   ? ` · ~${row.eta_minutes} min`
                   : ''}
               </p>
+              {row.status === 'pending' ? (
+                <p className="mt-2 rounded-xl border border-line bg-paper px-3 py-2 text-xs text-muted">
+                  Payment processing — this visit will confirm once checkout completes.
+                </p>
+              ) : null}
               <p className="mt-1 text-sm">{formatUsd(row.quote_cents)}</p>
               {row.status === 'door_timer_active' && row.door_timer_ends_at ? (
                 <MysticDoorTimerBanner endsAt={row.door_timer_ends_at} />
@@ -219,6 +311,7 @@ export function VisitsClient() {
                   latitude={row.stylist_latitude}
                   longitude={row.stylist_longitude}
                   updatedAt={row.stylist_location_updated_at}
+                  destination={visitAddressDestination(row.address)}
                 />
               ) : row.status === 'stylist_en_route' ? (
                 <p className="mt-3 rounded-xl border border-line bg-paper px-3 py-3 text-sm text-muted">
@@ -234,13 +327,20 @@ export function VisitsClient() {
                   onUploaded={() => load({ silent: true })}
                 />
               ) : null}
+              <MysticMagneticLink href="/messages" className="mt-4 inline-block text-sm">
+                Message Luke about this visit
+              </MysticMagneticLink>
             </li>
           );
         })}
       </ul>
-      <MysticMagneticLink href="/messages" className="mt-8">
-        Message Luke
-      </MysticMagneticLink>
-    </div>
+      {tab === 'upcoming' && upcoming.length === 0 ? (
+        <MysticMagneticLink href="/book" fullWidth>
+          Book a house call
+        </MysticMagneticLink>
+      ) : (
+        <MysticMagneticLink href="/messages">Message Luke</MysticMagneticLink>
+      )}
+    </MysticClientPage>
   );
 }

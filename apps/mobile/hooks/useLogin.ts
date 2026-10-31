@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { createSupabaseMobileClient } from '@template/api/mobile';
 import { firstZodIssueMessage, getErrorMessage, loginSchema } from '@template/validation';
-import { authorizedFetch } from '../../lib/auth/authorizedFetch';
-import { getMobileAuthRedirectUri } from '../../lib/auth/oauth';
-import { fetchStudioAccess } from '../../lib/studioApi';
+import { authorizedFetch } from '../lib/auth/authorizedFetch';
+import { getMobileAuthRedirectUri } from '../lib/auth/oauth';
+import { fetchStudioAccess } from '../lib/studioApi';
 
 const CLIENT_HOME = '/(app)/(tabs)/book' as const;
 const STUDIO_HOME = '/(app)/(tabs)/studio' as const;

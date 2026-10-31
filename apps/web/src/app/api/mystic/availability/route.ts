@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createSupabaseAdminClient } from '@template/api';
+import { MysticAppointmentService, createSupabaseAdminClient } from '@template/api';
 import { buildTimeSlotsForDate, getServiceById, DEFAULT_SURCHARGE_RULES } from '@template/mystic';
 import { z } from 'zod';
 import { SERVICE_IDS } from '@template/mystic';
@@ -27,6 +27,7 @@ export async function GET(req: Request) {
     const service = getServiceById(parsed.data.serviceId);
     const workspaceId = getMysticWorkspaceId();
     const admin = createSupabaseAdminClient();
+    await new MysticAppointmentService(admin).cancelStalePending(workspaceId, 90);
 
     const { data: blocked } = await admin
       .from('mystic_blocked_dates')

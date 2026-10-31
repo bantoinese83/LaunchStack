@@ -4,5 +4,6 @@ node_modules
 .turbo
 dist
 **/next-env.d.ts
+**/expo-env.d.ts
 **/pnpm-lock.yaml
 supabase

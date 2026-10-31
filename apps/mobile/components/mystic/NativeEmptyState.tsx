@@ -1,40 +1,57 @@
 import React from 'react';
-import { Image, ImageSourcePropType, StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 import { MYSTIC_EMPTY_CONTENT, type MysticEmptyVariant } from '@template/mystic';
-import { displayTitle, theme } from '@template/mobile-ui';
-
-const ILLUSTRATIONS: Record<string, ImageSourcePropType> = {
-  'visits.jpg': require('../../assets/illustrations/empty/visits.jpg'),
-  'messages.jpg': require('../../assets/illustrations/empty/messages.jpg'),
-  'calendar.jpg': require('../../assets/illustrations/empty/calendar.jpg'),
-  'clients.jpg': require('../../assets/illustrations/empty/clients.jpg'),
-  'referrals.jpg': require('../../assets/illustrations/empty/referrals.jpg'),
-};
+import { displayTitle, monoLabel, roadTrip, theme } from '@template/mobile-ui';
+import { MYSTIC_EMPTY_ILLUSTRATIONS } from '../../constants/emptyIllustrations';
+import { NativeRoadStripe } from './NativeRoadStripe';
 
 type Props = {
   variant: MysticEmptyVariant;
   title?: string;
   description?: string;
+  eyebrow?: string;
   action?: React.ReactNode;
   compact?: boolean;
 };
 
-export function NativeEmptyState({ variant, title, description, action, compact = false }: Props) {
+export function NativeEmptyState({
+  variant,
+  title,
+  description,
+  eyebrow,
+  action,
+  compact = false,
+}: Props) {
   const content = MYSTIC_EMPTY_CONTENT[variant];
   const heading = title ?? content.title;
-  const body = description ?? content.description;
-  const source = ILLUSTRATIONS[content.illustration] ?? ILLUSTRATIONS['visits.jpg'];
+  const body =
+    description ??
+    (compact && content.compactDescription ? content.compactDescription : content.description);
+  const kicker = eyebrow ?? content.eyebrow;
+  const source =
+    MYSTIC_EMPTY_ILLUSTRATIONS[content.illustration] ?? MYSTIC_EMPTY_ILLUSTRATIONS['visits.jpg'];
 
   return (
-    <View style={[styles.wrap, compact && styles.wrapCompact]} accessibilityRole="text">
+    <View
+      style={[styles.wrap, compact && styles.wrapCompact]}
+      accessibilityRole="summary"
+      accessibilityLabel={`${heading}. ${body}`}
+    >
+      <View style={styles.stripeWrap}>
+        <NativeRoadStripe />
+      </View>
+      {kicker ? <Text style={styles.eyebrow}>{kicker}</Text> : null}
       <View style={[styles.artFrame, compact && styles.artFrameCompact]}>
+        <View style={styles.artPlumAccent} />
         <Image
           source={source}
           style={styles.art}
           resizeMode="cover"
           accessibilityIgnoresInvertColors
+          accessible={false}
         />
       </View>
+      <View style={styles.hairline} />
       <Text style={[styles.title, compact && styles.titleCompact]}>{heading}</Text>
       <Text style={[styles.body, compact && styles.bodyCompact]}>{body}</Text>
       {action ? <View style={styles.action}>{action}</View> : null}
@@ -45,39 +62,87 @@ export function NativeEmptyState({ variant, title, description, action, compact 
 const styles = StyleSheet.create({
   wrap: {
     alignItems: 'center',
-    paddingVertical: 28,
-    paddingHorizontal: 20,
-    borderRadius: theme.radii.xl,
-    borderWidth: 1,
-    borderColor: theme.line,
-    backgroundColor: theme.surface,
+    paddingVertical: 24,
+    paddingHorizontal: 8,
+    width: '100%',
   },
-  wrapCompact: { paddingVertical: 20 },
+  wrapCompact: {
+    paddingVertical: 16,
+    paddingHorizontal: 4,
+  },
+  stripeWrap: {
+    width: '72%',
+    maxWidth: 220,
+    marginBottom: 16,
+  },
+  eyebrow: {
+    ...monoLabel,
+    color: theme.plum,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
   artFrame: {
-    width: 168,
-    height: 168,
+    width: '100%',
+    maxWidth: 280,
+    aspectRatio: 1.15,
     borderRadius: theme.radii.lg,
     overflow: 'hidden',
-    backgroundColor: theme.accentSoft,
+    backgroundColor: theme.chalkSoft,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.line,
   },
-  artFrameCompact: { width: 132, height: 132 },
-  art: { width: '100%', height: '100%' },
+  artFrameCompact: {
+    maxWidth: 220,
+    aspectRatio: 1.1,
+  },
+  artPlumAccent: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 4,
+    backgroundColor: theme.plum,
+    zIndex: 1,
+  },
+  art: {
+    width: '100%',
+    height: '100%',
+  },
+  hairline: {
+    ...roadTrip.hairline,
+    maxWidth: 280,
+    marginTop: 16,
+    marginBottom: 4,
+  },
   title: {
     ...displayTitle,
-    fontSize: 20,
-    marginTop: 20,
+    fontSize: 22,
+    marginTop: 12,
     textAlign: 'center',
     color: theme.ink,
+    letterSpacing: -0.5,
   },
-  titleCompact: { fontSize: 17, marginTop: 14 },
+  titleCompact: {
+    fontSize: 18,
+    marginTop: 10,
+  },
   body: {
-    marginTop: 8,
-    fontSize: 14,
-    lineHeight: 20,
+    marginTop: 10,
+    fontSize: 15,
+    lineHeight: 22,
     textAlign: 'center',
     color: theme.muted,
-    maxWidth: 300,
+    maxWidth: 320,
   },
-  bodyCompact: { fontSize: 13 },
-  action: { marginTop: 20, width: '100%', maxWidth: 280 },
+  bodyCompact: {
+    fontSize: 14,
+    lineHeight: 20,
+    marginTop: 8,
+  },
+  action: {
+    marginTop: 20,
+    width: '100%',
+    maxWidth: 320,
+    gap: 10,
+  },
 });

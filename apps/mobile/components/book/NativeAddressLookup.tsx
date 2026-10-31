@@ -10,6 +10,8 @@ export type HouseCallAddress = {
   state: string;
   postalCode: string;
   notes: string;
+  latitude?: number;
+  longitude?: number;
 };
 
 type Props = {
@@ -45,6 +47,8 @@ export function NativeAddressLookup({ address, onChange, onSuggestionSelected }:
       city: s.city,
       state: s.state,
       postalCode: s.postalCode,
+      latitude: s.latitude,
+      longitude: s.longitude,
     });
     setLookup('');
     setSuggestions([]);

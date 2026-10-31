@@ -13,8 +13,7 @@ export function useStudioAccess() {
       setIsManager(Boolean(data.allowed));
       setWorkspaceId(data.workspaceId ?? null);
     } catch {
-      setIsManager(false);
-      setWorkspaceId(null);
+      // Keep last-known access on transient errors so manager tabs do not flicker off.
     } finally {
       setLoading(false);
     }

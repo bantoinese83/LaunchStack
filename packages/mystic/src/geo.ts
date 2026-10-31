@@ -41,7 +41,75 @@ export function openStreetMapEmbedUrl(
   return `https://www.openstreetmap.org/export/embed.html?bbox=${encodeURIComponent(bbox)}&layer=mapnik&marker=${latitude},${longitude}`;
 }
 
+export type LatLng = { lat: number; lng: number };
+
+/** OSM embed framing multiple pins (no API key / billing). */
+export function openStreetMapEmbedForPoints(points: LatLng[], paddingDegrees = 0.03): string {
+  if (!points.length) {
+    return openStreetMapEmbedUrl(MYSTIC_RIVER_NORTH.lat, MYSTIC_RIVER_NORTH.lng);
+  }
+  let minLat = points[0].lat;
+  let maxLat = points[0].lat;
+  let minLng = points[0].lng;
+  let maxLng = points[0].lng;
+  for (const p of points) {
+    minLat = Math.min(minLat, p.lat);
+    maxLat = Math.max(maxLat, p.lat);
+    minLng = Math.min(minLng, p.lng);
+    maxLng = Math.max(maxLng, p.lng);
+  }
+  minLat -= paddingDegrees;
+  maxLat += paddingDegrees;
+  minLng -= paddingDegrees;
+  maxLng += paddingDegrees;
+  const primary = points[0];
+  const bbox = `${minLng},${minLat},${maxLng},${maxLat}`;
+  return `https://www.openstreetmap.org/export/embed.html?bbox=${encodeURIComponent(bbox)}&layer=mapnik&marker=${primary.lat},${primary.lng}`;
+}
+
 export type MapCoordinate = { latitude: number; longitude: number; label?: string };
+
+/** Read coordinates stored on appointment address JSON. */
+export function addressLatLng(address: unknown): LatLng | null {
+  if (!address || typeof address !== 'object') return null;
+  const row = address as Record<string, unknown>;
+  const latRaw = row.latitude ?? row.lat;
+  const lngRaw = row.longitude ?? row.lng;
+  const lat = typeof latRaw === 'number' ? latRaw : Number.parseFloat(String(latRaw ?? ''));
+  const lng = typeof lngRaw === 'number' ? lngRaw : Number.parseFloat(String(lngRaw ?? ''));
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  return { lat, lng };
+}
+
+/** Turn-by-turn in Google Maps (Luke → client). */
+export function googleMapsDirectionsUrl(
+  destination: LatLng | string,
+  origin?: LatLng | string
+): string {
+  const url = new URL('https://www.google.com/maps/dir/?api=1');
+  url.searchParams.set('travelmode', 'driving');
+  if (typeof destination === 'string') url.searchParams.set('destination', destination);
+  else url.searchParams.set('destination', `${destination.lat},${destination.lng}`);
+  if (origin) {
+    if (typeof origin === 'string') url.searchParams.set('origin', origin);
+    else url.searchParams.set('origin', `${origin.lat},${origin.lng}`);
+  }
+  return url.toString();
+}
+
+/** Static embed (Maps Embed API) when JS API is unavailable. */
+export function googleMapsEmbedUrl(
+  apiKey: string,
+  latitude: number,
+  longitude: number,
+  zoom = 14
+): string {
+  const url = new URL('https://www.google.com/maps/embed/v1/view');
+  url.searchParams.set('key', apiKey);
+  url.searchParams.set('center', `${latitude},${longitude}`);
+  url.searchParams.set('zoom', String(zoom));
+  return url.toString();
+}
 
 export function mapRegionFromCenter(
   latitude: number,
@@ -55,4 +123,37 @@ export function mapRegionFromCenter(
     latitudeDelta,
     longitudeDelta,
   };
+}
+
+/** Fit react-native-maps region to one or more pins. */
+export function mapRegionForLatLngs(points: LatLng[], minDelta = 0.025) {
+  if (points.length === 0) {
+    return mapRegionFromCenter(MYSTIC_RIVER_NORTH.lat, MYSTIC_RIVER_NORTH.lng);
+  }
+  if (points.length === 1) {
+    return mapRegionFromCenter(points[0]!.lat, points[0]!.lng, minDelta * 2, minDelta * 2);
+  }
+  let minLat = points[0]!.lat;
+  let maxLat = points[0]!.lat;
+  let minLng = points[0]!.lng;
+  let maxLng = points[0]!.lng;
+  for (const p of points) {
+    minLat = Math.min(minLat, p.lat);
+    maxLat = Math.max(maxLat, p.lat);
+    minLng = Math.min(minLng, p.lng);
+    maxLng = Math.max(maxLng, p.lng);
+  }
+  const latitudeDelta = Math.max((maxLat - minLat) * 1.55, minDelta);
+  const longitudeDelta = Math.max((maxLng - minLng) * 1.55, minDelta);
+  return {
+    latitude: (minLat + maxLat) / 2,
+    longitude: (minLng + maxLng) / 2,
+    latitudeDelta,
+    longitudeDelta,
+  };
+}
+
+/** Resolve destination coords from a visit address blob. */
+export function visitAddressDestination(address: unknown): LatLng | null {
+  return addressLatLng(address);
 }

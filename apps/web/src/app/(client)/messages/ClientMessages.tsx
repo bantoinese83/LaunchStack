@@ -1,99 +1,143 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useCallback, useEffect, useState } from 'react';
+import { useDeferredEffect } from '@/lib/react/useDeferredEffect';
 import { createSupabaseBrowserClient } from '@template/api';
-import { MysticEmptyState } from '@/components/mystic/MysticEmptyState';
+import { CLIENT_MESSAGE_QUICK_REPLIES, MYSTIC_STYLIST } from '@template/mystic';
+import {
+  MysticMessageThread,
+  type ThreadMessage,
+  type ThreadParticipants,
+} from '@/components/mystic/MysticMessageThread';
+import { MysticClientPage } from '@/components/mystic/MysticClientPage';
 import { MysticPageIntro } from '@/components/mystic/MysticPageIntro';
-import { MysticMagneticButton } from '@/components/mystic/MysticMagneticButton';
-import { mysticCard, mysticInput } from '@/components/mystic/mystic-styles';
 import { getMysticWorkspaceId } from '@/lib/mystic/config';
 
-type Message = {
-  id: string;
-  body: string;
-  sender_role: string;
-  created_at: string;
-};
+const POLL_MS = 18_000;
 
 export function ClientMessages() {
   const workspaceId = getMysticWorkspaceId();
-  const [body, setBody] = useState('');
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [status, setStatus] = useState<string | null>(null);
+  const [messages, setMessages] = useState<ThreadMessage[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<number | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [participants, setParticipants] = useState<ThreadParticipants>({
+    stylist: { name: MYSTIC_STYLIST.name, avatarUrl: MYSTIC_STYLIST.portraitPath },
+  });
 
-  useEffect(() => {
-    let cancelled = false;
-    async function fetchMessages() {
+  const load = useCallback(
+    async (opts?: { silent?: boolean }) => {
+      if (!workspaceId) return;
+      if (!opts?.silent) setRefreshing(true);
       const supabase = createSupabaseBrowserClient();
       const { data: session } = await supabase.auth.getSession();
-      const userId = session.session?.user.id;
-      if (!userId || !workspaceId || cancelled) return;
+      const uid = session.session?.user.id;
+      if (!uid) {
+        setLoadError('Sign in to message Luke');
+        setRefreshing(false);
+        return;
+      }
+      setUserId(uid);
+      void fetch('/api/mystic/client-profile')
+        .then((r) => r.json())
+        .then((data) => {
+          const p = data.profile;
+          if (p) {
+            setParticipants({
+              stylist: { name: MYSTIC_STYLIST.name, avatarUrl: MYSTIC_STYLIST.portraitPath },
+              client: {
+                name: p.full_name ?? p.email ?? 'You',
+                avatarUrl: p.avatar_url ?? null,
+              },
+            });
+          }
+        })
+        .catch(() => {
+          /* avatar optional */
+        });
       const res = await fetch(
-        `/api/mystic/messages?workspaceId=${workspaceId}&clientUserId=${userId}`
+        `/api/mystic/messages?workspaceId=${workspaceId}&clientUserId=${uid}`
       );
       const data = await res.json();
-      if (!cancelled && res.ok) setMessages(data.messages ?? []);
-    }
-    void fetchMessages();
-    return () => {
-      cancelled = true;
-    };
-  }, [workspaceId]);
+      if (res.status === 401) {
+        setLoadError('Sign in to message Luke');
+      } else if (!res.ok) {
+        setLoadError(data.error ?? 'Could not load messages');
+      } else {
+        setLoadError(null);
+        setMessages(data.messages ?? []);
+        setLastUpdatedAt(Date.now());
+      }
+      setRefreshing(false);
+    },
+    [workspaceId]
+  );
 
-  async function send() {
-    if (!workspaceId) {
-      setStatus('Studio not configured');
-      return;
+  useDeferredEffect(() => void load(), [load]);
+
+  useEffect(() => {
+    if (!userId || !workspaceId) return;
+    const id = setInterval(() => void load({ silent: true }), POLL_MS);
+    return () => clearInterval(id);
+  }, [userId, workspaceId, load]);
+
+  useEffect(() => {
+    function onVisible() {
+      if (document.visibilityState === 'visible') void load({ silent: true });
     }
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, [load]);
+
+  async function onSend(body: string) {
+    if (!workspaceId) return { ok: false, error: 'Studio not configured' };
     const res = await fetch('/api/mystic/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ workspaceId, body }),
+      body: JSON.stringify({ workspaceId, body: body.trim() }),
     });
     const data = await res.json();
     if (res.ok) {
       setMessages((m) => [...m, data.message]);
-      setBody('');
-      setStatus('Sent');
-    } else {
-      setStatus(data.error);
+      setLastUpdatedAt(Date.now());
+      return { ok: true };
     }
+    return { ok: false, error: data.error ?? 'Could not send' };
   }
 
   return (
-    <div className="mx-auto max-w-lg">
+    <MysticClientPage>
       <MysticPageIntro
         eyebrow="Messages"
         title="Message Luke"
         description="House-call questions, inspo, or schedule tweaks — one thread with your stylist."
       />
-      {messages.length === 0 ? (
-        <MysticEmptyState variant="messages" className="mt-8" compact />
-      ) : (
-        <ul className={`${mysticCard} mt-8 max-h-72 space-y-2 overflow-y-auto p-4`}>
-          {messages.map((msg) => (
-            <li
-              key={msg.id}
-              className={`rounded-2xl px-3 py-2 text-sm ${
-                msg.sender_role === 'stylist' ? 'bg-accent-soft' : 'border border-line/80 bg-paper'
-              }`}
-            >
-              <p className="text-xs uppercase text-muted">{msg.sender_role}</p>
-              <p>{msg.body}</p>
-            </li>
-          ))}
-        </ul>
-      )}
-      <textarea
-        value={body}
-        onChange={(e) => setBody(e.target.value)}
-        className={`${mysticInput} mt-6 min-h-32`}
+      {loadError ? (
+        <p className="text-sm text-plum">
+          {loadError}
+          {loadError.toLowerCase().includes('sign in') ? (
+            <>
+              {' '}
+              <Link href="/login" className="font-medium text-plum underline underline-offset-2">
+                Sign in
+              </Link>
+            </>
+          ) : null}
+        </p>
+      ) : null}
+      <MysticMessageThread
+        messages={messages}
+        mode="client"
         placeholder="Hey Luke…"
+        quickReplies={CLIENT_MESSAGE_QUICK_REPLIES}
+        participants={participants}
+        onSend={onSend}
+        onRefresh={() => void load()}
+        refreshing={refreshing}
+        lastUpdatedAt={lastUpdatedAt}
       />
-      <MysticMagneticButton type="button" onClick={send} className="mt-4">
-        Send
-      </MysticMagneticButton>
-      {status ? <p className="mt-3 text-sm text-muted">{status}</p> : null}
-    </div>
+    </MysticClientPage>
   );
 }

@@ -11,6 +11,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const src = join(root, 'apps/web/public/brand/mystic-hair-logo.jpeg');
 const outLight = join(root, 'apps/web/public/brand/mystic-hair-logo-light.png');
 const outDark = join(root, 'apps/web/public/brand/mystic-hair-logo-dark.png');
+const mobileAssets = join(root, 'apps/mobile/assets');
 
 const py = `
 from PIL import Image
@@ -49,6 +50,37 @@ for out, im in ((out_light, light), (out_dark, dark)):
         im = im.crop(bbox)
     im.save(out, optimize=True)
     print('Wrote', out, im.size)
+
+mobile = ${JSON.stringify(mobileAssets)}
+import shutil
+shutil.copy2(out_light, mobile + '/mystic-hair-logo-light.png')
+shutil.copy2(out_dark, mobile + '/mystic-hair-logo-dark.png')
+
+logo = Image.open(out_light).convert('RGBA')
+PAPER = (247, 244, 237, 255)
+
+def paste_centered(canvas, mark, width):
+    scale = width / mark.width
+    height = int(mark.height * scale)
+    resized = mark.resize((width, height), Image.Resampling.LANCZOS)
+    x = (canvas.width - width) // 2
+    y = (canvas.height - height) // 2
+    canvas.paste(resized, (x, y), resized)
+    return resized, x, y
+
+splash = Image.new('RGBA', (1284, 2778), PAPER)
+paste_centered(splash, logo, 720)
+splash.convert('RGB').save(mobile + '/splash.png', optimize=True)
+
+icon_size = 1024
+icon = Image.new('RGBA', (icon_size, icon_size), PAPER)
+resized, x, y = paste_centered(icon, logo, 820)
+icon.save(mobile + '/icon.png', optimize=True)
+
+fg = Image.new('RGBA', (icon_size, icon_size), (0, 0, 0, 0))
+fg.paste(resized, (x, y), resized)
+fg.save(mobile + '/adaptive-icon.png', optimize=True)
+print('Wrote mobile splash + icon assets')
 `;
 
 const r = spawnSync('python3', ['-c', py], { encoding: 'utf8' });

@@ -1,8 +1,12 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { MysticEmptyState } from '@/components/mystic/MysticEmptyState';
+import { StudioLoadingRows } from '@/components/mystic/studio/StudioLoadingRows';
+import { StudioWorkspaceNotice } from '@/components/mystic/studio/StudioWorkspaceNotice';
+import { mysticCard, mysticInput } from '@/components/mystic/mystic-styles';
 import { getMysticWorkspaceId } from '@/lib/mystic/config';
+import { useDeferredEffect } from '@/lib/react/useDeferredEffect';
 
 type ReferrerRow = {
   referrerUserId: string;
@@ -24,47 +28,73 @@ export function ReferralsPanel() {
   const [month, setMonth] = useState(() => new Date().toISOString().slice(0, 7));
   const [referrers, setReferrers] = useState<ReferrerRow[]>([]);
   const [recent, setRecent] = useState<RecentReferral[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!workspaceId) return;
+  const load = useCallback(() => {
+    if (!workspaceId) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setError(null);
     void fetch(`/api/mystic/referrals?workspaceId=${workspaceId}&view=dashboard&month=${month}`)
       .then((r) => r.json())
       .then((data) => {
-        setReferrers(data.dashboard?.referrers ?? []);
-        setRecent(data.dashboard?.recent ?? []);
+        if (data.error) setError(data.error);
+        else {
+          setReferrers(data.dashboard?.referrers ?? []);
+          setRecent(data.dashboard?.recent ?? []);
+        }
       })
-      .catch(() => {
-        setReferrers([]);
-        setRecent([]);
-      });
+      .catch(() => setError('Could not load referrals'))
+      .finally(() => setLoading(false));
   }, [workspaceId, month]);
+
+  useDeferredEffect(load, [load]);
 
   const monthLabel = useMemo(() => {
     const [y, m] = month.split('-').map(Number);
     return new Date(y, m - 1, 1).toLocaleString(undefined, { month: 'long', year: 'numeric' });
   }, [month]);
 
-  return (
-    <div>
-      <label className="flex flex-wrap items-center gap-3 text-sm">
-        <span className="text-muted">Month</span>
-        <input
-          type="month"
-          value={month}
-          onChange={(e) => setMonth(e.target.value)}
-          className="rounded-xl border border-line px-3 py-2"
-        />
-      </label>
-      <p className="mt-2 text-sm text-muted">
-        Referrals credited in {monthLabel} — pending rows count toward the next reward when visits
-        confirm.
-      </p>
+  if (!workspaceId) {
+    return <StudioWorkspaceNotice />;
+  }
 
-      {referrers.length === 0 ? (
-        <MysticEmptyState variant="referrals" className="mt-6" compact />
-      ) : (
-        <div className="mt-6 overflow-hidden rounded-2xl border border-line bg-surface">
-          <table className="w-full text-left text-sm">
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <label className="block text-sm">
+          <span className="text-muted">Month</span>
+          <input
+            type="month"
+            value={month}
+            onChange={(e) => setMonth(e.target.value)}
+            className={`${mysticInput} mt-1 max-w-xs`}
+          />
+        </label>
+        <button
+          type="button"
+          onClick={load}
+          disabled={loading}
+          className="text-sm text-accent underline disabled:opacity-50"
+        >
+          {loading ? 'Refreshing…' : 'Refresh'}
+        </button>
+      </div>
+      <p className="text-sm text-muted">
+        Referrals credited in {monthLabel}. Pending rows count toward the next blowout reward after
+        the referred client&apos;s booking is confirmed and paid.
+      </p>
+      {error ? <p className="text-sm text-danger">{error}</p> : null}
+      {loading && referrers.length === 0 ? <StudioLoadingRows count={2} /> : null}
+
+      {!loading && referrers.length === 0 && !error ? (
+        <MysticEmptyState variant="referrals" compact />
+      ) : referrers.length > 0 ? (
+        <div className={`${mysticCard} overflow-x-auto p-0`}>
+          <table className="w-full min-w-[480px] text-left text-sm">
             <thead className="border-b border-line bg-paper text-xs uppercase tracking-wide text-muted">
               <tr>
                 <th className="px-4 py-3 font-medium">Referrer</th>
@@ -76,40 +106,47 @@ export function ReferralsPanel() {
             <tbody>
               {referrers.map((row) => (
                 <tr key={row.referrerUserId} className="border-b border-line/60 last:border-0">
-                  <td className="px-4 py-3 font-medium">{row.name}</td>
-                  <td className="px-4 py-3">{row.total}</td>
-                  <td className="px-4 py-3 text-muted">{row.pending}</td>
-                  <td className="px-4 py-3 text-muted">{row.credited}</td>
+                  <td className="px-4 py-3 font-medium text-ink">{row.name}</td>
+                  <td className="px-4 py-3 tabular-nums">{row.total}</td>
+                  <td className="px-4 py-3 tabular-nums text-muted">{row.pending}</td>
+                  <td className="px-4 py-3 tabular-nums text-muted">{row.credited}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-      )}
+      ) : null}
 
-      <h3 className="mt-8 text-sm font-medium">Recent in {monthLabel}</h3>
-      <ul className="mt-3 divide-y divide-line rounded-2xl border border-line bg-surface">
-        {recent.length === 0 ? (
-          <li className="list-none p-2">
-            <MysticEmptyState
-              variant="referrals"
-              compact
-              title="No recent referrals"
-              description="New sign-ups with a code will list here."
-            />
-          </li>
-        ) : (
-          recent.map((row) => (
-            <li key={row.id} className="flex justify-between px-4 py-3 text-sm">
-              <span>{row.referred_name}</span>
-              <span className="text-muted">
-                {row.credited ? 'Rewarded' : 'Pending'} ·{' '}
-                {new Date(row.created_at).toLocaleDateString()}
-              </span>
+      <div>
+        <h3 className="text-sm font-medium text-ink">Recent in {monthLabel}</h3>
+        <ul className={`${mysticCard} mt-3 divide-y divide-line/80 overflow-hidden p-0`}>
+          {loading && recent.length === 0 ? (
+            <li className="p-4 text-sm text-muted">Loading…</li>
+          ) : recent.length === 0 ? (
+            <li className="list-none p-2">
+              <MysticEmptyState
+                variant="referrals"
+                compact
+                title="No recent referrals"
+                description="New sign-ups with a code will list here."
+              />
             </li>
-          ))
-        )}
-      </ul>
+          ) : (
+            recent.map((row) => (
+              <li
+                key={row.id}
+                className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm"
+              >
+                <span className="font-medium text-ink">{row.referred_name}</span>
+                <span className="text-muted">
+                  {row.credited ? 'Rewarded' : 'Pending'} ·{' '}
+                  {new Date(row.created_at).toLocaleDateString()}
+                </span>
+              </li>
+            ))
+          )}
+        </ul>
+      </div>
     </div>
   );
 }

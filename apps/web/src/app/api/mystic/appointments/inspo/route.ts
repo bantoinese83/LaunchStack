@@ -1,18 +1,21 @@
 import { NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@template/api';
+import { DEFAULT_SURCHARGE_RULES } from '@template/mystic';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
-import { z } from 'zod';
-import { firstZodIssueMessage } from '@template/validation';
+import {
+  firstZodIssueMessage,
+  mysticInspoBatchSchema,
+  mysticInspoUploadSchema,
+} from '@template/validation';
 import type { User } from '@supabase/supabase-js';
 import { requireAuthenticatedUser, routeErrorResponse } from '@/lib/api/route-auth';
 import { requireStudioManager } from '@/lib/mystic/studio-auth';
-const querySchema = z.object({ appointmentId: z.uuid() });
+const MAX_BYTES = 5 * 1024 * 1024;
+const ALLOWED_IMAGE = /^image\//;
 
-async function canAccessAppointmentPhotos(
-  admin: ReturnType<typeof createSupabaseAdminClient>,
-  user: User,
-  appointmentId: string
-) {
+type AdminClient = ReturnType<typeof createSupabaseAdminClient>;
+
+async function canAccessAppointmentPhotos(admin: AdminClient, user: User, appointmentId: string) {
   const { data: appt } = await admin
     .from('mystic_appointments')
     .select('client_user_id, workspace_id')
@@ -25,18 +28,86 @@ async function canAccessAppointmentPhotos(
   return { ok: true as const, appt };
 }
 
+/**
+ * Photos for many appointments in two queries (appointments + photos) plus one
+ * membership check per distinct workspace — instead of 2–3 queries per visit.
+ */
+async function listPhotosForAppointments(admin: AdminClient, user: User, ids: string[]) {
+  const { data: appointments } = await admin
+    .from('mystic_appointments')
+    .select('id, client_user_id, workspace_id')
+    .in('id', ids);
+
+  const byId = new Map((appointments ?? []).map((a) => [a.id, a]));
+  if (byId.size !== ids.length) return { ok: false as const, status: 404, error: 'Not found' };
+
+  const studioAccess = new Map<string, boolean>();
+  for (const id of ids) {
+    const appt = byId.get(id);
+    if (!appt) return { ok: false as const, status: 404, error: 'Not found' };
+    if (appt.client_user_id === user.id) continue;
+    let allowed = studioAccess.get(appt.workspace_id);
+    if (allowed === undefined) {
+      allowed = (await requireStudioManager(user, appt.workspace_id)) === null;
+      studioAccess.set(appt.workspace_id, allowed);
+    }
+    if (!allowed) return { ok: false as const, status: 403, error: 'Forbidden' };
+  }
+
+  const { data: photos, error } = await admin
+    .from('mystic_appointment_photos')
+    .select('id, appointment_id, public_url, storage_path, created_at')
+    .in('appointment_id', ids)
+    .order('created_at', { ascending: true });
+  if (error) throw error;
+
+  const photosByAppointment: Record<string, unknown[]> = {};
+  for (const id of ids) photosByAppointment[id] = [];
+  for (const photo of photos ?? []) {
+    const list = photosByAppointment[photo.appointment_id];
+    if (list) list.push(photo);
+    else photosByAppointment[photo.appointment_id] = [photo];
+  }
+
+  return { ok: true as const, photosByAppointment };
+}
+
 export async function GET(req: Request) {
   try {
     const auth = await requireAuthenticatedUser(req);
     if (auth.response) return auth.response;
 
-    const appointmentId = new URL(req.url).searchParams.get('appointmentId');
-    const parsed = querySchema.safeParse({ appointmentId });
+    const url = new URL(req.url);
+    const admin = createSupabaseAdminClient();
+
+    // Batch mode: the studio board asks for every visit in one request.
+    const batchParam = url.searchParams.get('appointmentIds');
+    if (batchParam !== null) {
+      const ids = [
+        ...new Set(
+          batchParam
+            .split(',')
+            .map((v) => v.trim())
+            .filter(Boolean)
+        ),
+      ];
+      const parsed = mysticInspoBatchSchema.safeParse({ appointmentIds: ids });
+      if (!parsed.success) {
+        return NextResponse.json({ error: firstZodIssueMessage(parsed.error) }, { status: 400 });
+      }
+      const result = await listPhotosForAppointments(admin, auth.user, parsed.data.appointmentIds);
+      if (!result.ok) {
+        return NextResponse.json({ error: result.error }, { status: result.status });
+      }
+      return NextResponse.json({ photosByAppointment: result.photosByAppointment });
+    }
+
+    const appointmentId = url.searchParams.get('appointmentId');
+    const parsed = mysticInspoUploadSchema.safeParse({ appointmentId });
     if (!parsed.success) {
       return NextResponse.json({ error: firstZodIssueMessage(parsed.error) }, { status: 400 });
     }
 
-    const admin = createSupabaseAdminClient();
     const access = await canAccessAppointmentPhotos(admin, auth.user, parsed.data.appointmentId);
     if (!access.ok) {
       return NextResponse.json(
@@ -66,11 +137,18 @@ export async function POST(req: Request) {
     const form = await req.formData();
     const appointmentId = form.get('appointmentId');
     const file = form.get('file');
-    const parsed = querySchema.safeParse({ appointmentId });
+    const parsed = mysticInspoUploadSchema.safeParse({ appointmentId });
     if (!parsed.success || !(file instanceof File)) {
-      return NextResponse.json({ error: 'appointmentId and file required' }, { status: 400 });
+      return NextResponse.json({ error: 'appointmentId and image file required' }, { status: 400 });
+    }
+    if (!ALLOWED_IMAGE.test(file.type || '')) {
+      return NextResponse.json({ error: 'Only image uploads are allowed' }, { status: 415 });
+    }
+    if (file.size > MAX_BYTES) {
+      return NextResponse.json({ error: 'Image must be 5MB or smaller' }, { status: 413 });
     }
 
+    const maxPhotos = DEFAULT_SURCHARGE_RULES.maxInspoPhotos;
     const admin = createSupabaseAdminClient();
     const { data: appt } = await admin
       .from('mystic_appointments')
@@ -85,8 +163,11 @@ export async function POST(req: Request) {
       .from('mystic_appointment_photos')
       .select('*', { count: 'exact', head: true })
       .eq('appointment_id', parsed.data.appointmentId);
-    if ((count ?? 0) >= 4) {
-      return NextResponse.json({ error: 'Maximum 4 inspo photos per visit' }, { status: 400 });
+    if ((count ?? 0) >= maxPhotos) {
+      return NextResponse.json(
+        { error: `Maximum ${maxPhotos} inspo photos per visit` },
+        { status: 400 }
+      );
     }
 
     const supabase = await createSupabaseServerClient();
@@ -102,6 +183,18 @@ export async function POST(req: Request) {
     }
 
     const { data: urlData } = supabase.storage.from('mystic-inspo').getPublicUrl(path);
+    const { count: countBeforeInsert } = await admin
+      .from('mystic_appointment_photos')
+      .select('*', { count: 'exact', head: true })
+      .eq('appointment_id', parsed.data.appointmentId);
+    if ((countBeforeInsert ?? 0) >= maxPhotos) {
+      await supabase.storage.from('mystic-inspo').remove([path]);
+      return NextResponse.json(
+        { error: `Maximum ${maxPhotos} inspo photos per visit` },
+        { status: 400 }
+      );
+    }
+
     const { data: photo, error } = await admin
       .from('mystic_appointment_photos')
       .insert({
@@ -111,10 +204,23 @@ export async function POST(req: Request) {
       })
       .select('*')
       .single();
-    if (error) throw error;
+    if (error) {
+      if (error.code === '23514' || /inspo photos per visit/i.test(error.message ?? '')) {
+        await supabase.storage.from('mystic-inspo').remove([path]);
+        return NextResponse.json(
+          { error: `Maximum ${maxPhotos} inspo photos per visit` },
+          { status: 400 }
+        );
+      }
+      throw error;
+    }
 
     return NextResponse.json({ photo });
   } catch (err) {
+    const message = err instanceof Error ? err.message : '';
+    if (/inspo photos per visit/i.test(message)) {
+      return NextResponse.json({ error: message }, { status: 400 });
+    }
     return routeErrorResponse(err, 'mystic.appointments.inspo');
   }
 }

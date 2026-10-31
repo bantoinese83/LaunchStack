@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Platform,
+  Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -13,26 +14,38 @@ import * as ImagePicker from 'expo-image-picker';
 import {
   canUploadVisitInspo,
   DEFAULT_SURCHARGE_RULES,
+  formatAddressLine,
   formatUsd,
   formatVisitWhen,
   getServiceById,
   isVisitLiveTracking,
-  sortVisitsForDisplay,
+  partitionVisitsForTabs,
+  pickUpNextVisit,
   visitStatusLabel,
+  visitAddressDestination,
   type ServiceId,
 } from '@template/mystic';
-import { NativeButton, displayTitle, monoLabel, theme } from '@template/mobile-ui';
+import { NativeButton, theme } from '@template/mobile-ui';
 import { NativeEmptyState } from '../../../components/mystic/NativeEmptyState';
+import { NativeScreenHeader } from '../../../components/mystic/NativeScreenHeader';
+import { nativeScreenStyles } from '../../../components/mystic/nativeScreenStyles';
+import { nativeSegmentStyles } from '../../../components/mystic/nativeSegmentStyles';
 import { NativeInspoGallery } from '../../../components/mystic/NativeInspoGallery';
+import { NativeVisitUpNext } from '../../../components/mystic/NativeVisitUpNext';
+import { NativeServiceIllustration } from '../../../components/mystic/NativeServiceIllustration';
+import { NativeStylistChip } from '../../../components/mystic/NativeStylistChip';
 import { NativeDoorTimerBanner } from '../../../components/visits/NativeDoorTimerBanner';
 import { NativeLiveMap } from '../../../components/visits/NativeLiveMap';
 import { fetchMyAppointments, uploadInspoPhoto } from '../../../lib/mysticApi';
+
+type VisitTab = 'upcoming' | 'past';
 
 type Appointment = {
   id: string;
   starts_at: string;
   service_id: string;
   status: string;
+  address?: Record<string, unknown>;
   quote_cents: number;
   eta_minutes: number | null;
   door_timer_ends_at: string | null;
@@ -50,23 +63,33 @@ export default function VisitsTab() {
   const [refreshing, setRefreshing] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<string | null>(null);
   const [uploadBusyId, setUploadBusyId] = useState<string | null>(null);
+  const [tab, setTab] = useState<VisitTab>('upcoming');
 
-  const reload = useCallback((opts?: { silent?: boolean }) => {
-    if (!opts?.silent) setRefreshing(true);
-    void fetchMyAppointments()
-      .then((data) => {
-        if (data.error) setError(data.error);
-        else {
+  const reload = useCallback(
+    (opts?: { silent?: boolean }) => {
+      if (!opts?.silent) setRefreshing(true);
+      void fetchMyAppointments()
+        .then((data) => {
+          if (data.status === 401) {
+            setError('Sign in to see visits');
+            router.push('/(auth)/login');
+            return;
+          }
+          if (data.error || !data.ok) {
+            setError(data.error ?? 'Could not load visits');
+            return;
+          }
           setError(null);
-          setRows(data.appointments ?? []);
-        }
-      })
-      .catch(() => setError('Sign in to see visits'))
-      .finally(() => {
-        setLoading(false);
-        setRefreshing(false);
-      });
-  }, []);
+          setRows((data.appointments ?? []) as Appointment[]);
+        })
+        .catch(() => setError('Network error — check EXPO_PUBLIC_APP_URL'))
+        .finally(() => {
+          setLoading(false);
+          setRefreshing(false);
+        });
+    },
+    [router]
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -74,14 +97,25 @@ export default function VisitsTab() {
     }, [reload])
   );
 
-  const sorted = useMemo(() => sortVisitsForDisplay(rows), [rows]);
+  const { upcoming, past } = useMemo(() => partitionVisitsForTabs(rows), [rows]);
+  const visible = tab === 'upcoming' ? upcoming : past;
+  const upNext = useMemo(
+    () => (tab === 'upcoming' ? pickUpNextVisit(upcoming) : null),
+    [tab, upcoming]
+  );
+  const listRows = useMemo(() => {
+    if (!upNext || tab !== 'upcoming') return visible;
+    return visible.filter((row) => row.id !== upNext.id);
+  }, [tab, upNext, visible]);
   const hasLiveTracking = useMemo(() => rows.some((r) => isVisitLiveTracking(r.status)), [rows]);
+  const hasPending = useMemo(() => rows.some((r) => r.status === 'pending'), [rows]);
 
   useEffect(() => {
-    if (!hasLiveTracking) return;
-    const id = setInterval(() => reload({ silent: true }), 12_000);
+    if (!hasLiveTracking && !hasPending) return;
+    const ms = hasLiveTracking ? 12_000 : 45_000;
+    const id = setInterval(() => reload({ silent: true }), ms);
     return () => clearInterval(id);
-  }, [hasLiveTracking, reload]);
+  }, [hasLiveTracking, hasPending, reload]);
 
   async function addInspo(appointmentId: string) {
     setUploadStatus(null);
@@ -103,14 +137,16 @@ export default function VisitsTab() {
     const asset = result.assets[0];
     const res = await uploadInspoPhoto(appointmentId, asset.uri, asset.fileName ?? 'inspo.jpg');
     setUploadBusyId(null);
-    setUploadStatus(res.error ? res.error : 'Photo saved — Luke will see it before your visit.');
+    setUploadStatus(
+      res.ok ? 'Photo saved — Luke will see it before your visit.' : (res.error ?? 'Upload failed')
+    );
     reload({ silent: true });
   }
 
   return (
     <ScrollView
-      style={styles.scroll}
-      contentContainerStyle={styles.container}
+      style={nativeScreenStyles.scroll}
+      contentContainerStyle={nativeScreenStyles.container}
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
@@ -119,111 +155,186 @@ export default function VisitsTab() {
         />
       }
     >
-      <Text style={styles.kicker}>Visits</Text>
-      <Text style={styles.heading}>Your appointments</Text>
-      {hasLiveTracking ? (
-        <Text style={styles.liveHint}>Live updates while Luke is on the way</Text>
-      ) : null}
-      {error ? <Text style={styles.error}>{error}</Text> : null}
-      {uploadStatus ? <Text style={styles.feedback}>{uploadStatus}</Text> : null}
-      {loading ? (
-        <View style={styles.loadingWrap}>
-          <ActivityIndicator color={theme.accent} />
-        </View>
-      ) : null}
-      {!loading && sorted.length === 0 && !error ? (
-        <NativeEmptyState
-          variant="visits"
-          action={
-            <NativeButton
-              title="Book a house call"
-              onPress={() => router.push('/(app)/(tabs)/book')}
-            />
-          }
+      <View style={nativeScreenStyles.stack}>
+        <NativeScreenHeader
+          kicker="Visits"
+          title="Your house calls"
+          lede="Live map when Luke is en route, inspo uploads, and messages."
         />
-      ) : null}
-      {sorted.map((visit) => {
-        let name = visit.service_id;
-        try {
-          name = getServiceById(visit.service_id as ServiceId).name;
-        } catch {
-          /* keep id */
-        }
-        const live = isVisitLiveTracking(visit.status);
-        return (
-          <View
-            key={visit.id}
-            style={[
-              styles.card,
-              Platform.OS === 'android' && styles.cardAndroid,
-              live && styles.cardLive,
-            ]}
-          >
-            <Text style={styles.when}>{formatVisitWhen(visit.starts_at)}</Text>
-            <Text style={styles.service}>{name}</Text>
-            <Text style={styles.status}>
-              {visitStatusLabel(visit.status)}
-              {visit.eta_minutes && visit.status === 'stylist_en_route'
-                ? ` · ~${visit.eta_minutes} min`
-                : ''}
-            </Text>
-            {visit.status === 'door_timer_active' && visit.door_timer_ends_at ? (
-              <NativeDoorTimerBanner endsAt={visit.door_timer_ends_at} />
-            ) : null}
-            <Text style={styles.price}>{formatUsd(visit.quote_cents)}</Text>
-            {visit.status === 'stylist_en_route' &&
-            visit.stylist_latitude != null &&
-            visit.stylist_longitude != null ? (
-              <NativeLiveMap
-                latitude={visit.stylist_latitude}
-                longitude={visit.stylist_longitude}
-                updatedAt={visit.stylist_location_updated_at}
-              />
-            ) : visit.status === 'stylist_en_route' ? (
-              <Text style={styles.waitingMap}>
-                Luke is on the way — map appears when location is shared. Message him anytime from
-                Messages.
+        <View style={nativeSegmentStyles.shell}>
+          {(
+            [
+              ['upcoming', `Upcoming (${upcoming.length})`],
+              ['past', `Past (${past.length})`],
+            ] as const
+          ).map(([key, label]) => (
+            <Pressable
+              key={key}
+              onPress={() => setTab(key)}
+              style={[nativeSegmentStyles.tab, tab === key && nativeSegmentStyles.tabActive]}
+            >
+              <Text
+                style={[
+                  nativeSegmentStyles.tabText,
+                  tab === key && nativeSegmentStyles.tabTextActive,
+                ]}
+              >
+                {label}
               </Text>
-            ) : null}
-            <NativeInspoGallery photos={visit.inspo_photos ?? []} />
-            {canUploadVisitInspo(visit.status) &&
-            (visit.inspo_photos?.length ?? 0) < DEFAULT_SURCHARGE_RULES.maxInspoPhotos ? (
-              <NativeButton
-                title="Add inspo photo"
-                variant="secondary"
-                onPress={() => void addInspo(visit.id)}
-                isLoading={uploadBusyId === visit.id}
-                style={styles.inspoBtn}
-              />
-            ) : null}
+            </Pressable>
+          ))}
+        </View>
+        {hasLiveTracking ? (
+          <Text style={styles.liveHint}>Live updates while Luke is on the way</Text>
+        ) : hasPending ? (
+          <Text style={styles.liveHint}>Pending visits refresh automatically</Text>
+        ) : null}
+        {error ? <Text style={styles.error}>{error}</Text> : null}
+        {uploadStatus ? <Text style={styles.feedback}>{uploadStatus}</Text> : null}
+        {loading ? (
+          <View style={styles.loadingWrap}>
+            <ActivityIndicator color={theme.accent} />
           </View>
-        );
-      })}
+        ) : null}
+        {!loading && rows.length === 0 && !error ? (
+          <NativeEmptyState
+            variant="visits"
+            action={
+              <NativeButton
+                title="Book a house call"
+                onPress={() => router.push('/(app)/(tabs)/book')}
+              />
+            }
+          />
+        ) : null}
+        {!loading && rows.length > 0 && visible.length === 0 ? (
+          <NativeEmptyState
+            variant="visits"
+            compact
+            title={tab === 'upcoming' ? "You're all caught up" : 'No past visits yet'}
+            description={
+              tab === 'upcoming'
+                ? 'Book again anytime — your next visit will show here with live map and inspo.'
+                : 'Completed house calls appear here for history and photos.'
+            }
+            action={
+              tab === 'upcoming' ? (
+                <NativeButton
+                  title="Book a house call"
+                  onPress={() => router.push('/(app)/(tabs)/book')}
+                />
+              ) : undefined
+            }
+          />
+        ) : null}
+        {tab === 'upcoming' && upNext ? <NativeVisitUpNext visit={upNext} /> : null}
+        {tab === 'upcoming' && listRows.length > 0 ? (
+          <Text style={styles.sectionLabel}>All upcoming</Text>
+        ) : null}
+        {listRows.map((visit) => {
+          let name = visit.service_id;
+          try {
+            name = getServiceById(visit.service_id as ServiceId).name;
+          } catch {
+            /* keep id */
+          }
+          const live = isVisitLiveTracking(visit.status);
+          const addressLine = formatAddressLine(visit.address);
+          return (
+            <View
+              key={visit.id}
+              style={[
+                nativeScreenStyles.card,
+                Platform.OS === 'android' && nativeScreenStyles.cardAndroid,
+                live && styles.cardLive,
+              ]}
+            >
+              <Text style={styles.when}>{formatVisitWhen(visit.starts_at)}</Text>
+              <View style={styles.serviceRow}>
+                <NativeServiceIllustration serviceId={visit.service_id as ServiceId} size={48} />
+                <Text style={styles.service}>{name}</Text>
+              </View>
+              {tab === 'upcoming' ? <NativeStylistChip size={24} style={{ marginTop: 8 }} /> : null}
+              {addressLine ? <Text style={styles.address}>{addressLine}</Text> : null}
+              {visit.status === 'pending' ? (
+                <Text style={styles.pendingNote}>
+                  Payment processing — confirms when checkout completes.
+                </Text>
+              ) : null}
+              <Text style={styles.status}>
+                {visitStatusLabel(visit.status)}
+                {visit.eta_minutes && visit.status === 'stylist_en_route'
+                  ? ` · ~${visit.eta_minutes} min`
+                  : ''}
+              </Text>
+              {visit.status === 'door_timer_active' && visit.door_timer_ends_at ? (
+                <NativeDoorTimerBanner endsAt={visit.door_timer_ends_at} />
+              ) : null}
+              <Text style={styles.price}>{formatUsd(visit.quote_cents)}</Text>
+              {visit.status === 'stylist_en_route' &&
+              visit.stylist_latitude != null &&
+              visit.stylist_longitude != null ? (
+                <NativeLiveMap
+                  latitude={visit.stylist_latitude}
+                  longitude={visit.stylist_longitude}
+                  updatedAt={visit.stylist_location_updated_at}
+                  destination={visitAddressDestination(visit.address)}
+                />
+              ) : visit.status === 'stylist_en_route' ? (
+                <Text style={styles.waitingMap}>
+                  Luke is on the way — map appears when location is shared. Message him anytime from
+                  Messages.
+                </Text>
+              ) : null}
+              <NativeInspoGallery photos={visit.inspo_photos ?? []} />
+              {canUploadVisitInspo(visit.status) &&
+              (visit.inspo_photos?.length ?? 0) < DEFAULT_SURCHARGE_RULES.maxInspoPhotos ? (
+                <NativeButton
+                  title="Add inspo photo"
+                  variant="secondary"
+                  onPress={() => void addInspo(visit.id)}
+                  isLoading={uploadBusyId === visit.id}
+                  style={styles.inspoBtn}
+                />
+              ) : null}
+            </View>
+          );
+        })}
+      </View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  scroll: { flex: 1, backgroundColor: theme.paper },
-  container: { padding: 20, paddingBottom: 32 },
-  kicker: { ...monoLabel, color: theme.accent },
-  heading: { ...displayTitle, color: theme.ink, marginBottom: 8 },
+  sectionLabel: {
+    fontSize: 11,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    color: theme.muted,
+    marginBottom: 8,
+    marginTop: 4,
+  },
   liveHint: { fontSize: 12, color: theme.chalk, marginBottom: 12 },
-  card: {
-    backgroundColor: theme.surface,
-    borderRadius: theme.radii.lg,
-    padding: 16,
+  address: { marginTop: 6, fontSize: 12, color: theme.muted },
+  pendingNote: {
+    marginTop: 8,
+    fontSize: 12,
+    color: theme.muted,
+    padding: 10,
+    borderRadius: theme.radii.md,
     borderWidth: 1,
     borderColor: theme.line,
-    marginBottom: 12,
+    backgroundColor: theme.paper,
   },
   cardLive: {
-    borderColor: theme.accent,
-    borderWidth: 2,
+    borderLeftWidth: 3,
+    borderLeftColor: theme.gold,
+    paddingLeft: 4,
+    backgroundColor: theme.goldSoft,
   },
-  cardAndroid: { borderRadius: theme.radii.md, elevation: 1 },
   when: { fontWeight: '600', color: theme.ink },
-  service: { marginTop: 4, color: theme.muted },
+  serviceRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 8 },
+  service: { flex: 1, color: theme.ink, fontWeight: '500' },
   status: { marginTop: 8, fontSize: 12, color: theme.chalk },
   waitingMap: {
     marginTop: 10,

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { MysticProfileAvatar } from '@/components/mystic/MysticProfileAvatar';
 import { MysticMagneticButton } from '@/components/mystic/MysticMagneticButton';
-import { mysticCard, mysticInput } from '@/components/mystic/mystic-styles';
+import { mysticFlatRow, mysticInput } from '@/components/mystic/mystic-styles';
 
 type ProfileForm = {
   fullName: string;
@@ -47,12 +47,17 @@ export function AccountClient({ initialEmail }: { initialEmail: string | null })
 
   const loadProfile = useCallback(() => {
     void fetch('/api/mystic/client-profile')
-      .then((r) => {
+      .then(async (r) => {
         if (r.status === 401) {
           router.push('/login?next=/account');
           return null;
         }
-        return r.json();
+        const data = await r.json();
+        if (!r.ok) {
+          setStatus({ kind: 'error', text: data.error ?? 'Could not load profile' });
+          return null;
+        }
+        return data as { profile?: ClientProfileResponse };
       })
       .then((data: { profile?: ClientProfileResponse } | null) => {
         if (!data?.profile) return;
@@ -128,18 +133,18 @@ export function AccountClient({ initialEmail }: { initialEmail: string | null })
 
   if (loading) {
     return (
-      <div className={`${mysticCard} space-y-4 p-6`} aria-busy="true">
+      <div className="space-y-4 border-y border-line/80 py-6" aria-busy="true">
         {[0, 1, 2, 3].map((i) => (
-          <div key={i} className="h-10 animate-pulse rounded-xl bg-line/40" />
+          <div key={i} className="h-10 animate-pulse border-b border-line/40 bg-line/20" />
         ))}
       </div>
     );
   }
 
   return (
-    <form onSubmit={save} className={`${mysticCard} space-y-4 p-6`}>
+    <form onSubmit={save} className="space-y-5">
       {referralCode ? (
-        <div className="rounded-2xl border border-accent/30 bg-accent-soft px-4 py-3 text-sm">
+        <div className="border-l-[3px] border-gold bg-gold-soft/90 py-3 pl-4 text-sm">
           <p className="text-muted">
             Share with friends — you both earn rewards after their visit.
           </p>
@@ -148,7 +153,7 @@ export function AccountClient({ initialEmail }: { initialEmail: string | null })
             <button
               type="button"
               onClick={() => void copyReferral()}
-              className="rounded-full border border-line px-3 py-1 text-xs text-accent underline"
+              className="border-b border-plum/40 px-1 py-0.5 text-xs font-medium text-plum"
             >
               {copyHint ?? 'Copy code'}
             </button>
@@ -156,9 +161,7 @@ export function AccountClient({ initialEmail }: { initialEmail: string | null })
         </div>
       ) : null}
       {creditsSummary ? (
-        <p className="rounded-xl border border-line bg-paper px-3 py-2 text-sm text-chalk">
-          {creditsSummary}
-        </p>
+        <p className={`${mysticFlatRow} text-sm text-chalk`}>{creditsSummary}</p>
       ) : null}
 
       <MysticProfileAvatar
@@ -168,32 +171,32 @@ export function AccountClient({ initialEmail }: { initialEmail: string | null })
         onUploaded={setAvatarUrl}
       />
 
-      <label className="block text-sm">
+      <label className="type-eyebrow block text-plum">
         Full name
         <input
-          className={`${mysticInput} mt-1`}
+          className={mysticInput}
           value={form.fullName}
           onChange={(e) => setForm({ ...form, fullName: e.target.value })}
           autoComplete="name"
           required
         />
       </label>
-      <label className="block text-sm">
+      <label className="type-eyebrow block text-plum">
         Email
         <input
           type="email"
-          className={`${mysticInput} mt-1`}
+          className={mysticInput}
           value={form.email}
           onChange={(e) => setForm({ ...form, email: e.target.value })}
           autoComplete="email"
           required
         />
       </label>
-      <label className="block text-sm">
+      <label className="type-eyebrow block text-plum">
         Mobile (SMS for en route & door timer)
         <input
           type="tel"
-          className={`${mysticInput} mt-1`}
+          className={mysticInput}
           value={form.phone}
           onChange={(e) => setForm({ ...form, phone: e.target.value })}
           autoComplete="tel"
@@ -201,18 +204,18 @@ export function AccountClient({ initialEmail }: { initialEmail: string | null })
           required
         />
       </label>
-      <label className="block text-sm">
+      <label className="type-eyebrow block text-plum">
         Birthday (optional — Luke sends a little thank-you)
         <input
           type="date"
-          className={`${mysticInput} mt-1`}
+          className={mysticInput}
           value={form.birthday}
           onChange={(e) => setForm({ ...form, birthday: e.target.value })}
         />
       </label>
 
-      <fieldset className="space-y-3 rounded-xl border border-line px-4 py-3">
-        <legend className="px-1 text-sm font-medium">Notifications</legend>
+      <fieldset className={`${mysticFlatRow} space-y-3 border-t border-line/80 pt-5`}>
+        <legend className="type-eyebrow text-plum">Notifications</legend>
         <label className="flex items-start gap-2 text-sm">
           <input
             type="checkbox"
@@ -244,14 +247,14 @@ export function AccountClient({ initialEmail }: { initialEmail: string | null })
         </p>
       ) : null}
 
-      <nav className="flex flex-wrap gap-4 border-t border-line pt-4 text-sm">
-        <Link href="/visits" className="text-accent underline">
+      <nav className="divide-y divide-line/80 border-y border-line/80 text-sm">
+        <Link href="/visits" className={`${mysticFlatRow} block font-medium text-plum`}>
           My visits
         </Link>
-        <Link href="/messages" className="text-accent underline">
+        <Link href="/messages" className={`${mysticFlatRow} block font-medium text-plum`}>
           Messages
         </Link>
-        <Link href="/book" className="text-accent underline">
+        <Link href="/book" className={`${mysticFlatRow} block font-medium text-plum`}>
           Book again
         </Link>
       </nav>

@@ -7,6 +7,17 @@ export const MYSTIC_BRAND = {
   serviceAreaLabel: 'Chicago · River North & nearby',
 } as const;
 
+/** House-call stylist — portrait lives on the web app origin under public/marketing. */
+export const MYSTIC_STYLIST = {
+  name: 'Luke',
+  portraitPath: '/marketing/stylist.jpg',
+} as const;
+
+export function mysticStylistPortraitUrl(appOrigin?: string | null): string {
+  if (!appOrigin?.trim()) return MYSTIC_STYLIST.portraitPath;
+  return `${appOrigin.replace(/\/$/, '')}${MYSTIC_STYLIST.portraitPath}`;
+}
+
 export const SERVICE_IDS = ['blowout', 'haircut', 'updo', 'dry_style'] as const;
 export type ServiceId = (typeof SERVICE_IDS)[number];
 
@@ -148,6 +159,10 @@ export const APPOINTMENT_TAGS: { id: AppointmentTagId; label: string }[] = [
   { id: 'running_late', label: 'I may be a few minutes late' },
   { id: 'need_sink_wash', label: 'I need a sink wash (hose required)' },
 ];
+
+export function formatAppointmentTagLabels(tagIds: string[]): string[] {
+  return tagIds.map((id) => APPOINTMENT_TAGS.find((t) => t.id === id)?.label ?? id);
+}
 
 export function getServiceById(id: ServiceId): MysticService {
   const service = MYSTIC_SERVICES.find((s) => s.id === id);

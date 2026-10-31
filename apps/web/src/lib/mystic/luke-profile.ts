@@ -1,10 +1,10 @@
-import { MYSTIC_BRAND } from '@template/mystic';
+import { MYSTIC_BRAND, MYSTIC_STYLIST } from '@template/mystic';
 
 export const LUKE_PROFILE = {
-  name: 'Luke',
+  name: MYSTIC_STYLIST.name,
   title: 'Founder & house-call stylist',
   brand: MYSTIC_BRAND.name,
-  imageSrc: '/marketing/stylist.jpg',
+  imageSrc: MYSTIC_STYLIST.portraitPath,
   instagram: MYSTIC_BRAND.instagram,
   instagramUrl: 'https://instagram.com/mystichair21',
   serviceArea: MYSTIC_BRAND.serviceAreaLabel,

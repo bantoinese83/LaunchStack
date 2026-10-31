@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
-  ScrollView,
   Share,
   StyleSheet,
   Switch,
@@ -12,8 +11,11 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { createSupabaseMobileClient } from '@template/api/mobile';
-import { NativeButton, displayTitle, monoLabel, theme } from '@template/mobile-ui';
+import { NativeButton, monoLabel, roadTrip, theme } from '@template/mobile-ui';
 import { NativeProfileAvatar } from '../../../components/mystic/NativeProfileAvatar';
+import { NativeScreenHeader } from '../../../components/mystic/NativeScreenHeader';
+import { NativeScreenShell } from '../../../components/mystic/NativeScreenShell';
+import { useStudioAccess } from '../../../hooks/useStudioAccess';
 import { fetchClientProfile, fetchMyCredits, saveClientProfile } from '../../../lib/mysticApi';
 
 type FormState = {
@@ -27,6 +29,7 @@ type FormState = {
 
 export default function AccountTab() {
   const router = useRouter();
+  const { isManager, loading: studioAccessLoading } = useStudioAccess();
   const [form, setForm] = useState<FormState>({
     fullName: '',
     email: '',
@@ -136,12 +139,12 @@ export default function AccountTab() {
   }
 
   return (
-    <ScrollView style={styles.scroll} contentContainerStyle={styles.container}>
-      <Text style={styles.kicker}>Account</Text>
-      <Text style={styles.heading}>Your profile</Text>
-      <Text style={styles.lede}>
-        Phone and SMS preferences for en route, door timer, and booking updates.
-      </Text>
+    <NativeScreenShell>
+      <NativeScreenHeader
+        kicker="Account"
+        title="Your profile"
+        lede="Phone and SMS preferences for en route, door timer, and booking updates."
+      />
 
       {referralCode ? (
         <View style={styles.referralBox}>
@@ -240,12 +243,20 @@ export default function AccountTab() {
       ) : null}
 
       <View style={styles.links}>
-        <Pressable onPress={() => router.push('/(app)/(tabs)/visits')}>
+        <Pressable style={styles.linkRow} onPress={() => router.push('/(app)/(tabs)/visits')}>
           <Text style={styles.link}>My visits</Text>
         </Pressable>
-        <Pressable onPress={() => router.push('/(app)/(tabs)/book')}>
+        <Pressable style={styles.linkRow} onPress={() => router.push('/(app)/(tabs)/book')}>
           <Text style={styles.link}>Book again</Text>
         </Pressable>
+        <Pressable style={styles.linkRow} onPress={() => router.push('/(app)/(tabs)/shop')}>
+          <Text style={styles.link}>Shop products</Text>
+        </Pressable>
+        {!studioAccessLoading && isManager ? (
+          <Pressable style={styles.linkRow} onPress={() => router.push('/(app)/(tabs)/membership')}>
+            <Text style={styles.link}>Membership & packages</Text>
+          </Pressable>
+        ) : null}
       </View>
 
       <NativeButton
@@ -254,67 +265,53 @@ export default function AccountTab() {
         onPress={() => void signOut()}
         style={styles.signOut}
       />
-    </ScrollView>
+    </NativeScreenShell>
   );
 }
 
 const styles = StyleSheet.create({
-  scroll: { flex: 1, backgroundColor: theme.paper },
-  container: { padding: 20, paddingBottom: 40 },
   loadingWrap: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: theme.paper,
   },
-  kicker: { ...monoLabel, color: theme.accent },
-  heading: { ...displayTitle, color: theme.ink },
-  lede: { color: theme.muted, marginVertical: 12, lineHeight: 22, fontSize: 14 },
   referralBox: {
-    borderWidth: 1,
-    borderColor: theme.accent,
-    backgroundColor: theme.accentSoft,
-    borderRadius: theme.radii.lg,
-    padding: 14,
-    marginBottom: 12,
+    ...roadTrip.section,
+    borderLeftWidth: 3,
+    borderLeftColor: theme.gold,
+    backgroundColor: theme.goldSoft,
+    paddingHorizontal: 12,
+    marginBottom: 16,
   },
   referralHint: { fontSize: 12, color: theme.muted },
   referralRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 8 },
   referralCode: { fontSize: 18, fontWeight: '600', fontFamily: 'monospace', color: theme.ink },
   copyBtn: {
-    borderWidth: 1,
-    borderColor: theme.line,
-    borderRadius: theme.radii.pill,
     paddingHorizontal: 12,
     paddingVertical: 6,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: theme.plum,
   },
-  copyText: { fontSize: 12, color: theme.accent, fontWeight: '600' },
+  copyText: { fontSize: 12, color: theme.plum, fontWeight: '600' },
   credits: {
-    marginBottom: 12,
-    padding: 10,
-    borderRadius: theme.radii.md,
-    borderWidth: 1,
-    borderColor: theme.line,
+    marginBottom: 16,
+    paddingVertical: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: theme.line,
     color: theme.chalk,
     fontSize: 13,
   },
-  field: { marginBottom: 12 },
-  label: { ...monoLabel, color: theme.muted, marginBottom: 4 },
+  field: { marginBottom: 16 },
+  label: { ...monoLabel, color: theme.plum, marginBottom: 6 },
   input: {
-    borderWidth: 1,
-    borderColor: theme.line,
-    borderRadius: theme.radii.lg,
-    padding: 14,
-    color: theme.ink,
-    backgroundColor: theme.surface,
+    ...roadTrip.flatInput,
     fontSize: 16,
   },
   notifBox: {
-    borderWidth: 1,
-    borderColor: theme.line,
-    borderRadius: theme.radii.lg,
-    padding: 14,
-    marginBottom: 16,
+    ...roadTrip.section,
+    paddingHorizontal: 0,
+    marginBottom: 20,
     gap: 12,
   },
   notifTitle: { fontWeight: '600', color: theme.ink, marginBottom: 4 },
@@ -323,13 +320,17 @@ const styles = StyleSheet.create({
   status: { marginTop: 12, color: theme.chalk, fontSize: 13 },
   statusError: { color: theme.danger },
   links: {
-    flexDirection: 'row',
-    gap: 20,
-    marginTop: 20,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: theme.line,
+    flexDirection: 'column',
+    gap: 0,
+    marginTop: 24,
+    ...roadTrip.section,
+    paddingHorizontal: 0,
   },
-  link: { color: theme.accent, fontWeight: '600', fontSize: 14 },
+  linkRow: {
+    paddingVertical: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: theme.line,
+  },
+  link: { color: theme.plum, fontWeight: '600', fontSize: 14 },
   signOut: { marginTop: 24 },
 });
