@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server';
 import { MysticAppointmentService, createSupabaseAdminClient } from '@template/api';
-import { computeBookingQuote, getServiceById } from '@template/mystic';
+import {
+  computeBookingQuote,
+  getServiceById,
+  houseCallDistanceOutOfAreaMessage,
+  isWithinHouseCallServiceArea,
+} from '@template/mystic';
 import { onMysticAppointmentConfirmed } from '@/lib/mystic/confirm-appointment';
 import { assertEntitlementForBooking } from '@/lib/mystic/entitlement';
 import {
@@ -88,8 +93,24 @@ export async function POST(req: Request) {
     try {
       const geo = await geocodeHouseCallAddress(parsed.data.address);
       distanceMiles = geo.distanceMiles;
-    } catch {
-      /* keep client-supplied miles if geocoder unavailable */
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Could not verify address';
+      if (!isWithinHouseCallServiceArea(distanceMiles)) {
+        return abortCheckout(
+          400,
+          isWithinHouseCallServiceArea(parsed.data.distanceMiles)
+            ? message
+            : houseCallDistanceOutOfAreaMessage(parsed.data.distanceMiles)
+        );
+      }
+      if (/outside our Chicago house-call area/i.test(message)) {
+        return abortCheckout(400, message);
+      }
+      /* keep client-supplied miles when geocoder is temporarily unavailable */
+    }
+
+    if (!isWithinHouseCallServiceArea(distanceMiles)) {
+      return abortCheckout(400, houseCallDistanceOutOfAreaMessage(distanceMiles));
     }
 
     const surchargeRules = await loadStudioSurchargeRules(admin, parsed.data.workspaceId);

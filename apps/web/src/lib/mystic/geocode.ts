@@ -1,5 +1,7 @@
 import {
   distanceFromRiverNorthMiles,
+  isWithinHouseCallServiceArea,
+  houseCallDistanceOutOfAreaMessage,
   normalizeAddressFields,
   type AddressSuggestion,
 } from '@template/mystic';
@@ -142,15 +144,22 @@ export async function searchAddressSuggestions(query: string): Promise<AddressSu
   return hits.map(nominatimToSuggestion);
 }
 
+/** Bias Nominatim toward Chicagoland (lon,lat order). */
+const CHICAGO_VIEWBOX = '-88.05,41.62,-87.52,42.08';
+
 function geocodeResultFromCoords(
   latitude: number,
   longitude: number,
   formattedAddress?: string
 ): GeocodeResult {
+  const distanceMiles = distanceFromRiverNorthMiles(latitude, longitude);
+  if (!isWithinHouseCallServiceArea(distanceMiles)) {
+    throw new Error(houseCallDistanceOutOfAreaMessage(distanceMiles));
+  }
   return {
     latitude,
     longitude,
-    distanceMiles: distanceFromRiverNorthMiles(latitude, longitude),
+    distanceMiles,
     formattedAddress,
   };
 }
@@ -168,6 +177,9 @@ export async function geocodeHouseCallAddress(input: {
     const q = `${normalized.line1}, ${normalized.city}, ${normalized.state} ${normalized.postalCode}`;
     const url = new URL('https://maps.googleapis.com/maps/api/geocode/json');
     url.searchParams.set('address', q);
+    url.searchParams.set('components', 'administrative_area:IL|country:US');
+    url.searchParams.set('bounds', '41.62,-88.05|42.08,-87.52');
+    url.searchParams.set('region', 'us');
     url.searchParams.set('key', googleKey);
     const res = await fetch(url.toString());
     const data = (await res.json()) as {
@@ -190,6 +202,8 @@ export async function geocodeHouseCallAddress(input: {
   if (normalized.postalCode) structured.set('postalcode', normalized.postalCode);
   structured.set('country', 'USA');
   structured.set('limit', '1');
+  structured.set('viewbox', CHICAGO_VIEWBOX);
+  structured.set('bounded', '1');
   let hits = await nominatimSearch(structured);
 
   if (!hits.length) {
@@ -199,6 +213,8 @@ export async function geocodeHouseCallAddress(input: {
       `${normalized.line1}, ${normalized.city}, ${normalized.state} ${normalized.postalCode}, USA`
     );
     free.set('limit', '1');
+    free.set('viewbox', CHICAGO_VIEWBOX);
+    free.set('bounded', '1');
     hits = await nominatimSearch(free);
   }
 

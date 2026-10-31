@@ -10,6 +10,8 @@ import {
   MYSTIC_SERVICES,
   computeBookingQuote,
   distanceFromRiverNorthMiles,
+  isWithinHouseCallServiceArea,
+  houseCallDistanceOutOfAreaMessage,
   type AddressSuggestion,
   formatUsd,
   formatVisitWhen,
@@ -124,6 +126,11 @@ export function BookFlowClient() {
 
   function onAddressSuggestion(s: AddressSuggestion) {
     const miles = distanceFromRiverNorthMiles(s.latitude, s.longitude);
+    if (!isWithinHouseCallServiceArea(miles)) {
+      setDistanceNote(houseCallDistanceOutOfAreaMessage(miles));
+      setDistanceMiles(miles);
+      return;
+    }
     setAddress((current) => ({
       ...current,
       line1: s.line1,
@@ -206,12 +213,19 @@ export function BookFlowClient() {
     });
   }, [scheduledAt, serviceId, distanceMiles, entitlement, tipCents, surchargeRules]);
 
+  const distanceVerified = !geocodeBusy && Boolean(distanceNote?.includes('(auto)'));
+  const distanceOutOfArea = distanceVerified && !isWithinHouseCallServiceArea(distanceMiles);
+
   function toggleTag(id: AppointmentTagId) {
     setTags((current) => toggleAppointmentTag(current, id));
   }
 
   async function payAndBook() {
     if (!quote || !scheduledAt) return;
+    if (!isWithinHouseCallServiceArea(distanceMiles)) {
+      setError(houseCallDistanceOutOfAreaMessage(distanceMiles));
+      return;
+    }
     setSubmitting(true);
     setError(null);
     try {
@@ -393,11 +407,16 @@ export function BookFlowClient() {
             onSuggestionSelected={onAddressSuggestion}
           />
           <p className="text-sm font-medium">Travel distance</p>
-          <p className="text-sm text-muted">
+          <p
+            className={`text-sm ${distanceOutOfArea ? 'text-danger' : 'text-muted'}`}
+            role={distanceOutOfArea ? 'alert' : undefined}
+          >
             {geocodeBusy
               ? 'Calculating from your address…'
-              : (distanceNote ??
-                `We estimate miles from ${MYSTIC_RIVER_NORTH.label} when you enter street + ZIP.`)}
+              : distanceOutOfArea
+                ? houseCallDistanceOutOfAreaMessage(distanceMiles)
+                : (distanceNote ??
+                  `We estimate miles from ${MYSTIC_RIVER_NORTH.label} when you enter street + ZIP.`)}
           </p>
           <textarea
             placeholder="Gate code, parking, pets…"
@@ -422,6 +441,8 @@ export function BookFlowClient() {
                 address.state.length !== 2 ||
                 address.postalCode.length < 5 ||
                 geocodeBusy ||
+                !distanceVerified ||
+                distanceOutOfArea ||
                 Boolean(distanceNote?.includes('not found'))
               }
               className="min-w-0 flex-1"
@@ -622,7 +643,7 @@ export function BookFlowClient() {
               </MysticMagneticButton>
               <MysticMagneticButton
                 type="button"
-                disabled={!policiesAccepted || submitting}
+                disabled={!policiesAccepted || submitting || distanceOutOfArea}
                 aria-busy={submitting}
                 className="min-w-0 flex-1"
                 fullWidth

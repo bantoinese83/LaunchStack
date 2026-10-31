@@ -3,10 +3,29 @@ import {
   APPOINTMENT_TAG_IDS,
   MYSTIC_DEFAULT_WORKSPACE_ID,
   MYSTIC_INSPO_BATCH_MAX,
+  MYSTIC_MAX_HOUSE_CALL_DISTANCE_MILES,
+  houseCallDistanceOutOfAreaMessage,
   PACKAGE_IDS,
   MEMBERSHIP_IDS,
   SERVICE_IDS,
 } from '@template/mystic';
+
+const mysticDistanceMilesSchema = z
+  .number()
+  .min(0)
+  .superRefine((value, ctx) => {
+    if (value > MYSTIC_MAX_HOUSE_CALL_DISTANCE_MILES) {
+      ctx.addIssue({
+        code: 'too_big',
+        maximum: MYSTIC_MAX_HOUSE_CALL_DISTANCE_MILES,
+        type: 'number',
+        inclusive: true,
+        message: houseCallDistanceOutOfAreaMessage(value),
+        origin: 'number',
+        input: value,
+      });
+    }
+  });
 
 /** Seed Mystic workspace id is not RFC-4122; accept it plus standard UUIDs. */
 export const mysticWorkspaceIdSchema = z.union([z.literal(MYSTIC_DEFAULT_WORKSPACE_ID), z.uuid()]);
@@ -44,7 +63,7 @@ export const mysticBookingDraftSchema = z.object({
     message: 'Please accept house-call policies',
   }),
   tipCents: z.number().int().min(0).max(50000).optional(),
-  distanceMiles: z.number().min(0).max(100),
+  distanceMiles: mysticDistanceMilesSchema,
 });
 
 export const mysticClientProfileSchema = z.object({
@@ -75,7 +94,7 @@ export const mysticCreateAppointmentSchema = z.object({
   serviceId: z.enum(SERVICE_IDS),
   scheduledAt: z.iso.datetime(),
   address: mysticAddressSchema,
-  distanceMiles: z.number().min(0).max(100),
+  distanceMiles: mysticDistanceMilesSchema,
   entitlement: z.enum(['none', 'membership', 'package']),
   quoteCents: z.number().int().min(0),
   surchargeJson: z.array(

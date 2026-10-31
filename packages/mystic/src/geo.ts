@@ -5,6 +5,22 @@ export const MYSTIC_RIVER_NORTH = {
   label: 'River North',
 } as const;
 
+/** Max straight-line miles from River North for bookable house calls. */
+export const MYSTIC_MAX_HOUSE_CALL_DISTANCE_MILES = 50;
+
+export function houseCallDistanceOutOfAreaMessage(distanceMiles: number): string {
+  const rounded = Math.round(distanceMiles * 10) / 10;
+  return `That address is about ${rounded} mi from ${MYSTIC_RIVER_NORTH.label} — outside our Chicago house-call area. Pick a Chicago suggestion or message Luke if this looks wrong.`;
+}
+
+export function isWithinHouseCallServiceArea(distanceMiles: number): boolean {
+  return (
+    Number.isFinite(distanceMiles) &&
+    distanceMiles >= 0 &&
+    distanceMiles <= MYSTIC_MAX_HOUSE_CALL_DISTANCE_MILES
+  );
+}
+
 const EARTH_RADIUS_MILES = 3958.8;
 
 export function haversineMiles(lat1: number, lng1: number, lat2: number, lng2: number): number {
