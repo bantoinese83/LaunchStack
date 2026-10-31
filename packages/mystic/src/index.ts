@@ -9,3 +9,4 @@ export * from './shop';
 export * from './visits';
 export * from './booking-flow';
 export * from './empty-states';
+export * from './dicebear';

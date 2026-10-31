@@ -184,6 +184,21 @@ export async function fetchClientProfile(): Promise<{
   return data;
 }
 
+export async function saveDiceBearAvatar(
+  style: string,
+  seed: string
+): Promise<{ url?: string; error?: string }> {
+  if (!appUrl) return { error: 'EXPO_PUBLIC_APP_URL not set' };
+  const res = await fetch(`${appUrl}/api/profile/avatar`, {
+    method: 'PUT',
+    headers: { ...(await authHeaders()), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ style, seed }),
+  });
+  const data = await res.json();
+  if (!res.ok) return { error: data.error ?? 'Could not save avatar' };
+  return { url: data.url as string };
+}
+
 export async function uploadProfileAvatar(
   uri: string,
   fileName: string

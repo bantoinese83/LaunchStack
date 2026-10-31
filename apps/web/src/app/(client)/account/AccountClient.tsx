@@ -161,7 +161,12 @@ export function AccountClient({ initialEmail }: { initialEmail: string | null })
         </p>
       ) : null}
 
-      <MysticProfileAvatar avatarUrl={avatarUrl} name={form.fullName} onUploaded={setAvatarUrl} />
+      <MysticProfileAvatar
+        avatarUrl={avatarUrl}
+        name={form.fullName}
+        diceBearDefaultSeed={form.fullName || form.email}
+        onUploaded={setAvatarUrl}
+      />
 
       <label className="block text-sm">
         Full name

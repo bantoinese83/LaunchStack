@@ -156,7 +156,12 @@ export default function AccountTab() {
       ) : null}
       {creditsSummary ? <Text style={styles.credits}>{creditsSummary}</Text> : null}
 
-      <NativeProfileAvatar avatarUrl={avatarUrl} name={form.fullName} onUploaded={setAvatarUrl} />
+      <NativeProfileAvatar
+        avatarUrl={avatarUrl}
+        name={form.fullName}
+        diceBearDefaultSeed={form.fullName || form.email}
+        onUploaded={setAvatarUrl}
+      />
 
       <View style={styles.field}>
         <Text style={styles.label}>Full name</Text>
