@@ -1,4 +1,5 @@
 export * from './catalog';
+export * from './service-icons';
 export * from './pricing';
 export * from './policies';
 export * from './referrals';

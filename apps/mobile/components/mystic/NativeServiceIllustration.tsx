@@ -1,130 +1,74 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import Svg, { Circle, Ellipse, Path, Rect } from 'react-native-svg';
-import type { ServiceId } from '@template/mystic';
-import { theme } from '@template/mobile-ui';
+import Svg, { Circle, G, Path } from 'react-native-svg';
+import {
+  MYSTIC_SERVICE_ICON_FACE,
+  MYSTIC_SERVICE_ICON_FACE_UPDO,
+  MYSTIC_SERVICE_ICON_HAIR,
+  MYSTIC_SERVICE_ICON_STRANDS,
+  MYSTIC_SERVICE_ICON_TONES,
+  type ServiceId,
+} from '@template/mystic';
 
-const TONE: Record<ServiceId, { stroke: string; fill: string; bg: string }> = {
-  blowout: { stroke: theme.accent, fill: theme.gold, bg: theme.goldSoft },
-  haircut: { stroke: theme.plum, fill: theme.accent, bg: theme.accentSoft },
-  updo: { stroke: theme.plum, fill: theme.gold, bg: theme.goldSoft },
-  dry_style: { stroke: theme.accent, fill: theme.chalk, bg: theme.accentSoft },
-};
+function ServiceArt({ serviceId }: { serviceId: ServiceId }) {
+  const tone = MYSTIC_SERVICE_ICON_TONES[serviceId];
+  const hair = MYSTIC_SERVICE_ICON_HAIR[serviceId];
+  const strands = MYSTIC_SERVICE_ICON_STRANDS[serviceId];
+  const face = serviceId === 'updo' ? MYSTIC_SERVICE_ICON_FACE_UPDO : MYSTIC_SERVICE_ICON_FACE;
 
-function ServiceArt({
-  serviceId,
-  stroke,
-  fill,
-}: {
-  serviceId: ServiceId;
-  stroke: string;
-  fill: string;
-}) {
-  switch (serviceId) {
-    case 'blowout':
-      return (
-        <Svg viewBox="0 0 64 64" width="100%" height="100%">
-          <Path
-            d="M12 44c8-14 20-22 32-22 6 0 10 2 12 6"
-            stroke={stroke}
-            strokeWidth={2}
-            strokeLinecap="round"
-            fill="none"
+  return (
+    <Svg viewBox="0 0 64 64" width="100%" height="100%">
+      <Circle cx={32} cy={32} r={30} fill={tone.badge} />
+      <Path
+        d={hair}
+        fill={tone.hair}
+        stroke={tone.stroke}
+        strokeWidth={1.7}
+        strokeLinejoin="round"
+      />
+      {strands.map((d) => (
+        <Path
+          key={d}
+          d={d}
+          fill="none"
+          stroke={tone.stroke}
+          strokeWidth={1.2}
+          strokeLinecap="round"
+          opacity={0.5}
+        />
+      ))}
+      <Path
+        d={face}
+        fill={tone.skin}
+        stroke={tone.stroke}
+        strokeWidth={1.7}
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
+      {serviceId === 'updo' && tone.accent ? (
+        <G transform="translate(41 11)">
+          <Circle cx={0} cy={0} r={3.4} fill={tone.accent} stroke={tone.stroke} strokeWidth={1.3} />
+          <Circle
+            cx={-2.4}
+            cy={1.8}
+            r={2.3}
+            fill={tone.accent}
+            stroke={tone.stroke}
+            strokeWidth={1.1}
           />
-          <Path
-            d="M10 38c6-8 14-12 24-12s18 4 22 10"
-            stroke={fill}
-            strokeWidth={1.5}
-            strokeLinecap="round"
-            fill="none"
-            opacity={0.85}
+          <Circle
+            cx={2.4}
+            cy={1.8}
+            r={2.3}
+            fill={tone.accent}
+            stroke={tone.stroke}
+            strokeWidth={1.1}
           />
-          <Circle cx={48} cy={18} r={5} stroke={stroke} strokeWidth={1.5} fill="none" />
-          <Path d="M48 23v14" stroke={stroke} strokeWidth={2} strokeLinecap="round" fill="none" />
-          <Path d="M44 30h8" stroke={fill} strokeWidth={1.5} strokeLinecap="round" fill="none" />
-        </Svg>
-      );
-    case 'haircut':
-      return (
-        <Svg viewBox="0 0 64 64" width="100%" height="100%">
-          <Path
-            d="M22 42 L32 18 L42 42"
-            stroke={stroke}
-            strokeWidth={2}
-            strokeLinejoin="round"
-            fill="none"
-          />
-          <Circle cx={32} cy={44} r={3} fill={fill} opacity={0.5} />
-          <Path
-            d="M18 28c4-6 10-8 14-8M46 28c-4-6-10-8-14-8"
-            stroke={stroke}
-            strokeWidth={1.5}
-            strokeLinecap="round"
-            fill="none"
-          />
-        </Svg>
-      );
-    case 'updo':
-      return (
-        <Svg viewBox="0 0 64 64" width="100%" height="100%">
-          <Ellipse cx={32} cy={28} rx={14} ry={12} stroke={stroke} strokeWidth={1.8} fill="none" />
-          <Path
-            d="M32 16c-6 4-8 10-8 16 0 8 6 14 14 14"
-            stroke={fill}
-            strokeWidth={1.5}
-            strokeLinecap="round"
-            fill="none"
-          />
-          <Path
-            d="M38 14l4-4M26 14l-4-4"
-            stroke={stroke}
-            strokeWidth={1.5}
-            strokeLinecap="round"
-            fill="none"
-          />
-          <Circle cx={32} cy={40} r={2.5} fill={fill} />
-        </Svg>
-      );
-    case 'dry_style':
-      return (
-        <Svg viewBox="0 0 64 64" width="100%" height="100%">
-          <Path
-            d="M14 46c10-8 22-10 34-6"
-            stroke={stroke}
-            strokeWidth={2}
-            strokeLinecap="round"
-            fill="none"
-          />
-          <Path
-            d="M28 20c6 8 10 16 10 24"
-            stroke={fill}
-            strokeWidth={2}
-            strokeLinecap="round"
-            fill="none"
-          />
-          <Path
-            d="M36 18c-2 6-2 14 2 22"
-            stroke={stroke}
-            strokeWidth={1.5}
-            strokeLinecap="round"
-            fill="none"
-            opacity={0.7}
-          />
-          <Rect
-            x={40}
-            y={12}
-            width={8}
-            height={16}
-            rx={2}
-            stroke={stroke}
-            strokeWidth={1.5}
-            fill="none"
-          />
-        </Svg>
-      );
-    default:
-      return null;
-  }
+          <Circle cx={0} cy={0.5} r={1.15} fill={tone.hair} />
+        </G>
+      ) : null}
+    </Svg>
+  );
 }
 
 type Props = {
@@ -132,36 +76,16 @@ type Props = {
   size?: number;
 };
 
-export function NativeServiceIllustration({ serviceId, size = 52 }: Props) {
-  const tone = TONE[serviceId];
+export function NativeServiceIllustration({ serviceId, size = 56 }: Props) {
   return (
-    <View
-      style={[
-        styles.frame,
-        {
-          width: size,
-          height: size,
-          backgroundColor: tone.bg,
-          borderColor: theme.line,
-        },
-      ]}
-      accessibilityElementsHidden
-    >
-      <View style={styles.pad}>
-        <ServiceArt serviceId={serviceId} stroke={tone.stroke} fill={tone.fill} />
-      </View>
+    <View style={[styles.frame, { width: size, height: size }]} accessibilityElementsHidden>
+      <ServiceArt serviceId={serviceId} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   frame: {
-    borderRadius: theme.radii.lg,
-    borderWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden',
-  },
-  pad: {
-    flex: 1,
-    padding: 8,
   },
 });
