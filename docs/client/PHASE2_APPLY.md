@@ -27,7 +27,7 @@ Seed `mystic_studio_settings` for the workspace (defaults exist in migration-les
 
 ## 3. Edge function (optional)
 
-Prefer Vercel Cron (`apps/web/vercel.json`) → `POST /api/mystic/cron/door-timer-expire` with `CRON_SECRET`. Optional Supabase edge proxy: `supabase/functions/mystic-door-timer-expire`.
+Prefer GitHub Actions (`.github/workflows/mystic-door-timer-cron.yml`) → `POST /api/mystic/cron/door-timer-expire` with `CRON_SECRET` (Vercel Hobby: no sub-daily crons). Optional Supabase edge proxy: `supabase/functions/mystic-door-timer-expire`.
 
 ## 4. Luke studio
 

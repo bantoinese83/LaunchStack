@@ -4,10 +4,4 @@ export const config: VercelConfig = {
   framework: 'nextjs',
   installCommand: 'cd ../.. && pnpm install --frozen-lockfile',
   buildCommand: 'cd ../.. && pnpm --filter @template/web build',
-  crons: [
-    {
-      path: '/api/mystic/cron/door-timer-expire',
-      schedule: '*/5 * * * *',
-    },
-  ],
 };

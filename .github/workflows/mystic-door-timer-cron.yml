@@ -1,0 +1,25 @@
+# Door timer expiry runs every 5 min (Vercel Hobby only allows daily crons).
+# Repo secrets: CRON_SECRET, MYSTIC_APP_URL (e.g. https://mystic-hair-co.vercel.app)
+name: Mystic door timer cron
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+jobs:
+  expire-door-timers:
+    runs-on: ubuntu-latest
+    steps:
+      - name: POST door-timer-expire
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          MYSTIC_APP_URL: ${{ secrets.MYSTIC_APP_URL }}
+        run: |
+          if [ -z "$CRON_SECRET" ] || [ -z "$MYSTIC_APP_URL" ]; then
+            echo "Skip: set CRON_SECRET and MYSTIC_APP_URL in GitHub repo secrets."
+            exit 0
+          fi
+          curl -fsS -X POST \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            "${MYSTIC_APP_URL%/}/api/mystic/cron/door-timer-expire"

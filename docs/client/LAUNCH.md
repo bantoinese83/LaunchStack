@@ -44,7 +44,7 @@ node scripts/push-env-to-vercel.mjs       # sync apps/web/.env.local → Vercel
 
 ## 4. Door timer cron (production)
 
-Set `CRON_SECRET` on Vercel. Cron hits `POST /api/mystic/cron/door-timer-expire` every 5 minutes (see `apps/web/vercel.json`) with header `Authorization: Bearer $CRON_SECRET`. Captures deposit via Stripe when the door timer expires.
+Set `CRON_SECRET` on Vercel (same value as GitHub). **GitHub Actions** (`.github/workflows/mystic-door-timer-cron.yml`) hits `POST /api/mystic/cron/door-timer-expire` every 5 minutes with `Authorization: Bearer $CRON_SECRET` — Vercel Hobby cannot run sub-daily crons. Add repo secrets `CRON_SECRET` and `MYSTIC_APP_URL`. Captures deposit via Stripe when the door timer expires.
 
 Optional Supabase edge proxy: deploy `supabase/functions/mystic-door-timer-expire` with `MYSTIC_APP_URL` + `CRON_SECRET`.
 
