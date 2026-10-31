@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { MysticProfileAvatar } from '@/components/mystic/MysticProfileAvatar';
 import { MysticMagneticButton } from '@/components/mystic/MysticMagneticButton';
 import { mysticCard, mysticInput } from '@/components/mystic/mystic-styles';
 
@@ -23,6 +24,7 @@ type ClientProfileResponse = {
   marketing_sms?: boolean;
   marketing_email?: boolean;
   referral_code?: string | null;
+  avatar_url?: string | null;
 };
 
 export function AccountClient({ initialEmail }: { initialEmail: string | null }) {
@@ -41,6 +43,7 @@ export function AccountClient({ initialEmail }: { initialEmail: string | null })
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const [creditsSummary, setCreditsSummary] = useState<string | null>(null);
   const [copyHint, setCopyHint] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   const loadProfile = useCallback(() => {
     void fetch('/api/mystic/client-profile')
@@ -63,6 +66,7 @@ export function AccountClient({ initialEmail }: { initialEmail: string | null })
           marketingEmail: p.marketing_email ?? true,
         });
         setReferralCode(p.referral_code ?? null);
+        setAvatarUrl(p.avatar_url ?? null);
       })
       .finally(() => setLoading(false));
   }, [initialEmail, router]);
@@ -156,6 +160,8 @@ export function AccountClient({ initialEmail }: { initialEmail: string | null })
           {creditsSummary}
         </p>
       ) : null}
+
+      <MysticProfileAvatar avatarUrl={avatarUrl} name={form.fullName} onUploaded={setAvatarUrl} />
 
       <label className="block text-sm">
         Full name

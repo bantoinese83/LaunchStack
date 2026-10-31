@@ -13,7 +13,11 @@ export async function GET(req: Request) {
     const admin = createSupabaseAdminClient();
     const [{ data: identity, error: identityError }, { data: mystic, error: mysticError }] =
       await Promise.all([
-        admin.from('profiles').select('full_name, email').eq('id', auth.user.id).single(),
+        admin
+          .from('profiles')
+          .select('full_name, email, avatar_url')
+          .eq('id', auth.user.id)
+          .single(),
         admin.from('mystic_client_profiles').select('*').eq('user_id', auth.user.id).maybeSingle(),
       ]);
     if (identityError) throw identityError;
@@ -32,6 +36,7 @@ export async function GET(req: Request) {
         }),
         full_name: identity?.full_name ?? null,
         email: identity?.email ?? auth.user.email ?? null,
+        avatar_url: identity?.avatar_url ?? null,
       },
     });
   } catch (err) {

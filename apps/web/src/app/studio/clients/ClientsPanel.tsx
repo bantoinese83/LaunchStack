@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { MysticEmptyState } from '@/components/mystic/MysticEmptyState';
 import { getMysticWorkspaceId } from '@/lib/mystic/config';
@@ -17,6 +18,7 @@ type Client = {
   referral_code: string | null;
   full_name: string | null;
   email: string | null;
+  avatar_url?: string | null;
   credits: Credit[];
 };
 
@@ -37,25 +39,40 @@ export function ClientsPanel() {
   return (
     <ul className="mt-6 divide-y divide-line rounded-2xl border border-line bg-surface">
       {clients.map((client) => (
-        <li key={client.user_id} className="p-4">
-          <p className="font-medium">
-            {client.full_name ?? client.email ?? client.user_id.slice(0, 8)}
-          </p>
-          <p className="text-sm text-muted">{client.phone ?? 'No phone'}</p>
-          {client.referral_code ? (
-            <p className="mt-1 font-mono text-xs text-accent">Code {client.referral_code}</p>
-          ) : null}
-          {client.credits.length > 0 ? (
-            <ul className="mt-2 text-xs text-chalk">
-              {client.credits.map((c) => (
-                <li key={`${c.source_kind}-${c.source_id}`}>
-                  {c.blowouts_remaining} left · {c.source_kind} {c.source_id}
-                </li>
-              ))}
-            </ul>
+        <li key={client.user_id} className="flex gap-3 p-4">
+          {client.avatar_url ? (
+            <Image
+              src={client.avatar_url}
+              alt=""
+              width={44}
+              height={44}
+              className="h-11 w-11 shrink-0 rounded-full object-cover"
+            />
           ) : (
-            <p className="mt-1 text-xs text-muted">No active credits</p>
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-accent-soft text-sm font-medium text-accent">
+              {(client.full_name ?? client.email ?? '?')[0]?.toUpperCase()}
+            </div>
           )}
+          <div className="min-w-0 flex-1">
+            <p className="font-medium">
+              {client.full_name ?? client.email ?? client.user_id.slice(0, 8)}
+            </p>
+            <p className="text-sm text-muted">{client.phone ?? 'No phone'}</p>
+            {client.referral_code ? (
+              <p className="mt-1 font-mono text-xs text-accent">Code {client.referral_code}</p>
+            ) : null}
+            {client.credits.length > 0 ? (
+              <ul className="mt-2 text-xs text-chalk">
+                {client.credits.map((c) => (
+                  <li key={`${c.source_kind}-${c.source_id}`}>
+                    {c.blowouts_remaining} left · {c.source_kind} {c.source_id}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-1 text-xs text-muted">No active credits</p>
+            )}
+          </div>
         </li>
       ))}
     </ul>

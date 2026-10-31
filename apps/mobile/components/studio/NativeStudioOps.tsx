@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 import * as Location from 'expo-location';
 import {
@@ -9,7 +9,8 @@ import {
 } from '@template/mystic';
 import { NativeButton, monoLabel, theme } from '@template/mobile-ui';
 import { NativeEmptyState } from '../mystic/NativeEmptyState';
-import { shareStylistLocation, studioPost } from '../../lib/studioApi';
+import { NativeInspoGallery } from '../mystic/NativeInspoGallery';
+import { fetchAppointmentInspo, shareStylistLocation, studioPost } from '../../lib/studioApi';
 
 export type StudioAppointment = {
   id: string;
@@ -29,6 +30,28 @@ export function NativeStudioOps({
   const [eta, setEta] = useState('20');
   const [message, setMessage] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [inspoById, setInspoById] = useState<Record<string, { id: string; public_url: string }[]>>(
+    {}
+  );
+
+  const idKey = useMemo(() => appointments.map((a) => a.id).join(','), [appointments]);
+
+  useEffect(() => {
+    if (!idKey) {
+      setInspoById({});
+      return;
+    }
+    void Promise.all(
+      idKey.split(',').map(async (id) => {
+        const data = await fetchAppointmentInspo(id);
+        return { id, photos: data.photos ?? [] };
+      })
+    ).then((rows) => {
+      const next: Record<string, { id: string; public_url: string }[]> = {};
+      for (const row of rows) next[row.id] = row.photos;
+      setInspoById(next);
+    });
+  }, [idKey]);
 
   async function readCoords() {
     const { status } = await Location.requestForegroundPermissionsAsync();
@@ -116,6 +139,7 @@ export function NativeStudioOps({
             <Text style={styles.meta}>
               {formatVisitWhen(row.starts_at)} · {visitStatusLabel(row.status)}
             </Text>
+            <NativeInspoGallery photos={inspoById[row.id] ?? []} label="Client inspo" />
             <View style={styles.actions}>
               <NativeButton
                 title="On the way"

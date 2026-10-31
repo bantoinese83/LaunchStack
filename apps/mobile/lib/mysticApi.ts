@@ -161,12 +161,15 @@ export type ClientProfileForm = {
 export type ClientProfileRow = {
   full_name?: string | null;
   email?: string | null;
+  avatar_url?: string | null;
   phone?: string | null;
   birthday?: string | null;
   marketing_sms?: boolean;
   marketing_email?: boolean;
   referral_code?: string | null;
 };
+
+export type InspoPhotoRow = { id: string; public_url: string; created_at?: string };
 
 export async function fetchClientProfile(): Promise<{
   profile?: ClientProfileRow;
@@ -178,6 +181,41 @@ export async function fetchClientProfile(): Promise<{
   });
   const data = await res.json();
   if (!res.ok) return { error: data.error ?? 'Could not load profile' };
+  return data;
+}
+
+export async function uploadProfileAvatar(
+  uri: string,
+  fileName: string
+): Promise<{ url?: string; error?: string }> {
+  if (!appUrl) return { error: 'EXPO_PUBLIC_APP_URL not set' };
+  const form = new FormData();
+  form.append('file', {
+    uri,
+    name: fileName,
+    type: 'image/jpeg',
+  } as unknown as Blob);
+  const res = await fetch(`${appUrl}/api/profile/avatar`, {
+    method: 'POST',
+    headers: await authHeaders(false),
+    body: form,
+  });
+  const data = await res.json();
+  if (!res.ok) return { error: data.error ?? 'Upload failed' };
+  return { url: data.url as string };
+}
+
+export async function fetchAppointmentInspo(appointmentId: string): Promise<{
+  photos?: InspoPhotoRow[];
+  error?: string;
+}> {
+  if (!appUrl) throw new Error('EXPO_PUBLIC_APP_URL not set');
+  const res = await fetch(
+    `${appUrl}/api/mystic/appointments/inspo?appointmentId=${encodeURIComponent(appointmentId)}`,
+    { headers: await authHeaders() }
+  );
+  const data = await res.json();
+  if (!res.ok) return { error: data.error };
   return data;
 }
 

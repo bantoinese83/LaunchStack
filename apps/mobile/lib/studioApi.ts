@@ -133,6 +133,15 @@ export async function sendStudioBlast(body: {
   return res.json();
 }
 
+export async function fetchAppointmentInspo(appointmentId: string) {
+  const base = requireAppUrl();
+  const res = await fetch(
+    `${base}/api/mystic/appointments/inspo?appointmentId=${encodeURIComponent(appointmentId)}`,
+    { headers: await authHeaders() }
+  );
+  return res.json() as Promise<{ photos?: { id: string; public_url: string }[] }>;
+}
+
 export async function shareStylistLocation(
   appointmentId: string,
   latitude: number,

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { theme } from '@template/mobile-ui';
 import { NativeEmptyState } from '../../../../components/mystic/NativeEmptyState';
@@ -11,6 +11,7 @@ type ClientRow = {
   full_name?: string | null;
   email?: string | null;
   phone?: string | null;
+  avatar_url?: string | null;
 };
 
 export default function StudioClientsScreen() {
@@ -47,8 +48,19 @@ export default function StudioClientsScreen() {
                 })
               }
             >
-              <Text style={styles.name}>{name}</Text>
-              {client.phone ? <Text style={styles.muted}>{client.phone}</Text> : null}
+              <View style={styles.rowInner}>
+                {client.avatar_url ? (
+                  <Image source={{ uri: client.avatar_url }} style={styles.avatar} />
+                ) : (
+                  <View style={styles.avatarPlaceholder}>
+                    <Text style={styles.avatarInitial}>{name[0]?.toUpperCase() ?? '?'}</Text>
+                  </View>
+                )}
+                <View style={styles.rowText}>
+                  <Text style={styles.name}>{name}</Text>
+                  {client.phone ? <Text style={styles.muted}>{client.phone}</Text> : null}
+                </View>
+              </View>
             </Pressable>
           );
         })
@@ -68,6 +80,18 @@ const styles = StyleSheet.create({
     borderColor: theme.line,
     backgroundColor: theme.surface,
   },
+  rowInner: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  rowText: { flex: 1 },
+  avatar: { width: 44, height: 44, borderRadius: 22 },
+  avatarPlaceholder: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: theme.accentSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarInitial: { fontWeight: '600', color: theme.accent },
   name: { fontWeight: '600', color: theme.ink },
   muted: { marginTop: 4, fontSize: 13, color: theme.muted },
 });

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   formatVisitWhen,
   getServiceById,
@@ -9,6 +9,7 @@ import {
 } from '@template/mystic';
 import { getMysticWorkspaceId } from '@/lib/mystic/config';
 import { MysticEmptyState } from '@/components/mystic/MysticEmptyState';
+import { MysticInspoGallery, type InspoPhoto } from '@/components/mystic/MysticInspoGallery';
 import {
   mysticCard,
   mysticInput,
@@ -46,6 +47,28 @@ export function StudioOpsPanel({ initialAppointments }: { initialAppointments: A
   const [message, setMessage] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [busyAction, setBusyAction] = useState<string | null>(null);
+  const [inspoByAppointment, setInspoByAppointment] = useState<Record<string, InspoPhoto[]>>({});
+
+  const appointmentIds = useMemo(() => appointments.map((a) => a.id).join(','), [appointments]);
+
+  useEffect(() => {
+    if (!appointmentIds) {
+      setInspoByAppointment({});
+      return;
+    }
+    const ids = appointmentIds.split(',');
+    void Promise.all(
+      ids.map(async (id) => {
+        const res = await fetch(`/api/mystic/appointments/inspo?appointmentId=${id}`);
+        const data = await res.json();
+        return { id, photos: (data.photos ?? []) as InspoPhoto[] };
+      })
+    ).then((rows) => {
+      const next: Record<string, InspoPhoto[]> = {};
+      for (const row of rows) next[row.id] = row.photos;
+      setInspoByAppointment(next);
+    });
+  }, [appointmentIds]);
 
   async function enRoute(appointmentId: string) {
     setBusyId(appointmentId);
@@ -213,11 +236,15 @@ export function StudioOpsPanel({ initialAppointments }: { initialAppointments: A
                 key={row.id}
                 className="flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between"
               >
-                <div>
+                <div className="min-w-0 flex-1">
                   <p className="font-medium">{serviceName}</p>
                   <p className="text-sm text-muted">
                     {formatVisitWhen(row.starts_at)} · {visitStatusLabel(row.status)}
                   </p>
+                  <MysticInspoGallery
+                    photos={inspoByAppointment[row.id] ?? []}
+                    label="Client inspo"
+                  />
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <button

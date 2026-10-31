@@ -13,6 +13,7 @@ import {
 import { useRouter } from 'expo-router';
 import { createSupabaseMobileClient } from '@template/api/mobile';
 import { NativeButton, displayTitle, monoLabel, theme } from '@template/mobile-ui';
+import { NativeProfileAvatar } from '../../../components/mystic/NativeProfileAvatar';
 import { fetchClientProfile, fetchMyCredits, saveClientProfile } from '../../../lib/mysticApi';
 
 type FormState = {
@@ -39,6 +40,7 @@ export default function AccountTab() {
   const [status, setStatus] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const [creditsSummary, setCreditsSummary] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -65,6 +67,7 @@ export default function AccountTab() {
         marketingEmail: p?.marketing_email ?? true,
       });
       setReferralCode(p?.referral_code ?? null);
+      setAvatarUrl(p?.avatar_url ?? null);
 
       const credits = await fetchMyCredits();
       const rows = credits.credits ?? [];
@@ -152,6 +155,8 @@ export default function AccountTab() {
         </View>
       ) : null}
       {creditsSummary ? <Text style={styles.credits}>{creditsSummary}</Text> : null}
+
+      <NativeProfileAvatar avatarUrl={avatarUrl} name={form.fullName} onUploaded={setAvatarUrl} />
 
       <View style={styles.field}>
         <Text style={styles.label}>Full name</Text>

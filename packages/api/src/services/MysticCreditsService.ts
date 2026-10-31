@@ -145,7 +145,7 @@ export class MysticCreditsService {
     const ids = profiles.map((p) => p.user_id);
     const { data: names } = await this.supabase
       .from('profiles')
-      .select('id, full_name, email')
+      .select('id, full_name, email, avatar_url')
       .in('id', ids);
     const byId = new Map((names ?? []).map((n) => [n.id, n]));
 
@@ -153,6 +153,7 @@ export class MysticCreditsService {
       ...p,
       full_name: byId.get(p.user_id)?.full_name ?? null,
       email: byId.get(p.user_id)?.email ?? null,
+      avatar_url: byId.get(p.user_id)?.avatar_url ?? null,
     }));
   }
 }

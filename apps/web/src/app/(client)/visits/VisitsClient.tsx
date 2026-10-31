@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   canUploadVisitInspo,
+  DEFAULT_SURCHARGE_RULES,
   formatUsd,
   formatVisitWhen,
   getServiceById,
@@ -16,6 +17,7 @@ import { MysticLiveMapEmbed } from '@/components/mystic/MysticLiveMapEmbed';
 import { MysticPageIntro } from '@/components/mystic/MysticPageIntro';
 import { MysticEmptyState } from '@/components/mystic/MysticEmptyState';
 import { MysticMagneticLink } from '@/components/mystic/MysticMagneticButton';
+import { MysticInspoGallery } from '@/components/mystic/MysticInspoGallery';
 import { mysticCard, mysticInput } from '@/components/mystic/mystic-styles';
 
 type Appointment = {
@@ -29,9 +31,18 @@ type Appointment = {
   stylist_latitude: number | null;
   stylist_longitude: number | null;
   stylist_location_updated_at: string | null;
+  inspo_photos?: { id: string; public_url: string }[];
 };
 
-function InspoUpload({ appointmentId }: { appointmentId: string }) {
+function InspoUpload({
+  appointmentId,
+  photoCount,
+  onUploaded,
+}: {
+  appointmentId: string;
+  photoCount: number;
+  onUploaded: () => void;
+}) {
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -46,17 +57,26 @@ function InspoUpload({ appointmentId }: { appointmentId: string }) {
     try {
       const res = await fetch('/api/mystic/appointments/inspo', { method: 'POST', body: form });
       const data = await res.json();
-      setStatus(
-        res.ok
-          ? 'Photo saved — Luke will see it before your visit.'
-          : (data.error ?? 'Upload failed')
-      );
+      if (res.ok) {
+        setStatus('Photo saved — Luke will see it before your visit.');
+        onUploaded();
+      } else {
+        setStatus(data.error ?? 'Upload failed');
+      }
     } catch {
       setStatus('Upload failed — try again');
     } finally {
       setBusy(false);
       e.target.value = '';
     }
+  }
+
+  if (photoCount >= DEFAULT_SURCHARGE_RULES.maxInspoPhotos) {
+    return (
+      <p className="mt-3 text-xs text-muted">
+        Maximum {DEFAULT_SURCHARGE_RULES.maxInspoPhotos} inspo photos.
+      </p>
+    );
   }
 
   return (
@@ -206,7 +226,14 @@ export function VisitsClient() {
                   still message him anytime.
                 </p>
               ) : null}
-              {canUploadVisitInspo(row.status) ? <InspoUpload appointmentId={row.id} /> : null}
+              <MysticInspoGallery photos={row.inspo_photos ?? []} />
+              {canUploadVisitInspo(row.status) ? (
+                <InspoUpload
+                  appointmentId={row.id}
+                  photoCount={row.inspo_photos?.length ?? 0}
+                  onUploaded={() => load({ silent: true })}
+                />
+              ) : null}
             </li>
           );
         })}

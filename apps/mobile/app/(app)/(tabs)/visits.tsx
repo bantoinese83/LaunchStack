@@ -12,6 +12,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import {
   canUploadVisitInspo,
+  DEFAULT_SURCHARGE_RULES,
   formatUsd,
   formatVisitWhen,
   getServiceById,
@@ -22,6 +23,7 @@ import {
 } from '@template/mystic';
 import { NativeButton, displayTitle, monoLabel, theme } from '@template/mobile-ui';
 import { NativeEmptyState } from '../../../components/mystic/NativeEmptyState';
+import { NativeInspoGallery } from '../../../components/mystic/NativeInspoGallery';
 import { NativeDoorTimerBanner } from '../../../components/visits/NativeDoorTimerBanner';
 import { NativeLiveMap } from '../../../components/visits/NativeLiveMap';
 import { fetchMyAppointments, uploadInspoPhoto } from '../../../lib/mysticApi';
@@ -37,6 +39,7 @@ type Appointment = {
   stylist_latitude: number | null;
   stylist_longitude: number | null;
   stylist_location_updated_at: string | null;
+  inspo_photos?: { id: string; public_url: string }[];
 };
 
 export default function VisitsTab() {
@@ -182,7 +185,9 @@ export default function VisitsTab() {
                 Messages.
               </Text>
             ) : null}
-            {canUploadVisitInspo(visit.status) ? (
+            <NativeInspoGallery photos={visit.inspo_photos ?? []} />
+            {canUploadVisitInspo(visit.status) &&
+            (visit.inspo_photos?.length ?? 0) < DEFAULT_SURCHARGE_RULES.maxInspoPhotos ? (
               <NativeButton
                 title="Add inspo photo"
                 variant="secondary"
