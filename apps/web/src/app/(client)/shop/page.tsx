@@ -2,9 +2,8 @@ import type { Metadata } from 'next';
 import { MysticShopCatalog } from '@/components/mystic/MysticShopCatalog';
 
 export const metadata: Metadata = {
-  title: 'Shop — at-home hair care',
-  description:
-    'Pre-order Mystic Hair Co. at-home products — volume mist, heat shield, and finish serum.',
+  title: 'Shop — coming soon',
+  description: 'At-home styling products from Mystic Hair Co. — checkout opening soon.',
 };
 
 export default function ShopPage() {

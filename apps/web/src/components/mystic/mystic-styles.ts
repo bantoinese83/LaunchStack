@@ -37,9 +37,6 @@ export const mysticFlatRow = 'border-b border-line/80 py-4 last:border-b-0 bg-tr
 /** Live visit / en route — gold road marker (matches mobile) */
 export const mysticLiveHighlight = 'border-l-[3px] border-gold bg-gold-soft/90 pl-4 -ml-px';
 
-export const mysticRoadStripe =
-  'mb-4 flex h-[3px] overflow-hidden rounded-[1px] [&>span:nth-child(1)]:flex-[5] [&>span:nth-child(1)]:bg-gold [&>span:nth-child(2)]:flex-[2] [&>span:nth-child(2)]:bg-plum [&>span:nth-child(3)]:flex-[3] [&>span:nth-child(3)]:bg-accent';
-
 export const mysticPageEnter = 'animate-[rise_400ms_ease-out]';
 
 /** Vertical rhythm for app + studio pages */

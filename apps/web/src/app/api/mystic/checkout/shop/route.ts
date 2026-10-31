@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@template/api';
-import { getShopProductById, type ShopProductId } from '@template/mystic';
+import { MYSTIC_SHOP_ENABLED, getShopProductById, type ShopProductId } from '@template/mystic';
 import { firstZodIssueMessage, mysticShopCheckoutSchema } from '@template/validation';
 import { requireAuthenticatedUser, routeErrorResponse } from '@/lib/api/route-auth';
 import { getStripeClient } from '@/lib/stripe';
@@ -10,6 +10,13 @@ export async function POST(req: Request) {
   try {
     const auth = await requireAuthenticatedUser(req);
     if (auth.response) return auth.response;
+
+    if (!MYSTIC_SHOP_ENABLED) {
+      return NextResponse.json(
+        { error: 'Shop coming soon — check back shortly.' },
+        { status: 503 }
+      );
+    }
 
     const parsed = mysticShopCheckoutSchema.safeParse(await req.json());
     if (!parsed.success) {

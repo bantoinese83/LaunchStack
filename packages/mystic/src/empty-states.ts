@@ -7,6 +7,7 @@ export const MYSTIC_EMPTY_VARIANTS = [
   'referrals',
   'studio-ops',
   'book-slots',
+  'shop',
   'generic',
 ] as const;
 
@@ -72,6 +73,14 @@ export const MYSTIC_EMPTY_CONTENT: Record<MysticEmptyVariant, MysticEmptyContent
     title: 'No open times',
     description: 'That day may be full or blocked — try another date on the strip above.',
     compactDescription: 'Pick another day or check back later.',
+  },
+  shop: {
+    illustration: 'referrals.jpg',
+    eyebrow: 'Shop',
+    title: 'Coming soon',
+    description:
+      'Luke is finishing the at-home product line. Book a house call and he can recommend what to grab when we launch.',
+    compactDescription: 'Product checkout opens soon.',
   },
   generic: {
     illustration: 'visits.jpg',

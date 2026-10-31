@@ -1,5 +1,15 @@
 /** Phase 3 — product catalog (pre-order before full shop launch). */
 
+/** Flip to true when Stripe checkout and fulfillment are live. */
+export const MYSTIC_SHOP_ENABLED = false;
+
+export const MYSTIC_SHOP_COMING_SOON = {
+  title: 'Coming soon',
+  description:
+    'Luke is finishing the at-home product line — volume mist, heat shield, and silk serum. Book a house call and he can recommend a routine until checkout opens here.',
+  compactDescription: 'Product checkout opens soon.',
+} as const;
+
 export const SHOP_PRODUCT_IDS = ['volume_mist', 'heat_shield', 'silk_serum'] as const;
 export type ShopProductId = (typeof SHOP_PRODUCT_IDS)[number];
 

@@ -5,7 +5,6 @@ import { MysticMagneticLink } from '@/components/mystic/MysticMagneticButton';
 import { MysticHeaderAccountNavItem } from '@/components/mystic/MysticHeaderAccountNavItem';
 import { MysticHeaderMobileNav } from '@/components/mystic/MysticHeaderMobileNav';
 import { MysticIcon } from '@/components/mystic/icons/MysticIcon';
-import { MysticRoadStripe } from '@/components/mystic/MysticRoadStripe';
 import type { MysticIconRole } from '@template/mystic';
 
 const navItems: { href: string; label: string; icon: MysticIconRole }[] = [
@@ -21,9 +20,6 @@ const navLink =
 export function MysticHeader() {
   return (
     <header className="sticky top-0 z-40 bg-paper/90 px-4 pt-2.5 backdrop-blur-md sm:px-5 md:px-8 md:pt-3">
-      <div className="mx-auto max-w-6xl">
-        <MysticRoadStripe className="mb-3 hidden sm:flex" />
-      </div>
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 border-b border-line/60 pb-2.5 md:pb-3">
         <Link href="/" className="group shrink-0">
           <Image

@@ -1,5 +1,3 @@
-import { MysticRoadStripe } from '@/components/mystic/MysticRoadStripe';
-
 type Props = {
   eyebrow?: string;
   title: string;
@@ -23,7 +21,6 @@ export function MysticPageIntro({
 
   return (
     <header className={`w-full max-w-2xl ${className}`}>
-      <MysticRoadStripe className="mb-4 max-w-xs" />
       {eyebrow ? <p className="type-eyebrow text-plum">{eyebrow}</p> : null}
       <h1 className={titleClass}>{title}</h1>
       {description ? (

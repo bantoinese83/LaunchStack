@@ -250,7 +250,7 @@ export default function AccountTab() {
           <Text style={styles.link}>Book again</Text>
         </Pressable>
         <Pressable style={styles.linkRow} onPress={() => router.push('/(app)/(tabs)/shop')}>
-          <Text style={styles.link}>Shop products</Text>
+          <Text style={styles.link}>Shop (coming soon)</Text>
         </Pressable>
         {!studioAccessLoading && isManager ? (
           <Pressable style={styles.linkRow} onPress={() => router.push('/(app)/(tabs)/membership')}>

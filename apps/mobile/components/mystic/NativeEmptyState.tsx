@@ -3,8 +3,6 @@ import { Image, StyleSheet, Text, View } from 'react-native';
 import { MYSTIC_EMPTY_CONTENT, type MysticEmptyVariant } from '@template/mystic';
 import { displayTitle, monoLabel, roadTrip, theme } from '@template/mobile-ui';
 import { MYSTIC_EMPTY_ILLUSTRATIONS } from '../../constants/emptyIllustrations';
-import { NativeRoadStripe } from './NativeRoadStripe';
-
 type Props = {
   variant: MysticEmptyVariant;
   title?: string;
@@ -37,9 +35,6 @@ export function NativeEmptyState({
       accessibilityRole="summary"
       accessibilityLabel={`${heading}. ${body}`}
     >
-      <View style={styles.stripeWrap}>
-        <NativeRoadStripe />
-      </View>
       {kicker ? <Text style={styles.eyebrow}>{kicker}</Text> : null}
       <View style={[styles.artFrame, compact && styles.artFrameCompact]}>
         <View style={styles.artPlumAccent} />
@@ -69,11 +64,6 @@ const styles = StyleSheet.create({
   wrapCompact: {
     paddingVertical: 16,
     paddingHorizontal: 4,
-  },
-  stripeWrap: {
-    width: '72%',
-    maxWidth: 220,
-    marginBottom: 16,
   },
   eyebrow: {
     ...monoLabel,
