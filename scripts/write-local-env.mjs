@@ -3,7 +3,7 @@ import { execSync } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
 
 const projectRef = 'ipwubzqckiubrvrouzye';
-const raw = execSync(`supabase projects api-keys --project-ref ${projectRef} -o json`, {
+const raw = execSync(`supabase projects api-keys --project-ref ${projectRef} -o json 2>/dev/null`, {
   encoding: 'utf8',
 });
 const keys = JSON.parse(raw);
