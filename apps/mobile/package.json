@@ -27,7 +27,7 @@
     "@template/validation": "workspace:*",
     "expo": "~57.0.31",
     "expo-auth-session": "~57.0.16",
-    "expo-clipboard": "^58.0.4",
+    "expo-clipboard": "^57.0.2",
     "expo-constants": "~57.0.22",
     "expo-dev-client": "~57.0.20",
     "expo-device": "~57.0.2",
