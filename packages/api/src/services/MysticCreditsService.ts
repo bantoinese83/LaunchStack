@@ -31,50 +31,46 @@ export class MysticCreditsService {
   constructor(private supabase: SupabaseClient) {}
 
   async grantCredit(input: GrantCreditInput) {
-    if (input.sourceKind === 'membership') {
-      const { data: existing } = await this.supabase
+    const row = {
+      workspace_id: input.workspaceId,
+      user_id: input.userId,
+      source_kind: input.sourceKind,
+      source_id: input.sourceId,
+      blowouts_remaining: input.blowoutsRemaining,
+      expires_at: input.expiresAt,
+      stripe_subscription_id: input.stripeSubscriptionId ?? null,
+      updated_at: new Date().toISOString(),
+    };
+
+    // Idempotent per (workspace, user, source kind, source id).
+    //
+    // Stripe delivers webhooks at least once, and only membership used to dedupe —
+    // so a redelivered *package* purchase inserted a second full set of credits.
+    // Membership keeps its one-row-per-plan monthly reset; packages key on the
+    // checkout session id so each purchase is its own row and a replay updates it.
+    const { data: existing } = await this.supabase
+      .from('mystic_client_credits')
+      .select('id')
+      .eq('workspace_id', input.workspaceId)
+      .eq('user_id', input.userId)
+      .eq('source_kind', input.sourceKind)
+      .eq('source_id', input.sourceId)
+      .maybeSingle();
+
+    if (existing?.id) {
+      const { data, error } = await this.supabase
         .from('mystic_client_credits')
-        .select('id')
-        .eq('workspace_id', input.workspaceId)
-        .eq('user_id', input.userId)
-        .eq('source_kind', 'membership')
-        .eq('source_id', input.sourceId)
-        .maybeSingle();
-
-      const row = {
-        workspace_id: input.workspaceId,
-        user_id: input.userId,
-        source_kind: input.sourceKind,
-        source_id: input.sourceId,
-        blowouts_remaining: input.blowoutsRemaining,
-        expires_at: input.expiresAt,
-        stripe_subscription_id: input.stripeSubscriptionId ?? null,
-        updated_at: new Date().toISOString(),
-      };
-
-      if (existing?.id) {
-        const { data, error } = await this.supabase
-          .from('mystic_client_credits')
-          .update(row)
-          .eq('id', existing.id)
-          .select('*')
-          .single();
-        if (error) throw error;
-        return data;
-      }
+        .update(row)
+        .eq('id', existing.id)
+        .select('*')
+        .single();
+      if (error) throw error;
+      return data;
     }
 
     const { data, error } = await this.supabase
       .from('mystic_client_credits')
-      .insert({
-        workspace_id: input.workspaceId,
-        user_id: input.userId,
-        source_kind: input.sourceKind,
-        source_id: input.sourceId,
-        blowouts_remaining: input.blowoutsRemaining,
-        expires_at: input.expiresAt,
-        stripe_subscription_id: input.stripeSubscriptionId ?? null,
-      })
+      .insert(row)
       .select('*')
       .single();
     if (error) throw error;

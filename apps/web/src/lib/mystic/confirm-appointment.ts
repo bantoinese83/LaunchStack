@@ -43,8 +43,10 @@ export async function onMysticAppointmentConfirmed(admin: SupabaseClient, appoin
         email,
         phone: profile?.phone ?? undefined,
         whenLabel,
-        smsOptIn: Boolean(profile?.phone),
-        transactionalSms: true,
+        // Honour "Text me appointment updates" — this used to be
+        // `Boolean(profile?.phone)`, so the opt-out was ignored.
+        smsOptIn: profile?.marketing_sms !== false,
+        transactionalSms: profile?.marketing_sms !== false,
       });
     } catch {
       /* Brevo/Twilio optional until env set */

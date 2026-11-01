@@ -4,10 +4,13 @@ import type { ColorValue } from 'react-native';
 
 type MCIName = ComponentProps<typeof MaterialCommunityIcons>['name'];
 
-/** Salon + house-call MDI set — mirrors web `MysticIcon` roles (no sparkles). */
+/**
+ * Consistent outline → filled pairs (active only fills).
+ * Familiar metaphors: calendar, car, chat, scissors, person.
+ */
 const ROUTE_ICONS: Record<string, { active: MCIName; inactive: MCIName }> = {
-  book: { active: 'calendar-heart', inactive: 'calendar-heart-outline' },
-  visits: { active: 'car-side', inactive: 'car-side' },
+  book: { active: 'calendar-month', inactive: 'calendar-month-outline' },
+  visits: { active: 'map-marker', inactive: 'map-marker-outline' },
   membership: { active: 'ticket-confirmation', inactive: 'ticket-confirmation-outline' },
   shop: { active: 'shopping', inactive: 'shopping-outline' },
   messages: { active: 'message-text', inactive: 'message-text-outline' },
@@ -22,9 +25,10 @@ export function mysticTabBarIcon(
   size: number
 ) {
   const pair = ROUTE_ICONS[routeName] ?? ROUTE_ICONS.account;
+  // content-cut has no outline variant — soften inactive with opacity via color already
   const name = focused ? pair.active : pair.inactive;
-  return <MaterialCommunityIcons name={name} size={size + 1} color={color} />;
+  return <MaterialCommunityIcons name={name} size={size} color={color} />;
 }
 
 /** Extra bottom padding for scroll views above the tab bar. */
-export const MYSTIC_TAB_BAR_SCROLL_PADDING = 96;
+export const MYSTIC_TAB_BAR_SCROLL_PADDING = 88;

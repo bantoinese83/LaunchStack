@@ -80,35 +80,70 @@ export function BookSuccessClient({ appointment, refShort }: Props) {
     a.click();
   }
 
+  const confirmed = Boolean(appointment && serviceName);
+
   return (
     <MysticClientPage className="py-4 md:py-6">
       <div className="text-center">
-        <p className="type-eyebrow text-success">Confirmed</p>
-        <h1 className="font-display mt-3 text-3xl font-medium tracking-tight text-ink md:text-4xl">
-          You&apos;re on the books
-        </h1>
-        <p className="mt-4 text-muted">
-          Luke will see you soon. Check SMS and email for door-timer and on-the-way updates.
-          {refShort ? (
-            <>
-              <br />
-              <span className="font-mono text-xs text-muted/80">Ref {refShort}</span>
-            </>
-          ) : null}
-        </p>
+        {confirmed ? (
+          <>
+            <p className="type-eyebrow text-success">Confirmed</p>
+            <h1 className="font-display mt-3 text-3xl font-medium tracking-tight text-ink md:text-4xl">
+              You&apos;re on the books
+            </h1>
+            <p className="mt-4 text-muted">
+              Luke will see you soon. Check SMS and email for door-timer and on-the-way updates.
+              {refShort ? (
+                <>
+                  <br />
+                  <span className="font-mono text-xs text-muted/80">Ref {refShort}</span>
+                </>
+              ) : null}
+            </p>
+          </>
+        ) : (
+          <>
+            <p className="type-eyebrow text-plum">Payment received</p>
+            <h1 className="font-display mt-3 text-3xl font-medium tracking-tight text-ink md:text-4xl">
+              We&apos;re confirming your visit
+            </h1>
+            <p className="mt-4 text-muted">
+              Stripe checkout went through, but visit details aren&apos;t ready yet — that can take
+              a moment after payment. Check Visits, refresh this page, or message Luke if nothing
+              shows in a few minutes.
+              {refShort ? (
+                <>
+                  <br />
+                  <span className="font-mono text-xs text-muted/80">Ref {refShort}</span>
+                </>
+              ) : null}
+            </p>
+            <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+              <MysticMagneticButton type="button" onClick={() => window.location.reload()}>
+                Refresh
+              </MysticMagneticButton>
+              <MysticMagneticLink href="/visits" variant="secondary">
+                My visits
+              </MysticMagneticLink>
+              <MysticMagneticLink href="/messages" variant="secondary">
+                Message Luke
+              </MysticMagneticLink>
+            </div>
+          </>
+        )}
       </div>
 
-      {appointment && serviceName ? (
+      {confirmed ? (
         <div className="mt-10 space-y-4 text-left">
           <MysticSummaryRowGroup
             rows={[
-              { id: 'service', label: 'Service', value: serviceName },
+              { id: 'service', label: 'Service', value: serviceName as string },
               {
                 id: 'when',
                 label: 'When',
-                value: formatVisitWhen(appointment.startsAt),
+                value: formatVisitWhen(appointment!.startsAt),
               },
-              { id: 'where', label: 'Where', value: appointment.addressLine },
+              { id: 'where', label: 'Where', value: appointment!.addressLine },
             ]}
           />
 
@@ -132,39 +167,43 @@ export function BookSuccessClient({ appointment, refShort }: Props) {
         </div>
       ) : null}
 
-      <section className="mt-10 overflow-hidden rounded-2xl border border-line bg-gradient-to-br from-gold-soft via-surface to-accent-soft p-6 text-left shadow-[0_20px_50px_-32px_rgba(26,31,24,0.25)]">
-        <div className="flex items-start gap-3">
-          <span className="rounded-full bg-gold/15 p-2.5 text-gold">
-            <MysticIcon name="packageOffer" className="h-5 w-5" strokeWidth={1.85} />
-          </span>
-          <div>
-            <p className="type-eyebrow text-plum">Save on your next visits</p>
-            <h2 className="font-display mt-1 text-xl font-medium text-ink">
-              {upsellPack.blowoutCount}-blowout package
-            </h2>
-            <p className="mt-2 text-sm text-muted">
-              {formatUsd(upsellPack.priceCents)} total · {upsellPack.savingsLabel} · valid{' '}
-              {upsellPack.expiresMonths} months. Credits apply automatically at checkout.
-            </p>
-            {checkoutError ? <p className="mt-2 text-sm text-danger">{checkoutError}</p> : null}
-            <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-              <MysticMagneticButton type="button" disabled={checkoutLoading} onClick={buyPackage}>
-                {checkoutLoading ? 'Redirecting…' : 'Buy package'}
-              </MysticMagneticButton>
-              <MysticMagneticLink href="/memberships" variant="secondary">
-                Compare memberships
-              </MysticMagneticLink>
+      {confirmed ? (
+        <section className="mt-10 overflow-hidden rounded-2xl border border-line bg-gradient-to-br from-gold-soft via-surface to-accent-soft p-6 text-left shadow-[0_20px_50px_-32px_rgba(26,31,24,0.25)]">
+          <div className="flex items-start gap-3">
+            <span className="rounded-full bg-gold/15 p-2.5 text-gold">
+              <MysticIcon name="packageOffer" className="h-5 w-5" strokeWidth={1.85} />
+            </span>
+            <div>
+              <p className="type-eyebrow text-plum">Save on your next visits</p>
+              <h2 className="font-display mt-1 text-xl font-medium text-ink">
+                {upsellPack.blowoutCount}-blowout package
+              </h2>
+              <p className="mt-2 text-sm text-muted">
+                {formatUsd(upsellPack.priceCents)} total · {upsellPack.savingsLabel} · valid{' '}
+                {upsellPack.expiresMonths} months. Credits apply automatically at checkout.
+              </p>
+              {checkoutError ? <p className="mt-2 text-sm text-danger">{checkoutError}</p> : null}
+              <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                <MysticMagneticButton type="button" disabled={checkoutLoading} onClick={buyPackage}>
+                  {checkoutLoading ? 'Redirecting…' : 'Buy package'}
+                </MysticMagneticButton>
+                <MysticMagneticLink href="/memberships" variant="secondary">
+                  Compare memberships
+                </MysticMagneticLink>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      ) : null}
 
-      <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:justify-center">
-        <MysticMagneticLink href="/visits">My visits</MysticMagneticLink>
-        <MysticMagneticLink href="/messages" variant="secondary">
-          Message Luke
-        </MysticMagneticLink>
-      </div>
+      {confirmed ? (
+        <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:justify-center">
+          <MysticMagneticLink href="/visits">My visits</MysticMagneticLink>
+          <MysticMagneticLink href="/messages" variant="secondary">
+            Message Luke
+          </MysticMagneticLink>
+        </div>
+      ) : null}
     </MysticClientPage>
   );
 }

@@ -22,7 +22,7 @@ export function MysticStudioPageHeader({
     >
       <div className="min-w-0 max-w-2xl">
         {eyebrow ? <p className="type-eyebrow text-accent">{eyebrow}</p> : null}
-        <h1 className="font-display mt-1.5 text-2xl font-medium tracking-tight text-ink md:text-3xl">
+        <h1 className="font-display mystic-gradient-ink mt-1.5 text-2xl font-medium tracking-tight md:text-3xl lg:text-[2.125rem]">
           {title}
         </h1>
         {description ? (

@@ -55,6 +55,7 @@ export async function POST(req: Request) {
           phone: clientProfile.phone,
           etaMinutes: parsed.data.etaMinutes,
           mapUrl,
+          smsOptIn: clientProfile.marketing_sms !== false,
         });
       } catch (err) {
         console.warn('[mystic.enRoute] SMS failed', err);

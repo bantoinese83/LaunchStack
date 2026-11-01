@@ -1,11 +1,16 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { NativeButton, theme } from '@template/mobile-ui';
+import { NativeAiOrb } from '../../../../../components/mystic/NativeAiOrb';
 import { NativeUserAvatar } from '../../../../../components/mystic/NativeUserAvatar';
 import { MYSTIC_STYLIST, messageSenderLabel, mysticStylistPortraitUrl } from '@template/mystic';
 import { useStudioAccess } from '../../../../../hooks/useStudioAccess';
-import { fetchStudioThread, sendStudioMessage } from '../../../../../lib/studioApi';
+import {
+  fetchAiMessageSuggest,
+  fetchStudioThread,
+  sendStudioMessage,
+} from '../../../../../lib/studioApi';
 
 type Message = { id: string; body: string; sender_role: string };
 
@@ -21,6 +26,8 @@ export default function StudioThreadScreen() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [body, setBody] = useState('');
   const [status, setStatus] = useState<string | null>(null);
+  const [aiReplies, setAiReplies] = useState<string[]>([]);
+  const [aiBusy, setAiBusy] = useState(false);
 
   const load = useCallback(() => {
     if (!workspaceId || !clientUserId) return;
@@ -41,6 +48,20 @@ export default function StudioThreadScreen() {
       setBody('');
       setStatus(null);
       load();
+    }
+  }
+
+  async function draftAi() {
+    if (!workspaceId || !clientUserId) return;
+    setAiBusy(true);
+    setStatus(null);
+    try {
+      const data = await fetchAiMessageSuggest(workspaceId, clientUserId);
+      setAiReplies(data.replies ?? []);
+    } catch (err) {
+      setStatus(err instanceof Error ? err.message : 'Could not draft replies');
+    } finally {
+      setAiBusy(false);
     }
   }
 
@@ -69,6 +90,26 @@ export default function StudioThreadScreen() {
           </View>
         );
       })}
+      <View style={styles.aiDraftRow}>
+        <NativeAiOrb active={aiBusy} size="xs" label="AI draft replies" />
+        <View style={styles.aiDraftBtn}>
+          <NativeButton
+            title={aiBusy ? 'Drafting…' : 'AI draft replies'}
+            variant="outline"
+            onPress={() => void draftAi()}
+            isLoading={aiBusy}
+          />
+        </View>
+      </View>
+      {aiReplies.length > 0 ? (
+        <View style={styles.chips}>
+          {aiReplies.map((reply) => (
+            <Pressable key={reply} onPress={() => setBody(reply)} style={styles.chip}>
+              <Text style={styles.chipText}>{reply}</Text>
+            </Pressable>
+          ))}
+        </View>
+      ) : null}
       <TextInput
         value={body}
         onChangeText={setBody}
@@ -85,8 +126,8 @@ export default function StudioThreadScreen() {
 
 const styles = StyleSheet.create({
   scroll: { flex: 1, backgroundColor: theme.paper },
-  container: { padding: 20 },
-  headingRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 },
+  container: { padding: 20, gap: 10 },
+  headingRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
   heading: { fontWeight: '600', color: theme.ink, flex: 1 },
   msgRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, marginBottom: 10 },
   msgRowStylist: { flexDirection: 'row-reverse' },
@@ -98,6 +139,18 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.line,
   },
+  aiDraftRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4 },
+  aiDraftBtn: { flex: 1 },
+  chips: { gap: 8 },
+  chip: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: theme.radii.lg,
+    borderWidth: 1,
+    borderColor: theme.line,
+    backgroundColor: theme.surface,
+  },
+  chipText: { fontSize: 13, color: theme.ink },
   role: { fontSize: 10, textTransform: 'uppercase', color: theme.muted },
   body: { marginTop: 4, color: theme.ink },
   input: {

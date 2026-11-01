@@ -8,59 +8,74 @@ import {
   canNavigateToBookingStep,
   type BookingFlowStep,
 } from '@template/mystic';
+import type { LucideIcon } from 'lucide-react';
+import { CalendarClock, Check, ClipboardList, CreditCard, MapPin, Scissors } from 'lucide-react';
 
 type Props = {
   step: BookingFlowStep;
   onStepChange?: (step: BookingFlowStep) => void;
 };
 
+/** Icons replace 1–5 on web + mobile. */
+const STEP_ICON: Record<BookingFlowStep, LucideIcon> = {
+  service: Scissors,
+  datetime: CalendarClock,
+  location: MapPin,
+  details: ClipboardList,
+  review: CreditCard,
+};
+
 export function MysticBookStepProgress({ step, onStepChange }: Props) {
   const currentIndex = bookingFlowStepIndex(step);
 
   return (
-    <div className="w-full">
-      <ol className="flex items-start justify-between gap-1 sm:gap-2" aria-label="Booking steps">
+    <div className="mb-8 w-full">
+      <ol className="flex items-start justify-between gap-1" aria-label="Booking steps">
         {BOOKING_FLOW_STEPS.map((id, index) => {
           const done = index < currentIndex;
           const active = index === currentIndex;
           const reachable = canNavigateToBookingStep(step, id);
           const label = BOOKING_FLOW_STEP_LABEL[id];
+          const Icon = STEP_ICON[id];
+          const glyph = done ? (
+            <Check className="h-4 w-4" strokeWidth={2.5} aria-hidden />
+          ) : (
+            <Icon className="h-[1.125rem] w-[1.125rem]" strokeWidth={1.75} aria-hidden />
+          );
+          const chipClass = [
+            'flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition duration-200',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/45',
+            active
+              ? 'scale-105 bg-accent text-paper shadow-[0_10px_24px_-12px_rgba(122,143,110,0.9)]'
+              : done
+                ? 'bg-accent-soft text-accent hover:bg-accent/20'
+                : 'bg-paper text-muted',
+          ].join(' ');
 
           return (
-            <li key={id} className="flex min-w-0 flex-1 flex-col items-center">
+            <li key={id} className="flex min-w-0 flex-1 flex-col items-center gap-1.5">
               {onStepChange && reachable ? (
                 <button
                   type="button"
                   onClick={() => onStepChange(id)}
-                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/45 ${
-                    active
-                      ? 'bg-accent text-paper'
-                      : done
-                        ? 'bg-accent/20 text-accent hover:bg-accent/30'
-                        : 'border border-line bg-surface text-muted'
-                  }`}
+                  className={chipClass}
                   aria-current={active ? 'step' : undefined}
                   aria-label={`${label}${done ? ', completed' : active ? ', current' : ''}`}
                 >
-                  {done ? '✓' : index + 1}
+                  {glyph}
                 </button>
               ) : (
                 <span
-                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-medium ${
-                    active
-                      ? 'bg-accent text-paper'
-                      : done
-                        ? 'bg-accent/20 text-accent'
-                        : 'border border-line bg-surface text-muted'
-                  }`}
+                  className={chipClass}
                   aria-current={active ? 'step' : undefined}
+                  aria-hidden={!active}
                 >
-                  {done ? '✓' : index + 1}
+                  {glyph}
                 </span>
               )}
               <span
-                className={`mt-1.5 hidden text-center text-[10px] leading-tight sm:block ${
-                  active ? 'font-medium text-ink' : 'text-muted'
+                className={`max-w-full truncate text-center text-[10px] leading-tight tracking-wide ${
+                  active ? 'font-semibold text-ink' : 'font-medium text-muted'
                 }`}
               >
                 {label}
@@ -69,20 +84,35 @@ export function MysticBookStepProgress({ step, onStepChange }: Props) {
           );
         })}
       </ol>
+
+      {/* Serrated progress — one tooth per step (not a single continuous bar) */}
       <div
-        className="mystic-progress-track mt-4"
+        className="mt-4 flex w-full items-end gap-1.5"
         role="progressbar"
         aria-valuemin={1}
         aria-valuemax={BOOKING_FLOW_STEPS.length}
         aria-valuenow={currentIndex + 1}
         aria-valuetext={`Step ${currentIndex + 1} of ${BOOKING_FLOW_STEPS.length}: ${BOOKING_FLOW_STEP_HINT[step]}`}
       >
-        <div
-          className="mystic-progress-fill transition-[width] duration-300 ease-out"
-          style={{ width: `${((currentIndex + 1) / BOOKING_FLOW_STEPS.length) * 100}%` }}
-        />
+        {BOOKING_FLOW_STEPS.map((id, index) => {
+          const on = index <= currentIndex;
+          const tall = index === currentIndex;
+          return (
+            <span
+              key={id}
+              className={[
+                'block min-w-0 flex-1 rounded-sm transition-all duration-300 ease-out',
+                tall ? 'h-2.5' : 'h-1.5',
+                on ? 'bg-gradient-to-r from-accent to-gold' : 'bg-line/80',
+              ].join(' ')}
+            />
+          );
+        })}
       </div>
-      <p className="mt-2 text-sm text-muted">{BOOKING_FLOW_STEP_HINT[step]}</p>
+
+      <p className="mt-2.5 text-center text-sm text-muted sm:text-left">
+        {BOOKING_FLOW_STEP_HINT[step]}
+      </p>
     </div>
   );
 }

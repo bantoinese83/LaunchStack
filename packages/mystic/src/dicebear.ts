@@ -56,3 +56,40 @@ export function parseDiceBearAvatarUrl(
     return null;
   }
 }
+
+export type DiceBearGalleryItem = {
+  id: string;
+  style: DiceBearStyleId;
+  seed: string;
+  url: string;
+};
+
+/** Curated grid of pickable faces — styles × seed variants for a scrollable marquee. */
+export function buildDiceBearGallery(
+  baseSeed: string,
+  opts?: { variants?: number; size?: number; shuffleKey?: string }
+): DiceBearGalleryItem[] {
+  const variants = Math.max(1, Math.min(6, opts?.variants ?? 3));
+  const size = opts?.size ?? 96;
+  const root = sanitizeDiceBearSeed(baseSeed);
+  const shuffle = opts?.shuffleKey ? sanitizeDiceBearSeed(opts.shuffleKey) : '';
+  const items: DiceBearGalleryItem[] = [];
+
+  for (const style of DICEBEAR_STYLES) {
+    for (let i = 0; i < variants; i += 1) {
+      const seed =
+        i === 0 && !shuffle
+          ? root
+          : sanitizeDiceBearSeed(
+              [root, style.id, shuffle, i > 0 ? String(i + 1) : ''].filter(Boolean).join('-')
+            );
+      items.push({
+        id: `${style.id}:${seed}`,
+        style: style.id,
+        seed,
+        url: buildDiceBearAvatarUrl(style.id, seed, size),
+      });
+    }
+  }
+  return items;
+}

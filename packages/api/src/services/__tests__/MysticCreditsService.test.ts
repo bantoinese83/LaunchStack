@@ -92,3 +92,70 @@ describe('MysticCreditsService.listForWorkspace', () => {
     ).rejects.toThrow('boom');
   });
 });
+
+/** Stub that lets a test choose whether a credit row already exists. */
+function makeGrantMock(existing: { id: string } | null) {
+  const inserted: unknown[] = [];
+  const updated: unknown[] = [];
+  const chain: Record<string, unknown> = {};
+  chain.select = () => chain;
+  chain.eq = () => chain;
+  chain.maybeSingle = () => Promise.resolve({ data: existing, error: null });
+  chain.insert = (row: unknown) => {
+    inserted.push(row);
+    return chain;
+  };
+  chain.update = (row: unknown) => {
+    updated.push(row);
+    return chain;
+  };
+  chain.single = () => Promise.resolve({ data: { id: 'credit-row' }, error: null });
+  return { supabase: { from: () => chain } as unknown as SupabaseClient, inserted, updated };
+}
+
+describe('MysticCreditsService.grantCredit', () => {
+  const packageInput = {
+    workspaceId: 'ws-1',
+    userId: 'u-1',
+    sourceKind: 'package' as const,
+    sourceId: 'cs_test_123',
+    blowoutsRemaining: 4,
+    expiresAt: '2026-09-01T00:00:00.000Z',
+  };
+
+  it('inserts a credit row for a new package purchase', async () => {
+    const mock = makeGrantMock(null);
+
+    await new MysticCreditsService(mock.supabase).grantCredit(packageInput);
+
+    expect(mock.inserted).toHaveLength(1);
+    expect(mock.inserted[0]).toMatchObject({ source_id: 'cs_test_123', blowouts_remaining: 4 });
+    expect(mock.updated).toHaveLength(0);
+  });
+
+  it('updates instead of inserting when the same purchase is replayed', async () => {
+    // Stripe delivers webhooks at least once; a replay must not grant a second pack.
+    const mock = makeGrantMock({ id: 'credit-1' });
+
+    await new MysticCreditsService(mock.supabase).grantCredit(packageInput);
+
+    expect(mock.inserted).toHaveLength(0);
+    expect(mock.updated).toHaveLength(1);
+    expect(mock.updated[0]).toMatchObject({ source_id: 'cs_test_123' });
+  });
+
+  it('keeps membership grants to one row per plan', async () => {
+    const mock = makeGrantMock({ id: 'credit-2' });
+
+    await new MysticCreditsService(mock.supabase).grantCredit({
+      ...packageInput,
+      sourceKind: 'membership',
+      sourceId: 'glow',
+      blowoutsRemaining: 2,
+    });
+
+    expect(mock.inserted).toHaveLength(0);
+    expect(mock.updated).toHaveLength(1);
+    expect(mock.updated[0]).toMatchObject({ source_kind: 'membership', blowouts_remaining: 2 });
+  });
+});

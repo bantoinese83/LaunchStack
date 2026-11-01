@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { useDeferredEffect } from '@/lib/react/useDeferredEffect';
-import { createSupabaseBrowserClient } from '@template/api';
 import { CLIENT_MESSAGE_QUICK_REPLIES, MYSTIC_STYLIST } from '@template/mystic';
 import {
   MysticMessageThread,
@@ -12,7 +11,9 @@ import {
 } from '@/components/mystic/MysticMessageThread';
 import { MysticClientPage } from '@/components/mystic/MysticClientPage';
 import { MysticPageIntro } from '@/components/mystic/MysticPageIntro';
+import { authorizedFetch } from '@/lib/api/authorized-fetch';
 import { getMysticWorkspaceId } from '@/lib/mystic/config';
+import { requireBrowserSession } from '@/lib/supabase/browser-session';
 
 const POLL_MS = 18_000;
 
@@ -31,9 +32,9 @@ export function ClientMessages() {
     async (opts?: { silent?: boolean }) => {
       if (!workspaceId) return;
       if (!opts?.silent) setRefreshing(true);
-      const supabase = createSupabaseBrowserClient();
-      const { data: session } = await supabase.auth.getSession();
-      const uid = session.session?.user.id;
+      // Cookie-backed session (same client as login) — not the plain localStorage client.
+      const auth = await requireBrowserSession();
+      const uid = auth?.user.id;
       if (!uid) {
         setLoadError('Sign in to message Luke');
         setRefreshing(false);
@@ -57,18 +58,22 @@ export function ClientMessages() {
         .catch(() => {
           /* avatar optional */
         });
-      const res = await fetch(
-        `/api/mystic/messages?workspaceId=${workspaceId}&clientUserId=${uid}`
-      );
-      const data = await res.json();
-      if (res.status === 401) {
+      try {
+        const res = await authorizedFetch(
+          `/api/mystic/messages?workspaceId=${workspaceId}&clientUserId=${uid}`
+        );
+        const data = await res.json();
+        if (res.status === 401) {
+          setLoadError('Sign in to message Luke');
+        } else if (!res.ok) {
+          setLoadError(data.error ?? 'Could not load messages');
+        } else {
+          setLoadError(null);
+          setMessages(data.messages ?? []);
+          setLastUpdatedAt(Date.now());
+        }
+      } catch {
         setLoadError('Sign in to message Luke');
-      } else if (!res.ok) {
-        setLoadError(data.error ?? 'Could not load messages');
-      } else {
-        setLoadError(null);
-        setMessages(data.messages ?? []);
-        setLastUpdatedAt(Date.now());
       }
       setRefreshing(false);
     },
@@ -93,47 +98,71 @@ export function ClientMessages() {
 
   async function onSend(body: string) {
     if (!workspaceId) return { ok: false, error: 'Studio not configured' };
-    const res = await fetch('/api/mystic/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ workspaceId, body: body.trim() }),
-    });
-    const data = await res.json();
-    if (res.ok) {
-      setMessages((m) => [...m, data.message]);
-      setLastUpdatedAt(Date.now());
-      return { ok: true };
+    try {
+      const res = await authorizedFetch('/api/mystic/messages', {
+        method: 'POST',
+        body: JSON.stringify({ workspaceId, body: body.trim() }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setMessages((m) => [...m, data.message]);
+        setLastUpdatedAt(Date.now());
+        return { ok: true };
+      }
+      return { ok: false, error: data.error ?? 'Could not send' };
+    } catch {
+      return { ok: false, error: 'Sign in to message Luke' };
     }
-    return { ok: false, error: data.error ?? 'Could not send' };
   }
+
+  const initialLoading = refreshing && messages.length === 0 && !loadError && !lastUpdatedAt;
 
   return (
     <MysticClientPage>
       <MysticPageIntro eyebrow="Messages" title="Message Luke" />
       {loadError ? (
-        <p className="text-sm text-plum">
-          {loadError}
-          {loadError.toLowerCase().includes('sign in') ? (
-            <>
-              {' '}
-              <Link href="/login" className="font-medium text-plum underline underline-offset-2">
-                Sign in
-              </Link>
-            </>
+        <div className="mb-4 space-y-2 rounded-xl border border-line bg-paper px-3 py-3">
+          <p className="text-sm text-plum">
+            {loadError}
+            {loadError.toLowerCase().includes('sign in') ? (
+              <>
+                {' '}
+                <Link href="/login" className="font-medium text-plum underline underline-offset-2">
+                  Sign in
+                </Link>
+              </>
+            ) : null}
+          </p>
+          {!loadError.toLowerCase().includes('sign in') ? (
+            <button
+              type="button"
+              onClick={() => void load()}
+              className="text-sm font-medium text-accent underline"
+            >
+              Retry
+            </button>
           ) : null}
-        </p>
+        </div>
       ) : null}
-      <MysticMessageThread
-        messages={messages}
-        mode="client"
-        placeholder="Hey Luke…"
-        quickReplies={CLIENT_MESSAGE_QUICK_REPLIES}
-        participants={participants}
-        onSend={onSend}
-        onRefresh={() => void load()}
-        refreshing={refreshing}
-        lastUpdatedAt={lastUpdatedAt}
-      />
+      {initialLoading ? (
+        <div className="space-y-3" aria-busy="true" aria-label="Loading messages">
+          <div className="h-8 animate-pulse rounded-lg bg-surface" />
+          <div className="h-48 animate-pulse rounded-2xl bg-surface" />
+          <div className="h-24 animate-pulse rounded-xl bg-surface" />
+        </div>
+      ) : (
+        <MysticMessageThread
+          messages={messages}
+          mode="client"
+          placeholder="Hey Luke…"
+          quickReplies={CLIENT_MESSAGE_QUICK_REPLIES}
+          participants={participants}
+          onSend={onSend}
+          onRefresh={() => void load()}
+          refreshing={refreshing}
+          lastUpdatedAt={lastUpdatedAt}
+        />
+      )}
     </MysticClientPage>
   );
 }

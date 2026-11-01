@@ -37,6 +37,10 @@ export function createRateLimiter(
 export const apiRateLimiter = createRateLimiter(60, '1 m'); // 60 requests per minute
 export const authRateLimiter = createRateLimiter(5, '1 m'); // 5 auth attempts per minute
 export const strictRateLimiter = createRateLimiter(10, '1 m'); // 10 strict action attempts per minute
+/** AI feature budget — keeps Luke / client assist snappy without burning the key. */
+export const aiRateLimiter = createRateLimiter(8, '1 m');
+/** Per-action cooldown between AI regenerations (stop brief, suggest, concierge). */
+export const aiCooldownLimiter = createRateLimiter(1, '20 s');
 
 /**
  * Cache helper to get JSON data

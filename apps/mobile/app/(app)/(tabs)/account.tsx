@@ -42,6 +42,7 @@ export default function AccountTab() {
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
   const [referralCode, setReferralCode] = useState<string | null>(null);
+  const [referralCopy, setReferralCopy] = useState<string | null>(null);
   const [creditsSummary, setCreditsSummary] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
@@ -70,6 +71,7 @@ export default function AccountTab() {
         marketingEmail: p?.marketing_email ?? true,
       });
       setReferralCode(p?.referral_code ?? null);
+      setReferralCopy(data.referralProgress?.copy ?? null);
       setAvatarUrl(p?.avatar_url ?? null);
 
       const credits = await fetchMyCredits();
@@ -151,6 +153,7 @@ export default function AccountTab() {
               <Text style={styles.copyText}>Share</Text>
             </Pressable>
           </View>
+          {referralCopy ? <Text style={styles.referralProgress}>{referralCopy}</Text> : null}
         </View>
       ) : null}
       {creditsSummary ? <Text style={styles.credits}>{creditsSummary}</Text> : null}
@@ -238,13 +241,16 @@ export default function AccountTab() {
         </Text>
       ) : null}
 
-      {!studioAccessLoading && isManager ? (
-        <View style={styles.links}>
-          <Pressable style={styles.linkRow} onPress={() => router.push('/(app)/(tabs)/membership')}>
-            <Text style={styles.link}>Membership & packages</Text>
+      <View style={styles.links}>
+        <Pressable style={styles.linkRow} onPress={() => router.push('/(app)/(tabs)/membership')}>
+          <Text style={styles.link}>Plans & packages</Text>
+        </Pressable>
+        {!studioAccessLoading && isManager ? (
+          <Pressable style={styles.linkRow} onPress={() => router.push('/(app)/(tabs)/studio')}>
+            <Text style={styles.link}>Open Studio</Text>
           </Pressable>
-        </View>
-      ) : null}
+        ) : null}
+      </View>
 
       <NativeButton
         title="Sign out"
@@ -264,16 +270,16 @@ const styles = StyleSheet.create({
     backgroundColor: theme.paper,
   },
   referralBox: {
-    ...roadTrip.section,
-    borderLeftWidth: 3,
-    borderLeftColor: theme.gold,
     backgroundColor: theme.goldSoft,
+    borderRadius: theme.radii.md,
     paddingHorizontal: 12,
+    paddingVertical: 14,
     marginBottom: 16,
   },
   referralHint: { fontSize: 12, color: theme.muted },
   referralRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 8 },
   referralCode: { fontSize: 18, fontWeight: '600', fontFamily: 'monospace', color: theme.ink },
+  referralProgress: { marginTop: 10, fontSize: 12, color: theme.muted, lineHeight: 18 },
   copyBtn: {
     paddingHorizontal: 12,
     paddingVertical: 6,

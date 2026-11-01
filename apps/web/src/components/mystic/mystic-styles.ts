@@ -26,16 +26,21 @@ export const mysticBtn3dSecondarySm = `${mysticBtn3dBase} mystic-btn-3d-secondar
 export const mysticGhostBtn =
   'inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-medium text-muted transition hover:bg-surface/80 hover:text-ink';
 
+/** Soft lift + hairline edge — layered shadows, not a muddy single drop. */
 export const mysticCard =
-  'rounded-lg border border-line/80 bg-surface/95 transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-paper';
+  'mystic-lift rounded-lg border border-line/70 bg-surface/95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-paper';
 
-export const mysticCardHover = 'hover:border-gold/40';
+export const mysticCardHover = 'hover:border-gold/40 mystic-interactive';
+
+/** Frosted panel for sticky bars / overlays */
+export const mysticGlass =
+  'mystic-glass rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40';
 
 /** Flat list row — road-trip hairline instead of floating card */
 export const mysticFlatRow = 'border-b border-line/80 py-4 last:border-b-0 bg-transparent';
 
-/** Live visit / en route — gold road marker (matches mobile) */
-export const mysticLiveHighlight = 'border-l-[3px] border-gold bg-gold-soft/90 pl-4 -ml-px';
+/** Live visit / en route — soft gold wash (no side accent line) */
+export const mysticLiveHighlight = 'rounded-xl bg-gold-soft/90';
 
 export const mysticPageEnter = 'animate-[rise_400ms_ease-out]';
 
@@ -57,9 +62,6 @@ export const mysticSegmentTab = (active: boolean) =>
     ? 'flex-1 border-b-2 border-gold px-3 py-2.5 text-sm font-medium text-plum transition -mb-px'
     : 'flex-1 px-3 py-2.5 text-sm font-medium text-muted transition hover:text-ink';
 
-export const mysticSectionTitle =
-  'font-display text-3xl font-medium tracking-tight text-ink md:text-[2.125rem]';
-
 export const mysticInput =
   'w-full border-0 border-b border-line/80 bg-transparent px-0 py-3 text-ink outline-none transition focus:border-gold focus:ring-0';
 
@@ -68,16 +70,19 @@ const mysticChipFocus =
 
 export const mysticTimeChip = (active: boolean) =>
   active
-    ? `rounded-full border border-shell bg-shell py-2.5 text-sm font-medium text-paper shadow-sm ${mysticChipFocus}`
-    : `rounded-full border border-line/80 bg-surface py-2.5 text-sm text-ink transition hover:border-accent/35 ${mysticChipFocus}`;
+    ? `rounded-full bg-shell py-2.5 text-sm font-medium text-paper shadow-[0_8px_20px_-12px_rgba(26,31,24,0.55)] ${mysticChipFocus}`
+    : `rounded-full bg-surface py-2.5 text-sm text-ink transition hover:bg-accent-soft/60 ${mysticChipFocus}`;
 
 export const mysticStudioNavLink = (active: boolean) =>
   active
-    ? 'rounded-full border border-shell bg-shell px-3 py-1.5 text-sm font-medium text-paper shadow-sm'
-    : 'rounded-full border border-line/80 bg-surface/80 px-3 py-1.5 text-sm text-muted transition hover:border-accent/35 hover:text-ink';
+    ? 'mystic-interactive rounded-full border border-shell bg-shell px-3 py-1.5 text-sm font-medium text-paper'
+    : 'mystic-interactive rounded-full border border-line/80 bg-surface/80 px-3 py-1.5 text-sm text-muted hover:border-accent/35 hover:text-ink';
 
 export const mysticStudioBtn =
-  'rounded-full bg-accent px-4 py-2 text-xs font-medium text-white shadow-sm transition hover:bg-accent-hover';
+  'mystic-interactive rounded-full bg-accent px-4 py-2 text-xs font-medium text-white shadow-[var(--shadow-lift)] hover:bg-accent-hover';
 
 export const mysticStudioBtnOutline =
-  'rounded-full border border-line/80 bg-surface px-4 py-2 text-xs font-medium text-ink transition hover:border-accent/35';
+  'mystic-interactive rounded-full border border-line/80 bg-surface px-4 py-2 text-xs font-medium text-ink hover:border-accent/35';
+
+export const mysticSectionTitle =
+  'font-display mystic-gradient-ink text-3xl font-medium tracking-tight md:text-[2.125rem]';

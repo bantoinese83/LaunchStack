@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { analytics } from '@template/analytics';
 import { MysticReferralService } from '@template/api';
 
 /** Idempotent — records referral once booking is confirmed (paid or credit). */
@@ -27,5 +28,10 @@ export async function recordReferralOnBookingConfirmed(
     referredName: input.referredName,
     referredUserId: input.clientUserId,
     appointmentId: input.appointmentId,
+  });
+
+  analytics.track({
+    name: 'mystic_referral_recorded',
+    properties: { workspace_id: input.workspaceId },
   });
 }

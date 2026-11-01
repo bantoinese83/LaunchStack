@@ -3,7 +3,6 @@ import {
   AppState,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -24,6 +23,9 @@ import { NativeButton, theme } from '@template/mobile-ui';
 import { NativeEmptyState } from '../../../components/mystic/NativeEmptyState';
 import { NativeScreenHeader } from '../../../components/mystic/NativeScreenHeader';
 import { nativeScreenStyles } from '../../../components/mystic/nativeScreenStyles';
+import { NativeFadeIn } from '../../../components/motion/NativeFadeIn';
+import { NativePressableScale } from '../../../components/motion/NativePressableScale';
+import { hapticSuccess } from '../../../lib/haptics';
 import { fetchClientProfile, fetchMessageThread, sendClientMessage } from '../../../lib/mysticApi';
 import { NativeUserAvatar } from '../../../components/mystic/NativeUserAvatar';
 
@@ -115,6 +117,7 @@ export default function MessagesTab() {
       }
       if (data.error || !data.ok) setStatus(data.error ?? 'Send failed');
       else {
+        hapticSuccess();
         setStatus('Sent');
         setBody('');
         void load();
@@ -137,6 +140,7 @@ export default function MessagesTab() {
         style={nativeScreenStyles.scroll}
         contentContainerStyle={[nativeScreenStyles.container, styles.scrollContent]}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
       >
         <View style={nativeScreenStyles.stack}>
           <NativeScreenHeader kicker="Messages" title="Chat with Luke" />
@@ -155,7 +159,7 @@ export default function MessagesTab() {
               action={
                 <View style={styles.emptyStarters}>
                   {CLIENT_MESSAGE_QUICK_REPLIES.slice(0, 3).map((q) => (
-                    <Pressable
+                    <NativePressableScale
                       key={q}
                       onPress={() => setBody(q)}
                       style={styles.emptyChip}
@@ -163,19 +167,20 @@ export default function MessagesTab() {
                       accessibilityLabel={`Start with: ${q}`}
                     >
                       <Text style={styles.emptyChipText}>{q}</Text>
-                    </Pressable>
+                    </NativePressableScale>
                   ))}
                 </View>
               }
             />
           ) : null}
-          {messages.map((msg) => {
+          {messages.map((msg, index) => {
             const isSelf = msg.sender_role !== 'stylist';
             const avatarUrl = isSelf ? clientAvatarUrl : lukePortraitUrl;
             const avatarName = isSelf ? clientDisplayName : MYSTIC_STYLIST.name;
             return (
-              <View
+              <NativeFadeIn
                 key={msg.id}
+                delayMs={Math.min(index, 6) * 24}
                 style={[styles.msgRow, isSelf ? styles.msgRowSelf : styles.msgRowLuke]}
               >
                 <NativeUserAvatar url={avatarUrl} name={avatarName} size={28} />
@@ -188,7 +193,7 @@ export default function MessagesTab() {
                   </View>
                   <Text style={styles.time}>{formatMessageTimestamp(msg.created_at)}</Text>
                 </View>
-              </View>
+              </NativeFadeIn>
             );
           })}
         </View>
@@ -196,13 +201,13 @@ export default function MessagesTab() {
       <View style={styles.composer}>
         <View style={styles.quickRow}>
           {CLIENT_MESSAGE_QUICK_REPLIES.map((q) => (
-            <Pressable
+            <NativePressableScale
               key={q}
               onPress={() => setBody((b) => (b ? `${b} ${q}` : q))}
               style={styles.chip}
             >
               <Text style={styles.chipText}>{q}</Text>
-            </Pressable>
+            </NativePressableScale>
           ))}
         </View>
         <View style={[styles.inputWrap, Platform.OS === 'android' && styles.inputAndroid]}>
@@ -218,7 +223,7 @@ export default function MessagesTab() {
         </View>
         <NativeButton
           title={sending ? 'Sending…' : 'Send'}
-          onPress={send}
+          onPress={() => void send()}
           disabled={sending || !body.trim()}
         />
         {status ? <Text style={styles.status}>{status}</Text> : null}
@@ -251,11 +256,10 @@ const styles = StyleSheet.create({
   rowSelf: { alignSelf: 'flex-end', alignItems: 'flex-end' },
   rowLuke: { alignSelf: 'flex-start', alignItems: 'flex-start' },
   bubble: { padding: 12, borderRadius: theme.radii.sm },
-  bubbleLuke: { backgroundColor: theme.chalkSoft, borderLeftWidth: 3, borderLeftColor: theme.plum },
+  bubbleLuke: { backgroundColor: theme.chalkSoft, borderRadius: theme.radii.lg },
   bubbleClient: {
     backgroundColor: theme.accentSoft,
-    borderLeftWidth: 3,
-    borderLeftColor: theme.accent,
+    borderRadius: theme.radii.lg,
   },
   role: { fontSize: 10, textTransform: 'uppercase', color: theme.muted, marginBottom: 4 },
   roleOnAccent: { color: theme.plum },
@@ -286,14 +290,10 @@ const styles = StyleSheet.create({
   signInBlock: { gap: 12, marginBottom: 12 },
   emptyStarters: { width: '100%', gap: 8 },
   emptyChip: {
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.line,
     backgroundColor: theme.surface,
-    borderLeftWidth: 3,
-    borderLeftColor: theme.plum,
     paddingHorizontal: 14,
     paddingVertical: 12,
-    borderRadius: theme.radii.sm,
+    borderRadius: theme.radii.md,
   },
   emptyChipText: { fontSize: 14, color: theme.ink, lineHeight: 20 },
 });

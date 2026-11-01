@@ -4,6 +4,7 @@ import { canManageMembers } from '@template/auth';
 import {
   firstZodIssueMessage,
   mysticSendMessageSchema,
+  mysticUserIdSchema,
   mysticWorkspaceIdSchema,
 } from '@template/validation';
 import { z } from 'zod';
@@ -11,7 +12,7 @@ import { requireAuthenticatedUser, routeErrorResponse } from '@/lib/api/route-au
 
 const listSchema = z.object({
   workspaceId: mysticWorkspaceIdSchema,
-  clientUserId: z.uuid(),
+  clientUserId: mysticUserIdSchema,
 });
 
 export async function GET(req: Request) {

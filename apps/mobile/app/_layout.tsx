@@ -4,6 +4,7 @@ import { Stack, type ErrorBoundaryProps } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { NativeButton, displayTitle, theme } from '@template/mobile-ui';
 import { StyleSheet, Text, View } from 'react-native';
+import { MysticPressProvider } from '../components/motion/MysticPressProvider';
 
 export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
   return (
@@ -17,7 +18,7 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
 
 export default function RootLayout() {
   return (
-    <>
+    <MysticPressProvider>
       <StatusBar style="dark" />
       <Stack
         screenOptions={{
@@ -26,6 +27,7 @@ export default function RootLayout() {
           headerTitleStyle: { fontWeight: '600' },
           contentStyle: { backgroundColor: theme.paper },
           headerShadowVisible: false,
+          animation: 'fade_from_bottom',
         }}
       >
         <Stack.Screen name="index" options={{ headerShown: false }} />
@@ -33,7 +35,7 @@ export default function RootLayout() {
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(app)" options={{ headerShown: false }} />
       </Stack>
-    </>
+    </MysticPressProvider>
   );
 }
 

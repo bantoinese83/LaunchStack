@@ -1,5 +1,5 @@
 import { BrevoEmailService, escapeHtml } from '@template/email';
-import { sendSms, SMS_TEMPLATES } from '@template/sms';
+import { sendSms, SMS_TEMPLATES, type SmsSendResult } from '@template/sms';
 
 function logNotifyWarning(channel: string, detail: string) {
   console.warn(`[mystic.notify] ${channel}: ${detail}`);
@@ -45,7 +45,23 @@ export async function notifyBookingConfirmed(input: {
   return result;
 }
 
-export async function notifyEnRoute(input: { phone: string; etaMinutes: number; mapUrl?: string }) {
+/**
+ * "Luke is on the way" text.
+ *
+ * `smsOptIn` is the client's `mystic_client_profiles.marketing_sms` preference,
+ * which the account screen labels "Text me appointment updates (on the way, door
+ * timer, confirmations)". Both callers used to read the column and then ignore
+ * it, so clients who turned texts off kept receiving them.
+ */
+export async function notifyEnRoute(input: {
+  phone: string;
+  etaMinutes: number;
+  mapUrl?: string;
+  smsOptIn: boolean;
+}): Promise<SmsSendResult> {
+  if (!input.smsOptIn) {
+    return { status: 'skipped', reason: 'Client opted out of appointment texts' };
+  }
   const smsResult = await sendSms({
     to: input.phone,
     body: SMS_TEMPLATES.onTheWay(input.etaMinutes, input.mapUrl),
@@ -56,7 +72,15 @@ export async function notifyEnRoute(input: { phone: string; etaMinutes: number; 
   return smsResult;
 }
 
-export async function notifyDoorTimer(input: { phone: string; minutes: number }) {
+/** Door-timer text — same opt-in rule as {@link notifyEnRoute}. */
+export async function notifyDoorTimer(input: {
+  phone: string;
+  minutes: number;
+  smsOptIn: boolean;
+}): Promise<SmsSendResult> {
+  if (!input.smsOptIn) {
+    return { status: 'skipped', reason: 'Client opted out of appointment texts' };
+  }
   const smsResult = await sendSms({
     to: input.phone,
     body: SMS_TEMPLATES.doorTimer(input.minutes),

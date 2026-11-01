@@ -22,6 +22,25 @@ export class MysticReferralService {
       .select('*')
       .single();
     if (error) throw error;
+
+    const { data: profile } = await this.supabase
+      .from('mystic_client_profiles')
+      .select('referral_count')
+      .eq('workspace_id', input.workspaceId)
+      .eq('user_id', input.referrerUserId)
+      .maybeSingle();
+
+    if (profile) {
+      await this.supabase
+        .from('mystic_client_profiles')
+        .update({
+          referral_count: (profile.referral_count ?? 0) + 1,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('workspace_id', input.workspaceId)
+        .eq('user_id', input.referrerUserId);
+    }
+
     return data;
   }
 
@@ -42,6 +61,17 @@ export class MysticReferralService {
       .select('*', { count: 'exact', head: true })
       .eq('workspace_id', workspaceId)
       .eq('referrer_user_id', referrerUserId);
+    if (error) throw error;
+    return count ?? 0;
+  }
+
+  async countPendingForReferrer(workspaceId: string, referrerUserId: string) {
+    const { count, error } = await this.supabase
+      .from('mystic_referrals')
+      .select('*', { count: 'exact', head: true })
+      .eq('workspace_id', workspaceId)
+      .eq('referrer_user_id', referrerUserId)
+      .eq('credited', false);
     if (error) throw error;
     return count ?? 0;
   }

@@ -29,6 +29,7 @@
     "db:types:remote": "supabase gen types typescript --linked 2>/dev/null > packages/types/src/supabase.ts",
     "db:push": "supabase db push --linked",
     "db:seed:remote": "supabase db query --linked --file supabase/seed.sql",
+    "db:seed:mystic-demo": "node scripts/seed-mystic-demo-data.mjs",
     "test": "turbo run test",
     "test:e2e": "pnpm --filter @template/web test:e2e",
     "test:e2e:mystic": "pnpm --filter @template/web test:e2e:mystic",

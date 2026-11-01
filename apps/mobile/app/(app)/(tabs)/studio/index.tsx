@@ -7,12 +7,14 @@ import {
 } from '@template/mystic';
 import { monoLabel, theme } from '@template/mobile-ui';
 import { NativeStudioBoard } from '../../../../components/studio/NativeStudioBoard';
+import { NativeQuietBoard } from '../../../../components/studio/NativeQuietBoard';
 import { NativeStudioRoadBrief } from '../../../../components/studio/NativeStudioRoadBrief';
 import { NativeStudioTodayMap } from '../../../../components/studio/NativeStudioTodayMap';
 import {
   type StudioAppointment,
   type StudioClientRow,
 } from '../../../../components/studio/NativeStudioOps';
+import { NativeShimmerText } from '../../../../components/motion/NativeShimmerText';
 import { useStudioAccess } from '../../../../hooks/useStudioAccess';
 import { MYSTIC_TAB_BAR_SCROLL_PADDING } from '../../../../components/navigation/mysticTabBarIcon';
 import { fetchStudioAppointments, fetchStudioClients } from '../../../../lib/studioApi';
@@ -110,9 +112,14 @@ export default function StudioHomeScreen() {
         />
       ) : null}
 
-      {hasBoard || loading || error ? (
-        <View style={styles.boardBlock}>
-          {hasBoard ? <Text style={styles.boardKicker}>Stops</Text> : null}
+      <View style={styles.boardBlock}>
+        {loading && !hasBoard && !error ? (
+          <View style={styles.loadingPad}>
+            <NativeShimmerText>Checking this week’s road…</NativeShimmerText>
+          </View>
+        ) : null}
+
+        {error ? (
           <NativeStudioBoard
             appointments={appointments}
             clientsById={clientsById}
@@ -120,10 +127,25 @@ export default function StudioHomeScreen() {
             error={error}
             onRefresh={() => void load()}
             onChanged={() => void load({ pull: true })}
-            hideWhenEmpty
           />
-        </View>
-      ) : null}
+        ) : null}
+
+        {hasBoard ? (
+          <>
+            <Text style={styles.boardKicker}>Stops</Text>
+            <NativeStudioBoard
+              appointments={appointments}
+              clientsById={clientsById}
+              loading={loading}
+              error={null}
+              onRefresh={() => void load()}
+              onChanged={() => void load({ pull: true })}
+            />
+          </>
+        ) : null}
+
+        {!loading && !error && !hasBoard ? <NativeQuietBoard /> : null}
+      </View>
     </ScrollView>
   );
 }
@@ -131,6 +153,7 @@ export default function StudioHomeScreen() {
 const styles = StyleSheet.create({
   scroll: { flex: 1, backgroundColor: theme.paper },
   container: { padding: 20, paddingBottom: MYSTIC_TAB_BAR_SCROLL_PADDING + 24 },
-  boardBlock: { marginTop: 22, gap: 8 },
-  boardKicker: { ...monoLabel, color: theme.plum, fontSize: 10 },
+  boardBlock: { marginTop: 8, gap: 10 },
+  boardKicker: { ...monoLabel, color: theme.plum, fontSize: 10, marginTop: 8 },
+  loadingPad: { paddingVertical: 28, alignItems: 'center' },
 });

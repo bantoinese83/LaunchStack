@@ -234,10 +234,19 @@ export type ClientProfileRow = {
   referral_code?: string | null;
 };
 
+export type ReferralProgress = {
+  pending: number;
+  threshold: number;
+  towardNext: number;
+  untilReward: number;
+  copy: string;
+};
+
 export type InspoPhotoRow = { id: string; public_url: string; created_at?: string };
 
 export async function fetchClientProfile(): Promise<{
   profile?: ClientProfileRow;
+  referralProgress?: ReferralProgress;
   error?: string;
 }> {
   if (!appUrl) throw new Error('EXPO_PUBLIC_APP_URL not set');
@@ -313,4 +322,26 @@ export async function saveClientProfile(body: ClientProfileForm): Promise<{
   const data = await res.json();
   if (!res.ok) return { ok: false, error: data.error ?? 'Could not save' };
   return { ok: true, profile: data.profile };
+}
+
+export async function askBookingConcierge(prompt: string): Promise<{
+  serviceId?: ServiceId;
+  serviceName?: string;
+  reason?: string;
+  tip?: string;
+  confidence?: 'high' | 'medium' | 'low';
+  clarifyingQuestion?: string;
+  alternatives?: { serviceId: ServiceId; serviceName?: string; why: string }[];
+  suggestedTags?: string[];
+  error?: string;
+}> {
+  if (!appUrl) throw new Error('EXPO_PUBLIC_APP_URL not set');
+  const res = await fetch(`${appUrl}/api/mystic/ai/booking-concierge`, {
+    method: 'POST',
+    headers: await authHeaders(),
+    body: JSON.stringify({ prompt }),
+  });
+  const data = await res.json();
+  if (!res.ok) return { error: data.error ?? 'Could not recommend a service' };
+  return data;
 }

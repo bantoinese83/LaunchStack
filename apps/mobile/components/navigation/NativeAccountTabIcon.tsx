@@ -37,7 +37,7 @@ export function NativeAccountTabIcon({ focused, color, size }: Props) {
             width: dim,
             height: dim,
             borderRadius: dim / 2,
-            borderColor: focused ? theme.plum : theme.line,
+            borderColor: focused ? theme.gold : theme.line,
           },
         ]}
       >

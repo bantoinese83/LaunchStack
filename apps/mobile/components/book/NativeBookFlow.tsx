@@ -20,6 +20,8 @@ import {
   MYSTIC_SERVICES,
   computeBookingQuote,
   distanceFromRiverNorthMiles,
+  houseCallDistanceOutOfAreaMessage,
+  isWithinHouseCallServiceArea,
   type AddressSuggestion,
   formatUsd,
   formatVisitWhen,
@@ -31,6 +33,7 @@ import {
   type SurchargeRules,
 } from '@template/mystic';
 import { NativeButton, roadTrip, theme } from '@template/mobile-ui';
+import { NativeAiOrb } from '../mystic/NativeAiOrb';
 import { NativeServiceIllustration } from '../mystic/NativeServiceIllustration';
 import { NativeScreenHeader } from '../mystic/NativeScreenHeader';
 import { NativeAddressMapPreview } from '../maps/NativeAddressMapPreview';
@@ -39,6 +42,7 @@ import { NativeBookDateStrip } from './NativeBookDateStrip';
 import { NativeEmptyState } from '../mystic/NativeEmptyState';
 import { NativeBookStepProgress } from './NativeBookStepProgress';
 import {
+  askBookingConcierge,
   fetchAvailability,
   fetchBookingSettings,
   fetchGeocodedDistance,
@@ -75,6 +79,9 @@ export function NativeBookFlow() {
   const [inspoUris, setInspoUris] = useState<{ uri: string; name: string }[]>([]);
   const [status, setStatus] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [conciergePrompt, setConciergePrompt] = useState('');
+  const [conciergeBusy, setConciergeBusy] = useState(false);
+  const [conciergeHint, setConciergeHint] = useState<string | null>(null);
   const checkoutIdempotencyKey = useRef<string | null>(null);
   const [address, setAddress] = useState<HouseCallAddress>({
     line1: '',
@@ -116,9 +123,17 @@ export function NativeBookFlow() {
   function onAddressSuggestion(s: AddressSuggestion) {
     const miles = distanceFromRiverNorthMiles(s.latitude, s.longitude);
     setDistanceMiles(String(miles.toFixed(1)));
-    setDistanceNote(`${miles.toFixed(1)} mi from ${MYSTIC_RIVER_NORTH.label}`);
+    if (!isWithinHouseCallServiceArea(miles)) {
+      setDistanceNote(houseCallDistanceOutOfAreaMessage(miles));
+      return;
+    }
+    setDistanceNote(`${miles.toFixed(1)} mi from ${MYSTIC_RIVER_NORTH.label} (auto)`);
     setAddress((prev) => ({
       ...prev,
+      line1: s.line1,
+      city: s.city,
+      state: s.state,
+      postalCode: s.postalCode,
       latitude: s.latitude,
       longitude: s.longitude,
     }));
@@ -139,8 +154,13 @@ export function NativeBookFlow() {
             setDistanceNote(data.error);
             return;
           }
-          setDistanceMiles(String(data.distanceMiles));
-          setDistanceNote(`${data.distanceMiles} mi from ${MYSTIC_RIVER_NORTH.label}`);
+          const miles = Number(data.distanceMiles);
+          setDistanceMiles(String(miles));
+          if (!isWithinHouseCallServiceArea(miles)) {
+            setDistanceNote(houseCallDistanceOutOfAreaMessage(miles));
+          } else {
+            setDistanceNote(`${miles} mi from ${MYSTIC_RIVER_NORTH.label} (auto)`);
+          }
           if (typeof data.latitude === 'number' && typeof data.longitude === 'number') {
             setAddress((prev) => ({
               ...prev,
@@ -224,6 +244,10 @@ export function NativeBookFlow() {
       setStatus('Complete address, time, and policies');
       return;
     }
+    if (!isWithinHouseCallServiceArea(miles)) {
+      setStatus(houseCallDistanceOutOfAreaMessage(miles));
+      return;
+    }
     if (!policiesAccepted) {
       setStatus('Accept house-call policies to continue');
       return;
@@ -287,7 +311,11 @@ export function NativeBookFlow() {
       }
       if (result.url) await Linking.openURL(result.url);
     } catch {
-      setStatus('Set EXPO_PUBLIC_APP_URL and sign in');
+      setStatus(
+        isMysticApiConfigured()
+          ? 'Network error — check your connection and tap Pay again.'
+          : 'Set EXPO_PUBLIC_APP_URL to your Mystic web app, then sign in and try again.'
+      );
     } finally {
       setSubmitting(false);
     }
@@ -304,13 +332,14 @@ export function NativeBookFlow() {
   }
 
   const canContinueDatetime = Boolean(date && slot);
+  const distanceVerified = !geocodeBusy && Boolean(distanceNote?.includes('(auto)'));
+  const distanceOutOfArea = distanceVerified && !isWithinHouseCallServiceArea(miles);
   const canContinueLocation = Boolean(
     address.line1.trim() &&
     address.state.length === 2 &&
     address.postalCode.length >= 5 &&
-    !geocodeBusy &&
-    distanceNote &&
-    !distanceNote.toLowerCase().includes('not found')
+    distanceVerified &&
+    !distanceOutOfArea
   );
 
   return (
@@ -330,29 +359,91 @@ export function NativeBookFlow() {
 
       {step === 'service' && (
         <>
-          {MYSTIC_SERVICES.map((service) => {
-            const selected = serviceId === service.id;
-            return (
-              <Pressable
-                key={service.id}
-                onPress={() => setServiceId(service.id)}
-                accessibilityRole="button"
-                accessibilityState={{ selected }}
-                accessibilityLabel={`${service.name}, ${service.durationMinutes} minutes, ${formatUsd(service.priceCents)}`}
-                style={[styles.serviceRow, selected && styles.serviceRowSelected]}
-              >
-                <View style={styles.serviceRowInner}>
+          <View style={styles.conciergeHeader}>
+            <NativeAiOrb active={conciergeBusy} size="sm" label="Booking concierge" />
+            <View style={styles.conciergeCopy}>
+              <Text style={styles.conciergeTitle}>Not sure? Ask the concierge</Text>
+              <Text style={styles.conciergeHint}>Describe the look — I’ll match a service.</Text>
+            </View>
+          </View>
+          <TextInput
+            value={conciergePrompt}
+            onChangeText={setConciergePrompt}
+            placeholder="Wedding guest, soft waves…"
+            multiline
+            style={styles.conciergeInput}
+            placeholderTextColor={theme.muted}
+          />
+          <NativeButton
+            title={conciergeBusy ? 'Matching…' : 'Recommend a service'}
+            variant="outline"
+            isLoading={conciergeBusy}
+            onPress={() => {
+              void (async () => {
+                const prompt = conciergePrompt.trim();
+                if (prompt.length < 4) {
+                  setConciergeHint('Tell us the occasion or look in a sentence.');
+                  return;
+                }
+                setConciergeBusy(true);
+                setConciergeHint(null);
+                try {
+                  const data = await askBookingConcierge(prompt);
+                  if (data.error) {
+                    setConciergeHint(data.error);
+                    return;
+                  }
+                  if (data.serviceId) setServiceId(data.serviceId);
+                  if (data.suggestedTags?.length) {
+                    setTags((current) => {
+                      let next = current;
+                      for (const id of data.suggestedTags as AppointmentTagId[]) {
+                        if (!next.includes(id)) next = toggleAppointmentTag(next, id);
+                      }
+                      return next;
+                    });
+                  }
+                  const alt =
+                    data.alternatives?.[0] != null
+                      ? ` Or try ${data.alternatives[0].serviceName ?? data.alternatives[0].serviceId}: ${data.alternatives[0].why}`
+                      : '';
+                  const ask = data.clarifyingQuestion
+                    ? ` Still unsure? ${data.clarifyingQuestion}`
+                    : '';
+                  setConciergeHint(
+                    `${data.serviceName}: ${data.reason}${data.tip ? ` — ${data.tip}` : ''}${alt}${ask}`
+                  );
+                } catch {
+                  setConciergeHint('Could not recommend — pick below');
+                } finally {
+                  setConciergeBusy(false);
+                }
+              })();
+            }}
+            style={styles.cta}
+          />
+          {conciergeHint ? <Text style={styles.cardMeta}>{conciergeHint}</Text> : null}
+          <View style={styles.serviceGrid}>
+            {MYSTIC_SERVICES.map((service) => {
+              const selected = serviceId === service.id;
+              return (
+                <Pressable
+                  key={service.id}
+                  onPress={() => setServiceId(service.id)}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected }}
+                  accessibilityLabel={`${service.name}, ${service.durationMinutes} minutes, ${formatUsd(service.priceCents)}`}
+                  style={[styles.serviceTile, selected && styles.serviceTileSelected]}
+                >
                   <NativeServiceIllustration serviceId={service.id} />
-                  <View style={styles.serviceCopy}>
-                    <Text style={styles.cardTitle}>{service.name}</Text>
-                    <Text style={styles.cardMeta}>
-                      {service.durationMinutes} min · {formatUsd(service.priceCents)}
-                    </Text>
-                  </View>
-                </View>
-              </Pressable>
-            );
-          })}
+                  <Text style={styles.cardTitle}>{service.name}</Text>
+                  <Text style={styles.cardMeta}>
+                    {service.durationMinutes} min · {formatUsd(service.priceCents)}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
           <NativeButton title="Continue" onPress={goNext} style={styles.cta} />
         </>
       )}
@@ -427,11 +518,13 @@ export function NativeBookFlow() {
             onSuggestionSelected={onAddressSuggestion}
           />
           <Text style={styles.sectionLabel}>Travel distance</Text>
-          <Text style={styles.muted}>
+          <Text style={[styles.muted, distanceOutOfArea && styles.dangerText]}>
             {geocodeBusy
               ? 'Calculating distance from your address…'
-              : (distanceNote ??
-                `Enter street + ZIP to calculate from ${MYSTIC_RIVER_NORTH.label}.`)}
+              : distanceOutOfArea
+                ? houseCallDistanceOutOfAreaMessage(miles)
+                : (distanceNote ??
+                  `Enter street + ZIP to calculate from ${MYSTIC_RIVER_NORTH.label}.`)}
           </Text>
           {address.latitude != null && address.longitude != null ? (
             <NativeAddressMapPreview coords={{ lat: address.latitude, lng: address.longitude }} />
@@ -565,22 +658,49 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     paddingVertical: 12,
     paddingHorizontal: 12,
-    borderLeftWidth: 3,
-    borderLeftColor: theme.plum,
+    borderRadius: theme.radii.md,
     backgroundColor: theme.chalkSoft,
     color: theme.plum,
     fontSize: 13,
     lineHeight: 18,
   },
-  serviceRow: {
-    ...roadTrip.flatRow,
-    paddingVertical: 16,
+  serviceGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginTop: 20,
+    marginBottom: 8,
   },
-  serviceRowSelected: roadTrip.flatRowSelected,
-  serviceRowInner: { flexDirection: 'row', alignItems: 'center', gap: 14 },
-  serviceCopy: { flex: 1, minWidth: 0 },
-  cardTitle: { fontSize: 17, fontWeight: '600', color: theme.ink },
-  cardMeta: { marginTop: 4, color: theme.muted, fontSize: 13 },
+  serviceTile: {
+    width: '47.5%',
+    flexGrow: 1,
+    minWidth: '45%',
+    padding: 14,
+    borderRadius: theme.radii.lg,
+    backgroundColor: theme.surface,
+    gap: 8,
+  },
+  serviceTileSelected: {
+    backgroundColor: theme.goldSoft,
+  },
+  cardTitle: { fontSize: 16, fontWeight: '600', color: theme.ink },
+  cardMeta: { marginTop: 2, color: theme.muted, fontSize: 12 },
+  conciergeHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginTop: 16,
+    marginBottom: 10,
+  },
+  conciergeCopy: { flex: 1, minWidth: 0 },
+  conciergeTitle: { ...roadTrip.kicker, color: theme.muted },
+  conciergeHint: { marginTop: 2, fontSize: 12, color: theme.muted },
+  conciergeInput: {
+    ...roadTrip.flatInput,
+    minHeight: 72,
+    textAlignVertical: 'top',
+    marginBottom: 8,
+  },
   sectionLabel: { ...roadTrip.kicker, color: theme.muted, marginTop: 16, marginBottom: 10 },
   input: {
     ...roadTrip.flatInput,
@@ -608,6 +728,7 @@ const styles = StyleSheet.create({
   policyRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 16 },
   policyAccept: { flex: 1, fontSize: 13, color: theme.ink },
   muted: { color: theme.muted, fontSize: 13, marginTop: 6 },
+  dangerText: { color: theme.danger, marginTop: 6 },
   cta: { marginTop: 10 },
   rowButtons: { flexDirection: 'row', gap: 10, marginTop: 16 },
   half: { flex: 1 },

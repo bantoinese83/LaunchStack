@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   APPOINTMENT_TAGS,
@@ -21,6 +22,7 @@ import {
   type ServiceId,
   type SurchargeRules,
 } from '@template/mystic';
+import { MysticAiOrb } from '@/components/mystic/MysticAiOrb';
 import { MysticEmptyState } from '@/components/mystic/MysticEmptyState';
 import { MysticPageIntro } from '@/components/mystic/MysticPageIntro';
 import { MysticBookStepProgress } from '@/components/mystic/book/MysticBookStepProgress';
@@ -33,12 +35,7 @@ import {
   type HouseCallAddress,
 } from '@/components/mystic/book/MysticAddressLookup';
 import { MysticBookDateStrip } from '@/components/mystic/book/MysticBookDateStrip';
-import {
-  mysticFlatRow,
-  mysticInput,
-  mysticLiveHighlight,
-  mysticTimeChip,
-} from '@/components/mystic/mystic-styles';
+import { mysticLiveHighlight, mysticTimeChip } from '@/components/mystic/mystic-styles';
 import { MysticSecureBookingLine } from '@/components/mystic/MysticSecureBookingLine';
 import { MysticSummaryRowGroup } from '@/components/mystic/MysticSummaryRowGroup';
 import { Alert } from '@template/ui';
@@ -74,6 +71,16 @@ export function BookFlowClient() {
   const [surchargeRules, setSurchargeRules] = useState<SurchargeRules | null>(null);
   const [depositCents, setDepositCents] = useState(2500);
   const [inspoFiles, setInspoFiles] = useState<File[]>([]);
+  const [conciergePrompt, setConciergePrompt] = useState('');
+  const [conciergeBusy, setConciergeBusy] = useState(false);
+  const [conciergeHint, setConciergeHint] = useState<string | null>(null);
+  const [conciergeExtras, setConciergeExtras] = useState<{
+    clarifyingQuestion?: string;
+    alternatives?: { serviceId: string; serviceName?: string; why: string }[];
+    confidence?: string;
+  } | null>(null);
+  const [profilePhone, setProfilePhone] = useState<string | null | undefined>(undefined);
+  const [slotsReloadToken, setSlotsReloadToken] = useState(0);
 
   useEffect(() => {
     void fetch('/api/mystic/public/booking-settings')
@@ -83,6 +90,20 @@ export function BookFlowClient() {
         if (typeof data.depositCents === 'number') setDepositCents(data.depositCents);
       })
       .catch(() => setSurchargeRules(null));
+  }, []);
+
+  useEffect(() => {
+    void fetch('/api/mystic/client-profile')
+      .then(async (r) => {
+        if (!r.ok) {
+          setProfilePhone(null);
+          return;
+        }
+        const data = await r.json();
+        const phone = typeof data.profile?.phone === 'string' ? data.profile.phone.trim() : '';
+        setProfilePhone(phone || null);
+      })
+      .catch(() => setProfilePhone(null));
   }, []);
 
   useEffect(() => {
@@ -193,7 +214,7 @@ export function BookFlowClient() {
         setSlotsError('Network error loading availability');
         setSlots([]);
       });
-  }, [date, serviceId]);
+  }, [date, serviceId, slotsReloadToken]);
 
   const scheduledAt = useMemo(() => {
     if (!date || !time) return null;
@@ -218,6 +239,49 @@ export function BookFlowClient() {
 
   function toggleTag(id: AppointmentTagId) {
     setTags((current) => toggleAppointmentTag(current, id));
+  }
+
+  async function askConcierge() {
+    const prompt = conciergePrompt.trim();
+    if (prompt.length < 4) {
+      setConciergeHint('Tell us the occasion or look in a sentence.');
+      return;
+    }
+    setConciergeBusy(true);
+    setConciergeHint(null);
+    setConciergeExtras(null);
+    try {
+      const res = await fetch('/api/mystic/ai/booking-concierge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setConciergeHint(data.error ?? 'Could not recommend a service');
+        return;
+      }
+      setServiceId(data.serviceId as ServiceId);
+      if (Array.isArray(data.suggestedTags) && data.suggestedTags.length) {
+        setTags((current) => {
+          let next = current;
+          for (const id of data.suggestedTags as AppointmentTagId[]) {
+            if (!next.includes(id)) next = toggleAppointmentTag(next, id);
+          }
+          return next;
+        });
+      }
+      setConciergeHint(`${data.serviceName}: ${data.reason}${data.tip ? ` — ${data.tip}` : ''}`);
+      setConciergeExtras({
+        clarifyingQuestion: data.clarifyingQuestion,
+        alternatives: data.alternatives,
+        confidence: data.confidence,
+      });
+    } catch {
+      setConciergeHint('Network error — pick a service below');
+    } finally {
+      setConciergeBusy(false);
+    }
   }
 
   async function payAndBook() {
@@ -304,35 +368,92 @@ export function BookFlowClient() {
       <MysticBookStepProgress step={step} onStepChange={setStep} />
 
       {step === 'service' && (
-        <section className="w-full divide-y divide-line/80 border-y border-line/80">
-          {MYSTIC_SERVICES.map((service) => (
-            <button
-              key={service.id}
-              type="button"
-              aria-pressed={serviceId === service.id}
-              onClick={() => setServiceId(service.id)}
-              className={`${mysticFlatRow} w-full text-left ${
-                serviceId === service.id ? mysticLiveHighlight : 'hover:bg-surface/80'
-              }`}
-            >
-              <div className="flex items-center gap-4">
-                <MysticServiceIllustration serviceId={service.id} size="sm" />
-                <div className="flex min-w-0 flex-1 justify-between gap-4">
-                  <div className="min-w-0">
-                    <p className="font-medium text-ink">{service.name}</p>
-                    <p className="mt-1 text-sm text-muted">{service.description}</p>
-                  </div>
-                  <p className="shrink-0 font-medium">{formatUsd(service.priceCents)}</p>
-                </div>
+        <section className="w-full space-y-6">
+          <div className="space-y-3 rounded-2xl bg-accent-soft/40 p-4 sm:p-5">
+            <div className="flex items-center gap-3">
+              <MysticAiOrb active={conciergeBusy} size="sm" label="Booking concierge" />
+              <div>
+                <p className="type-eyebrow text-plum">Not sure? Ask the concierge</p>
+                <p className="mt-0.5 text-xs text-muted">
+                  Describe the look — I’ll match a service.
+                </p>
               </div>
+            </div>
+            <textarea
+              value={conciergePrompt}
+              onChange={(e) => setConciergePrompt(e.target.value)}
+              rows={2}
+              maxLength={400}
+              placeholder="Wedding guest, soft waves, 45 minutes before photos…"
+              className="min-h-[4.5rem] w-full resize-y rounded-xl bg-paper/80 px-3 py-3 text-sm text-ink outline-none ring-0 placeholder:text-muted focus:bg-paper"
+            />
+            <button
+              type="button"
+              disabled={conciergeBusy}
+              onClick={() => void askConcierge()}
+              className="text-sm font-medium text-accent underline disabled:opacity-50"
+            >
+              {conciergeBusy ? 'Matching…' : 'Recommend a service'}
             </button>
-          ))}
-          <MysticMagneticButton
-            type="button"
-            onClick={() => setStep('datetime')}
-            className="mt-6"
-            fullWidth
-          >
+            {conciergeHint ? <p className="text-sm text-muted">{conciergeHint}</p> : null}
+            {conciergeExtras?.clarifyingQuestion ? (
+              <p className="text-sm text-plum">
+                Still unsure? {conciergeExtras.clarifyingQuestion}
+              </p>
+            ) : null}
+            {conciergeExtras?.alternatives && conciergeExtras.alternatives.length > 0 ? (
+              <div className="flex flex-col gap-1.5">
+                {conciergeExtras.alternatives.map((alt) => (
+                  <button
+                    key={alt.serviceId}
+                    type="button"
+                    onClick={() => setServiceId(alt.serviceId as ServiceId)}
+                    className="rounded-xl bg-paper/70 px-3 py-2 text-left text-xs text-ink transition hover:bg-paper"
+                  >
+                    <span className="font-medium text-accent">
+                      Or {alt.serviceName ?? alt.serviceId}
+                    </span>
+                    <span className="text-muted"> — {alt.why}</span>
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </div>
+          <div className="grid grid-cols-2 gap-3 sm:gap-4">
+            {MYSTIC_SERVICES.map((service) => {
+              const selected = serviceId === service.id;
+              return (
+                <button
+                  key={service.id}
+                  type="button"
+                  aria-pressed={selected}
+                  onClick={() => setServiceId(service.id)}
+                  className={`group flex flex-col items-start gap-3 rounded-2xl p-4 text-left transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/45 ${
+                    selected
+                      ? `${mysticLiveHighlight} shadow-[0_10px_28px_-18px_rgba(196,169,98,0.9)]`
+                      : 'bg-surface hover:-translate-y-0.5 hover:bg-accent-soft/50'
+                  }`}
+                >
+                  <div className="flex w-full items-start justify-between gap-2">
+                    <MysticServiceIllustration serviceId={service.id} size="sm" />
+                    <span className="rounded-full bg-paper/80 px-2 py-0.5 text-[10px] font-medium tabular-nums text-muted">
+                      {service.durationMinutes}m
+                    </span>
+                  </div>
+                  <div className="min-w-0 w-full">
+                    <p className="font-medium text-ink">{service.name}</p>
+                    <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted">
+                      {service.description}
+                    </p>
+                    <p className="mt-3 text-sm font-semibold text-ink">
+                      {formatUsd(service.priceCents)}
+                    </p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+          <MysticMagneticButton type="button" onClick={() => setStep('datetime')} fullWidth>
             Continue
           </MysticMagneticButton>
         </section>
@@ -349,28 +470,57 @@ export function BookFlowClient() {
             }}
           />
           <label className="block text-sm font-medium">Time</label>
-          {slotsError ? <p className="text-sm text-danger">{slotsError}</p> : null}
-          {date && !slotsError && slots.length === 0 ? (
-            <MysticEmptyState variant="book-slots" compact className="mb-4" />
-          ) : null}
-          <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-            {(slots.length ? slots : !date ? ['10:00', '12:00', '15:00'] : []).map((slot) => (
+          {!date ? <p className="text-sm text-muted">Pick a date to see open times.</p> : null}
+          {slotsError ? (
+            <div className="flex flex-wrap items-center gap-3">
+              <p className="text-sm text-danger">{slotsError}</p>
               <button
-                key={slot}
                 type="button"
-                aria-pressed={time === slot}
-                onClick={() => setTime(slot)}
-                className={mysticTimeChip(time === slot)}
+                className="text-sm font-medium text-accent underline"
+                onClick={() => setSlotsReloadToken((n) => n + 1)}
               >
-                {slot}
+                Retry
               </button>
-            ))}
-          </div>
+            </div>
+          ) : null}
+          {date && !slotsError && slots.length === 0 ? (
+            <div className="space-y-3">
+              <MysticEmptyState variant="book-slots" compact className="mb-0" />
+              <button
+                type="button"
+                className="text-sm font-medium text-accent underline"
+                onClick={() => {
+                  if (!date) return;
+                  const next = new Date(`${date}T12:00:00`);
+                  next.setDate(next.getDate() + 1);
+                  setDate(next.toISOString().slice(0, 10));
+                  setTime('');
+                }}
+              >
+                Try tomorrow
+              </button>
+            </div>
+          ) : null}
+          {date && slots.length > 0 ? (
+            <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+              {slots.map((slot) => (
+                <button
+                  key={slot}
+                  type="button"
+                  aria-pressed={time === slot}
+                  onClick={() => setTime(slot)}
+                  className={mysticTimeChip(time === slot)}
+                >
+                  {slot}
+                </button>
+              ))}
+            </div>
+          ) : null}
           <label className="block text-sm font-medium">Booking type</label>
           <select
             value={entitlement}
             onChange={(e) => setEntitlement(e.target.value as typeof entitlement)}
-            className="w-full rounded-xl border border-line bg-surface px-4 py-3"
+            className="w-full rounded-xl bg-surface px-4 py-3 text-ink outline-none focus:bg-accent-soft/40"
           >
             <option value="none">One-off (surcharges may apply)</option>
             <option value="membership">Member</option>
@@ -422,7 +572,7 @@ export function BookFlowClient() {
             placeholder="Gate code, parking, pets…"
             value={address.notes}
             onChange={(e) => setAddress({ ...address, notes: e.target.value })}
-            className="min-h-24 w-full rounded-xl border border-line px-4 py-3"
+            className="min-h-24 w-full rounded-xl bg-surface px-4 py-3 text-ink outline-none placeholder:text-muted focus:bg-accent-soft/40"
           />
           <div className="flex gap-3">
             <MysticMagneticButton
@@ -464,8 +614,10 @@ export function BookFlowClient() {
                 type="button"
                 aria-pressed={tags.includes(tag.id)}
                 onClick={() => toggleTag(tag.id)}
-                className={`rounded-full border px-3 py-1.5 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/45 focus-visible:ring-offset-2 ${
-                  tags.includes(tag.id) ? 'border-accent bg-accent-soft' : 'border-line'
+                className={`rounded-full px-3 py-1.5 text-xs transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/45 focus-visible:ring-offset-2 ${
+                  tags.includes(tag.id)
+                    ? 'bg-accent text-paper'
+                    : 'bg-surface text-muted hover:bg-accent-soft hover:text-ink'
                 }`}
               >
                 {tag.label}
@@ -477,14 +629,14 @@ export function BookFlowClient() {
             placeholder="Referral code (optional)"
             value={referralCode}
             onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
-            className="w-full rounded-xl border border-line px-4 py-3"
+            className="w-full rounded-xl bg-surface px-4 py-3 text-ink outline-none placeholder:text-muted focus:bg-accent-soft/40"
           />
           <input
             maxLength={120}
             placeholder="Or referred by (first & last name)"
             value={referredBy}
             onChange={(e) => setReferredBy(e.target.value)}
-            className="w-full rounded-xl border border-line px-4 py-3"
+            className="w-full rounded-xl bg-surface px-4 py-3 text-ink outline-none placeholder:text-muted focus:bg-accent-soft/40"
           />
           <div>
             <p className="text-sm font-medium">Inspo photos (optional, up to 4)</p>
@@ -564,54 +716,65 @@ export function BookFlowClient() {
                         .map((t) => APPOINTMENT_TAGS.find((a) => a.id === t)?.label ?? t)
                         .join(' · ')
                     : 'No extra preferences',
-                hint: referredBy || referralCode ? 'Referral noted' : undefined,
+                hint:
+                  referredBy || referralCode ? 'Referral will be checked at checkout' : undefined,
                 onEdit: () => setStep('details'),
               },
             ]}
           />
-          <div className={`${mysticFlatRow} border-t border-line/80 pt-6`}>
+          <div className="rounded-2xl bg-surface p-5">
             <p className="type-eyebrow text-plum">Payment</p>
-            <ul className="mt-3 space-y-1 text-sm">
-              <li className="flex justify-between">
+            <ul className="mt-3 space-y-2 text-sm">
+              <li className="flex justify-between gap-3">
                 <span>Service + surcharges</span>
-                <span>{formatUsd(quote.totalCents - tipCents)}</span>
+                <span className="tabular-nums">{formatUsd(quote.totalCents - tipCents)}</span>
               </li>
               {quote.surcharges.map((line) => (
-                <li key={line.code} className="flex justify-between text-muted">
+                <li key={line.code} className="flex justify-between gap-3 text-muted">
                   <span>{line.label}</span>
-                  <span>{formatUsd(line.amountCents)}</span>
+                  <span className="tabular-nums">{formatUsd(line.amountCents)}</span>
                 </li>
               ))}
             </ul>
-            <label className="mt-4 block text-sm">Tip</label>
+            <label className="mt-4 block text-sm font-medium">Tip</label>
             <select
               value={tipCents}
               onChange={(e) => setTipCents(Number(e.target.value))}
-              className="mt-1 w-full rounded-xl border border-line px-4 py-2"
+              className="mt-1 w-full rounded-xl bg-paper px-4 py-2.5 text-ink outline-none"
             >
               <option value={0}>No tip</option>
               <option value={1000}>$10</option>
               <option value={1500}>$15</option>
               <option value={2000}>$20</option>
             </select>
-            <p className="mt-2 flex justify-between text-sm text-muted">
+            <p className="mt-3 flex justify-between gap-3 text-sm text-muted">
               <span>Refundable hold (no-show / door timer)</span>
-              <span>{formatUsd(depositCents)}</span>
+              <span className="tabular-nums">{formatUsd(depositCents)}</span>
             </p>
-            <p className="mt-4 flex justify-between border-t border-line pt-4 font-medium">
+            <p className="mt-4 flex justify-between gap-3 rounded-xl bg-gold-soft/80 px-3 py-3 font-medium">
               <span>Total due now</span>
-              <span>{formatUsd(quote.totalCents)}</span>
+              <span className="tabular-nums">{formatUsd(quote.totalCents)}</span>
             </p>
           </div>
 
-          <div className="space-y-3 rounded-2xl border border-line bg-paper p-5 text-sm">
+          <div className="space-y-4 rounded-2xl bg-paper/80 p-5 text-sm">
             {HOUSE_CALL_POLICIES.map((policy) => (
               <div key={policy.id}>
-                <p className="font-medium">{policy.title}</p>
-                <p className="text-muted">{policy.body}</p>
+                <p className="font-medium text-ink">{policy.title}</p>
+                <p className="mt-0.5 leading-relaxed text-muted">{policy.body}</p>
               </div>
             ))}
           </div>
+
+          {profilePhone === null ? (
+            <Alert variant="info" className="text-sm">
+              Add a mobile number in{' '}
+              <Link href="/account" className="font-medium underline underline-offset-2">
+                Account
+              </Link>{' '}
+              so you get on-the-way and door-timer texts. You can still pay now.
+            </Alert>
+          ) : null}
 
           <label className="flex items-start gap-3 text-sm">
             <input
@@ -629,7 +792,7 @@ export function BookFlowClient() {
             </Alert>
           ) : null}
 
-          <div className="sticky bottom-3 z-10 space-y-2 rounded-2xl border border-line/80 bg-surface/95 p-3 shadow-[0_12px_40px_-16px_rgba(26,31,24,0.35)] backdrop-blur-md">
+          <div className="sticky bottom-3 z-10 space-y-2 rounded-2xl bg-surface/95 p-3 shadow-[0_16px_48px_-20px_rgba(26,31,24,0.4)] backdrop-blur-md">
             <MysticSecureBookingLine className="px-1" />
             <div className="flex gap-3">
               <MysticMagneticButton

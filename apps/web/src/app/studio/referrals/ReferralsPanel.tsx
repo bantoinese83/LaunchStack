@@ -30,6 +30,10 @@ export function ReferralsPanel() {
   const [recent, setRecent] = useState<RecentReferral[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [referrerCode, setReferrerCode] = useState('');
+  const [referredName, setReferredName] = useState('');
+  const [logging, setLogging] = useState(false);
+  const [logStatus, setLogStatus] = useState<string | null>(null);
 
   const load = useCallback(() => {
     if (!workspaceId) {
@@ -39,13 +43,14 @@ export function ReferralsPanel() {
     setLoading(true);
     setError(null);
     void fetch(`/api/mystic/referrals?workspaceId=${workspaceId}&view=dashboard&month=${month}`)
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.error) setError(data.error);
-        else {
-          setReferrers(data.dashboard?.referrers ?? []);
-          setRecent(data.dashboard?.recent ?? []);
+      .then(async (r) => {
+        const data = await r.json();
+        if (!r.ok || data.error) {
+          setError(data.error ?? 'Could not load referrals');
+          return;
         }
+        setReferrers(data.dashboard?.referrers ?? []);
+        setRecent(data.dashboard?.recent ?? []);
       })
       .catch(() => setError('Could not load referrals'))
       .finally(() => setLoading(false));
@@ -57,6 +62,41 @@ export function ReferralsPanel() {
     const [y, m] = month.split('-').map(Number);
     return new Date(y, m - 1, 1).toLocaleString(undefined, { month: 'long', year: 'numeric' });
   }, [month]);
+
+  async function logManualReferral(e: React.FormEvent) {
+    e.preventDefault();
+    if (!workspaceId) return;
+    setLogging(true);
+    setLogStatus(null);
+    try {
+      const res = await fetch('/api/mystic/referrals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          workspaceId,
+          referrerCode: referrerCode.trim().toUpperCase(),
+          referredName: referredName.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setLogStatus(data.error ?? 'Could not save referral');
+        return;
+      }
+      setReferrerCode('');
+      setReferredName('');
+      setLogStatus(
+        data.untilReward === 0
+          ? 'Saved — reward threshold met for this referrer'
+          : `Saved — ${data.untilReward} more until next blowout reward`
+      );
+      load();
+    } catch {
+      setLogStatus('Network error — try again');
+    } finally {
+      setLogging(false);
+    }
+  }
 
   if (!workspaceId) {
     return <StudioWorkspaceNotice />;
@@ -84,8 +124,8 @@ export function ReferralsPanel() {
         </button>
       </div>
       <p className="text-sm text-muted">
-        Referrals credited in {monthLabel}. Pending rows count toward the next blowout reward after
-        the referred client&apos;s booking is confirmed and paid.
+        Referrals in {monthLabel}. Pending rows count toward the next free blowout after the
+        referred client&apos;s booking is confirmed. Rewards use lifetime pending totals.
       </p>
       {error ? <p className="text-sm text-danger">{error}</p> : null}
       {loading && referrers.length === 0 ? <StudioLoadingRows count={2} /> : null}
@@ -116,6 +156,46 @@ export function ReferralsPanel() {
           </table>
         </div>
       ) : null}
+
+      <form onSubmit={(e) => void logManualReferral(e)} className={`${mysticCard} space-y-3 p-4`}>
+        <h3 className="text-sm font-medium text-ink">Log a referral</h3>
+        <p className="text-xs text-muted">
+          Use when someone books by name or walk-in and you already know who sent them.
+        </p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="block text-sm">
+            <span className="text-muted">Referrer code</span>
+            <input
+              value={referrerCode}
+              onChange={(e) => setReferrerCode(e.target.value.toUpperCase())}
+              className={`${mysticInput} mt-1`}
+              placeholder="MYSTIC•••••"
+              required
+              maxLength={16}
+            />
+          </label>
+          <label className="block text-sm">
+            <span className="text-muted">Referred client name</span>
+            <input
+              value={referredName}
+              onChange={(e) => setReferredName(e.target.value)}
+              className={`${mysticInput} mt-1`}
+              placeholder="First & last"
+              required
+              minLength={2}
+              maxLength={120}
+            />
+          </label>
+        </div>
+        <button
+          type="submit"
+          disabled={logging}
+          className="text-sm font-medium text-accent underline disabled:opacity-50"
+        >
+          {logging ? 'Saving…' : 'Save referral'}
+        </button>
+        {logStatus ? <p className="text-sm text-muted">{logStatus}</p> : null}
+      </form>
 
       <div>
         <h3 className="text-sm font-medium text-ink">Recent in {monthLabel}</h3>

@@ -1,8 +1,13 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { formatUsd } from '@template/mystic';
+import { LinearGradient } from 'expo-linear-gradient';
+import { formatStudioAnalyticsRate, formatUsd } from '@template/mystic';
 import { monoLabel, theme } from '@template/mobile-ui';
+import { NativeRoadStripe } from '../../../../components/mystic/NativeRoadStripe';
+import { NativePressableScale } from '../../../../components/motion/NativePressableScale';
+import { NativeFadeIn } from '../../../../components/motion/NativeFadeIn';
+import { hapticSoft } from '../../../../lib/haptics';
 import { useStudioAccess } from '../../../../hooks/useStudioAccess';
 import {
   fetchStudioAnalytics,
@@ -10,20 +15,36 @@ import {
   patchStudioSettings,
 } from '../../../../lib/studioApi';
 
+type AnalyticsSnap = {
+  periodLabel?: string;
+  bookingCount?: number;
+  revenueCents?: number;
+  completedCount?: number;
+  noShowCount?: number;
+  avgTicketCents?: number;
+  completionRate?: number | null;
+  error?: string;
+};
+
 export default function StudioMoreScreen() {
   const router = useRouter();
   const { workspaceId } = useStudioAccess();
-  const [analytics, setAnalytics] = useState<{
-    bookingCount?: number;
-    revenueCents?: number;
-    completedCount?: number;
-  } | null>(null);
+  const [analytics, setAnalytics] = useState<AnalyticsSnap | null>(null);
+  const [analyticsError, setAnalyticsError] = useState<string | null>(null);
   const [winterBuffer, setWinterBuffer] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
   const load = useCallback(() => {
     if (!workspaceId) return;
-    void fetchStudioAnalytics(workspaceId).then(setAnalytics);
+    void fetchStudioAnalytics(workspaceId, 'mtd').then((data: AnalyticsSnap) => {
+      if (data.error) {
+        setAnalyticsError(data.error);
+        setAnalytics(null);
+        return;
+      }
+      setAnalyticsError(null);
+      setAnalytics(data);
+    });
     void fetchStudioSettings(workspaceId).then((data) => {
       if (data.settings) setWinterBuffer(data.settings.winter_buffer_enabled);
     });
@@ -42,86 +63,125 @@ export default function StudioMoreScreen() {
 
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.container}>
-      <Text style={styles.section}>This month</Text>
-      {analytics ? (
-        <View style={styles.card}>
-          <Text style={styles.stat}>{analytics.bookingCount ?? 0} bookings</Text>
-          <Text style={styles.stat}>{formatUsd(analytics.revenueCents ?? 0)} revenue</Text>
-          <Text style={styles.muted}>{analytics.completedCount ?? 0} completed</Text>
+      <NativeFadeIn>
+        <NativeRoadStripe compact />
+        <Text style={styles.section}>{analytics?.periodLabel ?? 'This month'}</Text>
+        {analyticsError ? (
+          <Text style={styles.error}>{analyticsError}</Text>
+        ) : analytics ? (
+          <View style={styles.revenuePoster}>
+            <LinearGradient
+              colors={['#242B20', theme.shell]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={StyleSheet.absoluteFill}
+            />
+            <Text style={styles.revenue}>{formatUsd(analytics.revenueCents ?? 0)}</Text>
+            <Text style={styles.revenueMuted}>Completed revenue</Text>
+            <View style={styles.statRow}>
+              <Text style={styles.statOnDark}>{analytics.bookingCount ?? 0} bookings</Text>
+              <Text style={styles.statOnDark}>{analytics.completedCount ?? 0} done</Text>
+            </View>
+            {analytics.avgTicketCents ? (
+              <Text style={styles.revenueMuted}>
+                Avg ticket {formatUsd(analytics.avgTicketCents)}
+              </Text>
+            ) : null}
+            {analytics.completionRate != null ? (
+              <Text style={styles.revenueMuted}>
+                Settle rate {formatStudioAnalyticsRate(analytics.completionRate)}
+                {analytics.noShowCount ? ` · ${analytics.noShowCount} no-show` : ''}
+              </Text>
+            ) : null}
+          </View>
+        ) : (
+          <Text style={styles.muted}>Loading…</Text>
+        )}
+
+        <Text style={styles.section}>Winter buffer</Text>
+        <View style={styles.row}>
+          <Text style={styles.rowLabel}>45 min between stops</Text>
+          <Switch
+            value={winterBuffer}
+            onValueChange={(v) => {
+              hapticSoft();
+              void saveWinter(v);
+            }}
+            trackColor={{ true: theme.accent, false: theme.line }}
+          />
         </View>
-      ) : (
-        <Text style={styles.muted}>Loading…</Text>
-      )}
 
-      <Text style={styles.section}>Winter buffer</Text>
-      <View style={styles.row}>
-        <Text style={styles.rowLabel}>45 min between stops</Text>
-        <Switch value={winterBuffer} onValueChange={(v) => void saveWinter(v)} />
-      </View>
+        {message ? <Text style={styles.message}>{message}</Text> : null}
 
-      {message ? <Text style={styles.message}>{message}</Text> : null}
-
-      <Text style={styles.section}>Studio</Text>
-      <LinkRow label="Referrals" onPress={() => router.push('/(app)/(tabs)/studio/referrals')} />
-      <LinkRow
-        label="Deposits & surcharges"
-        onPress={() => router.push('/(app)/(tabs)/studio/settings')}
-      />
-      <LinkRow
-        label="Blocked travel days"
-        onPress={() => router.push('/(app)/(tabs)/studio/blocked')}
-      />
+        <Text style={styles.section}>Studio</Text>
+        <LinkRow label="Referrals" onPress={() => router.push('/(app)/(tabs)/studio/referrals')} />
+        <LinkRow
+          label="Deposits & surcharges"
+          onPress={() => router.push('/(app)/(tabs)/studio/settings')}
+        />
+        <LinkRow
+          label="Blocked travel days"
+          onPress={() => router.push('/(app)/(tabs)/studio/blocked')}
+        />
+      </NativeFadeIn>
     </ScrollView>
   );
 }
 
 function LinkRow({ label, onPress }: { label: string; onPress: () => void }) {
   return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [styles.link, pressed && styles.linkPressed]}
-      accessibilityRole="button"
-    >
+    <NativePressableScale onPress={onPress} style={styles.link} accessibilityRole="button">
       <Text style={styles.linkText}>{label}</Text>
       <Text style={styles.chevron}>→</Text>
-    </Pressable>
+    </NativePressableScale>
   );
 }
 
 const styles = StyleSheet.create({
   scroll: { flex: 1, backgroundColor: theme.paper },
   container: { padding: 20, paddingBottom: 40 },
-  section: { ...monoLabel, color: theme.accent, marginTop: 16, marginBottom: 8 },
-  card: {
-    padding: 16,
-    borderRadius: theme.radii.lg,
-    borderWidth: 1,
-    borderColor: theme.line,
-    backgroundColor: theme.surface,
+  section: { ...monoLabel, color: theme.plum, marginTop: 18, marginBottom: 10 },
+  revenuePoster: {
+    borderRadius: theme.radii.xl,
+    padding: 20,
+    overflow: 'hidden',
+    minHeight: 140,
   },
-  stat: { fontSize: 18, fontWeight: '600', color: theme.ink },
-  muted: { color: theme.muted, marginTop: 4 },
+  revenue: {
+    fontSize: 36,
+    fontWeight: '600',
+    color: theme.paper,
+    letterSpacing: -1,
+  },
+  revenueMuted: {
+    color: 'rgba(247,244,237,0.55)',
+    marginTop: 4,
+    fontSize: 13,
+  },
+  statRow: { flexDirection: 'row', gap: 16, marginTop: 14 },
+  statOnDark: { fontSize: 14, fontWeight: '600', color: theme.paper },
+  muted: { color: theme.muted, marginTop: 4, fontSize: 13 },
+  error: { color: theme.plum, fontSize: 13 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 14,
+    padding: 16,
     borderRadius: theme.radii.lg,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.line,
     backgroundColor: theme.surface,
   },
-  rowLabel: { color: theme.ink, flex: 1, paddingRight: 12 },
-  message: { marginTop: 16, color: theme.chalk },
+  rowLabel: { color: theme.ink, flex: 1, paddingRight: 12, fontSize: 15 },
+  message: { marginTop: 12, color: theme.chalk, fontSize: 13 },
   link: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 14,
+    paddingVertical: 16,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: theme.line,
   },
-  linkPressed: { backgroundColor: theme.goldSoft },
-  linkText: { fontWeight: '500', color: theme.ink, flex: 1, fontSize: 15 },
-  chevron: { color: theme.muted, marginLeft: 8 },
+  linkText: { fontWeight: '500', color: theme.ink, flex: 1, fontSize: 16 },
+  chevron: { color: theme.gold, marginLeft: 8, fontSize: 16 },
 });

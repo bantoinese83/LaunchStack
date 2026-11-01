@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { MysticProfileAvatar } from '@/components/mystic/MysticProfileAvatar';
 import { MysticMagneticButton } from '@/components/mystic/MysticMagneticButton';
-import { mysticFlatRow, mysticInput } from '@/components/mystic/mystic-styles';
+import { mysticInput } from '@/components/mystic/mystic-styles';
 
 type ProfileForm = {
   fullName: string;
@@ -27,6 +27,14 @@ type ClientProfileResponse = {
   avatar_url?: string | null;
 };
 
+type ReferralProgress = {
+  pending: number;
+  threshold: number;
+  towardNext: number;
+  untilReward: number;
+  copy: string;
+};
+
 export function AccountClient({ initialEmail }: { initialEmail: string | null }) {
   const router = useRouter();
   const [form, setForm] = useState<ProfileForm>({
@@ -41,6 +49,7 @@ export function AccountClient({ initialEmail }: { initialEmail: string | null })
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [referralCode, setReferralCode] = useState<string | null>(null);
+  const [referralProgress, setReferralProgress] = useState<ReferralProgress | null>(null);
   const [creditsSummary, setCreditsSummary] = useState<string | null>(null);
   const [copyHint, setCopyHint] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -57,22 +66,25 @@ export function AccountClient({ initialEmail }: { initialEmail: string | null })
           setStatus({ kind: 'error', text: data.error ?? 'Could not load profile' });
           return null;
         }
-        return data as { profile?: ClientProfileResponse };
+        return data as { profile?: ClientProfileResponse; referralProgress?: ReferralProgress };
       })
-      .then((data: { profile?: ClientProfileResponse } | null) => {
-        if (!data?.profile) return;
-        const p = data.profile;
-        setForm({
-          fullName: p.full_name?.trim() || '',
-          email: p.email?.trim() || initialEmail || '',
-          phone: p.phone ?? '',
-          birthday: p.birthday ?? '',
-          marketingSms: p.marketing_sms ?? true,
-          marketingEmail: p.marketing_email ?? true,
-        });
-        setReferralCode(p.referral_code ?? null);
-        setAvatarUrl(p.avatar_url ?? null);
-      })
+      .then(
+        (data: { profile?: ClientProfileResponse; referralProgress?: ReferralProgress } | null) => {
+          if (!data?.profile) return;
+          const p = data.profile;
+          setForm({
+            fullName: p.full_name?.trim() || '',
+            email: p.email?.trim() || initialEmail || '',
+            phone: p.phone ?? '',
+            birthday: p.birthday ?? '',
+            marketingSms: p.marketing_sms ?? true,
+            marketingEmail: p.marketing_email ?? true,
+          });
+          setReferralCode(p.referral_code ?? null);
+          setReferralProgress(data.referralProgress ?? null);
+          setAvatarUrl(p.avatar_url ?? null);
+        }
+      )
       .finally(() => setLoading(false));
   }, [initialEmail, router]);
 
@@ -104,7 +116,14 @@ export function AccountClient({ initialEmail }: { initialEmail: string | null })
       const res = await fetch('/api/mystic/client-profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          fullName: form.fullName,
+          email: form.email,
+          phone: form.phone,
+          birthday: form.birthday || undefined,
+          marketingSms: form.marketingSms,
+          marketingEmail: form.marketingEmail,
+        }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -133,7 +152,7 @@ export function AccountClient({ initialEmail }: { initialEmail: string | null })
 
   if (loading) {
     return (
-      <div className="space-y-4 border-y border-line/80 py-6" aria-busy="true">
+      <div className="space-y-4 py-2" aria-busy="true">
         {[0, 1, 2, 3].map((i) => (
           <div key={i} className="h-10 animate-pulse border-b border-line/40 bg-line/20" />
         ))}
@@ -144,9 +163,10 @@ export function AccountClient({ initialEmail }: { initialEmail: string | null })
   return (
     <form onSubmit={save} className="space-y-5">
       {referralCode ? (
-        <div className="border-l-[3px] border-gold bg-gold-soft/90 py-3 pl-4 text-sm">
+        <div className="rounded-xl bg-gold-soft/90 px-4 py-3 text-sm">
           <p className="text-muted">
-            Share with friends — you both earn rewards after their visit.
+            Share with friends — free blowout after {referralProgress?.threshold ?? 5} confirmed
+            bookings.
           </p>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <span className="font-mono text-base font-medium text-ink">{referralCode}</span>
@@ -158,10 +178,26 @@ export function AccountClient({ initialEmail }: { initialEmail: string | null })
               {copyHint ?? 'Copy code'}
             </button>
           </div>
+          {referralProgress ? (
+            <div className="mt-3">
+              <div className="h-1.5 overflow-hidden rounded-full bg-line/70">
+                <div
+                  className="h-full rounded-full bg-gold transition-[width] duration-500"
+                  style={{
+                    width: `${Math.min(
+                      100,
+                      (referralProgress.towardNext / Math.max(1, referralProgress.threshold)) * 100
+                    )}%`,
+                  }}
+                />
+              </div>
+              <p className="mt-2 text-xs text-muted">{referralProgress.copy}</p>
+            </div>
+          ) : null}
         </div>
       ) : null}
       {creditsSummary ? (
-        <p className={`${mysticFlatRow} text-sm text-chalk`}>{creditsSummary}</p>
+        <p className="rounded-xl bg-surface px-4 py-3 text-sm text-chalk">{creditsSummary}</p>
       ) : null}
 
       <MysticProfileAvatar
@@ -214,7 +250,7 @@ export function AccountClient({ initialEmail }: { initialEmail: string | null })
         />
       </label>
 
-      <fieldset className={`${mysticFlatRow} space-y-3 border-t border-line/80 pt-5`}>
+      <fieldset className="space-y-3 rounded-2xl bg-surface px-4 py-4">
         <legend className="type-eyebrow text-plum">Notifications</legend>
         <label className="flex items-start gap-2 text-sm">
           <input
@@ -247,14 +283,23 @@ export function AccountClient({ initialEmail }: { initialEmail: string | null })
         </p>
       ) : null}
 
-      <nav className="divide-y divide-line/80 border-y border-line/80 text-sm">
-        <Link href="/visits" className={`${mysticFlatRow} block font-medium text-plum`}>
+      <nav className="flex flex-col gap-2 text-sm">
+        <Link
+          href="/visits"
+          className="rounded-xl bg-surface px-4 py-3 font-medium text-plum transition hover:bg-accent-soft/60"
+        >
           My visits
         </Link>
-        <Link href="/messages" className={`${mysticFlatRow} block font-medium text-plum`}>
+        <Link
+          href="/messages"
+          className="rounded-xl bg-surface px-4 py-3 font-medium text-plum transition hover:bg-accent-soft/60"
+        >
           Messages
         </Link>
-        <Link href="/book" className={`${mysticFlatRow} block font-medium text-plum`}>
+        <Link
+          href="/book"
+          className="rounded-xl bg-surface px-4 py-3 font-medium text-plum transition hover:bg-accent-soft/60"
+        >
           Book again
         </Link>
       </nav>

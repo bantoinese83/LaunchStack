@@ -80,6 +80,10 @@ export const envSchema = z.object({
   UPSTASH_REDIS_REST_URL: optional(httpUrl('UPSTASH_REDIS_REST_URL must be a valid http(s) URL')),
   UPSTASH_REDIS_REST_TOKEN: optional(z.string()),
 
+  // ── AIHubMix (Mystic assists) ───────────────────────────────────────────────
+  AIHUBMIX_API_KEY: optional(z.string()),
+  MYSTIC_AI_MODEL: optional(z.string()),
+
   // ── Analytics / Observability ───────────────────────────────────────────────
   NEXT_PUBLIC_POSTHOG_KEY: optional(z.string()),
   NEXT_PUBLIC_POSTHOG_HOST: optional(

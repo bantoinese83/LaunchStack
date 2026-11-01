@@ -1,16 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  ActivityIndicator,
-  Platform,
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Platform, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
+import { NativePressableScale } from '../../../components/motion/NativePressableScale';
 import {
   canUploadVisitInspo,
   DEFAULT_SURCHARGE_RULES,
@@ -36,7 +28,14 @@ import { NativeServiceIllustration } from '../../../components/mystic/NativeServ
 import { NativeStylistChip } from '../../../components/mystic/NativeStylistChip';
 import { NativeDoorTimerBanner } from '../../../components/visits/NativeDoorTimerBanner';
 import { NativeLiveMap } from '../../../components/visits/NativeLiveMap';
-import { fetchMyAppointments, uploadInspoPhoto } from '../../../lib/mysticApi';
+import { NativePermissionPrimer } from '../../../components/motion/NativePermissionPrimer';
+import { NativeShimmerText } from '../../../components/motion/NativeShimmerText';
+import { hapticSoft, hapticSuccess } from '../../../lib/haptics';
+import {
+  fetchMyAppointments,
+  releaseBookingCheckout,
+  uploadInspoPhoto,
+} from '../../../lib/mysticApi';
 
 type VisitTab = 'upcoming' | 'past';
 
@@ -64,6 +63,8 @@ export default function VisitsTab() {
   const [uploadStatus, setUploadStatus] = useState<string | null>(null);
   const [uploadBusyId, setUploadBusyId] = useState<string | null>(null);
   const [tab, setTab] = useState<VisitTab>('upcoming');
+  const [inspoPrimerId, setInspoPrimerId] = useState<string | null>(null);
+  const [releasingHold, setReleasingHold] = useState(false);
 
   const reload = useCallback(
     (opts?: { silent?: boolean }) => {
@@ -120,6 +121,17 @@ export default function VisitsTab() {
   async function addInspo(appointmentId: string) {
     setUploadStatus(null);
     setUploadBusyId(appointmentId);
+    const existing = await ImagePicker.getMediaLibraryPermissionsAsync();
+    if (!existing.granted) {
+      setUploadBusyId(null);
+      setInspoPrimerId(appointmentId);
+      return;
+    }
+    await pickAndUploadInspo(appointmentId);
+  }
+
+  async function pickAndUploadInspo(appointmentId: string) {
+    setUploadBusyId(appointmentId);
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) {
       setUploadStatus('Allow photo access to upload inspo');
@@ -137,6 +149,7 @@ export default function VisitsTab() {
     const asset = result.assets[0];
     const res = await uploadInspoPhoto(appointmentId, asset.uri, asset.fileName ?? 'inspo.jpg');
     setUploadBusyId(null);
+    if (res.ok) hapticSuccess();
     setUploadStatus(
       res.ok ? 'Photo saved — Luke will see it before your visit.' : (res.error ?? 'Upload failed')
     );
@@ -164,9 +177,13 @@ export default function VisitsTab() {
               ['past', `Past (${past.length})`],
             ] as const
           ).map(([key, label]) => (
-            <Pressable
+            <NativePressableScale
               key={key}
-              onPress={() => setTab(key)}
+              skipHaptic
+              onPress={() => {
+                if (key !== tab) hapticSoft();
+                setTab(key);
+              }}
               style={[nativeSegmentStyles.tab, tab === key && nativeSegmentStyles.tabActive]}
             >
               <Text
@@ -177,7 +194,7 @@ export default function VisitsTab() {
               >
                 {label}
               </Text>
-            </Pressable>
+            </NativePressableScale>
           ))}
         </View>
         {hasLiveTracking ? (
@@ -187,9 +204,21 @@ export default function VisitsTab() {
         {uploadStatus ? <Text style={styles.feedback}>{uploadStatus}</Text> : null}
         {loading ? (
           <View style={styles.loadingWrap}>
-            <ActivityIndicator color={theme.accent} />
+            <NativeShimmerText>Gathering your house calls…</NativeShimmerText>
           </View>
         ) : null}
+        <NativePermissionPrimer
+          visible={inspoPrimerId != null}
+          title="Share inspo with Luke"
+          body="Photo access lets you attach a look you love so Luke can prep before he arrives. Nothing leaves your phone until you pick a photo."
+          confirmLabel="Allow photos"
+          onCancel={() => setInspoPrimerId(null)}
+          onConfirm={() => {
+            const id = inspoPrimerId;
+            setInspoPrimerId(null);
+            if (id) void pickAndUploadInspo(id);
+          }}
+        />
         {!loading && rows.length === 0 && !error ? (
           <NativeEmptyState
             variant="visits"
@@ -251,9 +280,40 @@ export default function VisitsTab() {
               {tab === 'upcoming' ? <NativeStylistChip size={24} style={{ marginTop: 8 }} /> : null}
               {addressLine ? <Text style={styles.address}>{addressLine}</Text> : null}
               {visit.status === 'pending' ? (
-                <Text style={styles.pendingNote}>
-                  Payment processing — confirms when checkout completes.
-                </Text>
+                <View style={styles.pendingNote}>
+                  <Text style={styles.pendingCopy}>
+                    Checkout wasn't finished — unpaid holds auto-cancel after about 90 minutes.
+                    Release this slot to pick a new time.
+                  </Text>
+                  <NativeButton
+                    title={releasingHold ? 'Releasing…' : 'Release slot & book again'}
+                    variant="secondary"
+                    disabled={releasingHold}
+                    isLoading={releasingHold}
+                    onPress={() => {
+                      void (async () => {
+                        setReleasingHold(true);
+                        setError(null);
+                        try {
+                          const released = await releaseBookingCheckout();
+                          if (!released.ok) {
+                            setError(
+                              'Could not release hold — message Luke if the slot still looks taken.'
+                            );
+                            return;
+                          }
+                          reload({ silent: true });
+                          router.push('/(app)/(tabs)/book');
+                        } catch {
+                          setError('Could not release hold — check your connection.');
+                        } finally {
+                          setReleasingHold(false);
+                        }
+                      })();
+                    }}
+                    style={styles.pendingBtn}
+                  />
+                </View>
               ) : null}
               <Text style={styles.status}>
                 {visitStatusLabel(visit.status)}
@@ -312,18 +372,16 @@ const styles = StyleSheet.create({
   address: { marginTop: 6, fontSize: 12, color: theme.muted },
   pendingNote: {
     marginTop: 8,
-    fontSize: 12,
-    color: theme.muted,
     padding: 10,
     borderRadius: theme.radii.md,
     borderWidth: 1,
     borderColor: theme.line,
     backgroundColor: theme.paper,
+    gap: 10,
   },
+  pendingCopy: { fontSize: 12, color: theme.muted, lineHeight: 17 },
+  pendingBtn: { alignSelf: 'stretch' },
   cardLive: {
-    borderLeftWidth: 3,
-    borderLeftColor: theme.gold,
-    paddingLeft: 4,
     backgroundColor: theme.goldSoft,
   },
   when: { fontWeight: '600', color: theme.ink },

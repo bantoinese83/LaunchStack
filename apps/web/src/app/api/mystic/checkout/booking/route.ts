@@ -155,7 +155,11 @@ export async function POST(req: Request) {
         parsed.data.referralCode
       );
     } else if (parsed.data.referredByName) {
-      referrerUserId = await resolveReferrerUserIdByName(admin, parsed.data.referredByName);
+      referrerUserId = await resolveReferrerUserIdByName(
+        admin,
+        parsed.data.referredByName,
+        parsed.data.workspaceId
+      );
     }
 
     const { data: clientProfile } = await admin

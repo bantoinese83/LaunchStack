@@ -1,8 +1,14 @@
 import { NextResponse } from 'next/server';
-import { createSupabaseAdminClient } from '@template/api';
+import { MysticReferralService, createSupabaseAdminClient } from '@template/api';
+import {
+  DEFAULT_REFERRAL_REWARD_AFTER,
+  referralProgressCopy,
+  referralsTowardNextReward,
+  referralsUntilReward,
+} from '@template/mystic';
 import { firstZodIssueMessage, mysticClientProfileSchema } from '@template/validation';
 import { requireAuthenticatedUser, routeErrorResponse } from '@/lib/api/route-auth';
-import { generateReferralCode } from '@/lib/mystic/referrals';
+import { ensureClientReferralCode } from '@/lib/mystic/referrals';
 import { getMysticWorkspaceId } from '@/lib/mystic/config';
 
 export async function GET(req: Request) {
@@ -11,17 +17,32 @@ export async function GET(req: Request) {
     if (auth.response) return auth.response;
 
     const admin = createSupabaseAdminClient();
-    const [{ data: identity, error: identityError }, { data: mystic, error: mysticError }] =
-      await Promise.all([
-        admin
-          .from('profiles')
-          .select('full_name, email, avatar_url')
-          .eq('id', auth.user.id)
-          .single(),
-        admin.from('mystic_client_profiles').select('*').eq('user_id', auth.user.id).maybeSingle(),
-      ]);
+    const workspaceId = getMysticWorkspaceId();
+
+    const [{ data: identity, error: identityError }, referralCode] = await Promise.all([
+      admin.from('profiles').select('full_name, email, avatar_url').eq('id', auth.user.id).single(),
+      ensureClientReferralCode(admin, { userId: auth.user.id, workspaceId }),
+    ]);
     if (identityError) throw identityError;
+
+    const { data: mystic, error: mysticError } = await admin
+      .from('mystic_client_profiles')
+      .select('*')
+      .eq('user_id', auth.user.id)
+      .maybeSingle();
     if (mysticError) throw mysticError;
+
+    const [{ data: settings }, pending, total] = await Promise.all([
+      admin
+        .from('mystic_studio_settings')
+        .select('referral_reward_after')
+        .eq('workspace_id', workspaceId)
+        .maybeSingle(),
+      new MysticReferralService(admin).countPendingForReferrer(workspaceId, auth.user.id),
+      new MysticReferralService(admin).countForReferrer(workspaceId, auth.user.id),
+    ]);
+
+    const threshold = settings?.referral_reward_after ?? DEFAULT_REFERRAL_REWARD_AFTER;
 
     return NextResponse.json({
       profile: {
@@ -31,12 +52,20 @@ export async function GET(req: Request) {
           birthday: null,
           marketing_sms: true,
           marketing_email: true,
-          referral_code: null,
           referral_count: 0,
         }),
+        referral_code: referralCode,
         full_name: identity?.full_name ?? null,
         email: identity?.email ?? auth.user.email ?? null,
         avatar_url: identity?.avatar_url ?? null,
+      },
+      referralProgress: {
+        total,
+        pending,
+        threshold,
+        towardNext: referralsTowardNextReward(pending, threshold),
+        untilReward: referralsUntilReward(pending, threshold),
+        copy: referralProgressCopy(pending, threshold),
       },
     });
   } catch (err) {
@@ -66,14 +95,10 @@ export async function PUT(req: Request) {
       })
       .eq('id', auth.user.id);
 
-    const { data: existing } = await admin
-      .from('mystic_client_profiles')
-      .select('referral_code')
-      .eq('user_id', auth.user.id)
-      .maybeSingle();
-
-    const referralCode =
-      existing?.referral_code ?? generateReferralCode(`${auth.user.id}-${workspaceId}`);
+    const referralCode = await ensureClientReferralCode(admin, {
+      userId: auth.user.id,
+      workspaceId,
+    });
 
     const { data, error } = await admin
       .from('mystic_client_profiles')

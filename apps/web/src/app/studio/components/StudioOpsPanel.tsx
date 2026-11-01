@@ -16,6 +16,7 @@ import {
 import { getMysticWorkspaceId } from '@/lib/mystic/config';
 import { useDeferredEffect } from '@/lib/react/useDeferredEffect';
 import { MysticEmptyState } from '@/components/mystic/MysticEmptyState';
+import { AiStopBrief } from '@/components/mystic/studio/AiStopBrief';
 import { StudioWorkspaceNotice } from '@/components/mystic/studio/StudioWorkspaceNotice';
 import { MysticInspoGallery, type InspoPhoto } from '@/components/mystic/MysticInspoGallery';
 import { MysticVisitStatusBadge } from '@/components/mystic/MysticVisitStatusBadge';
@@ -368,6 +369,7 @@ export function StudioOpsPanel({
                     photos={inspoByAppointment[row.id] ?? []}
                     label="Client inspo"
                   />
+                  <AiStopBrief workspaceId={workspaceId} appointmentId={row.id} />
                 </div>
                 <div className="flex flex-wrap gap-2 md:max-w-md md:justify-end">
                   <button

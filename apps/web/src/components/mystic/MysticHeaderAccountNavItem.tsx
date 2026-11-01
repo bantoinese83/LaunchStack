@@ -3,9 +3,9 @@
 import Link from 'next/link';
 import type { Route } from 'next';
 import { useEffect, useState } from 'react';
-import { createSupabaseBrowserClient } from '@template/api';
 import { MysticIcon } from '@/components/mystic/icons/MysticIcon';
 import { MysticUserAvatar } from '@/components/mystic/MysticUserAvatar';
+import { requireBrowserSession } from '@/lib/supabase/browser-session';
 
 const navLink =
   'mystic-link-focus inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-sm text-muted transition hover:bg-surface/80 hover:text-ink';
@@ -20,10 +20,8 @@ export function MysticHeaderAccountNavItem({ placement = 'bar', onNavigate }: Pr
   const [name, setName] = useState<string | undefined>();
 
   useEffect(() => {
-    const supabase = createSupabaseBrowserClient();
-    void supabase.auth.getSession().then(({ data }) => {
-      const uid = data.session?.user.id;
-      if (!uid) return;
+    void requireBrowserSession().then((auth) => {
+      if (!auth?.user.id) return;
       void fetch('/api/mystic/client-profile')
         .then((r) => r.json())
         .then((data) => {

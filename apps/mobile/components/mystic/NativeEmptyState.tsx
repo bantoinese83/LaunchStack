@@ -3,6 +3,7 @@ import { Image, StyleSheet, Text, View } from 'react-native';
 import { MYSTIC_EMPTY_CONTENT, type MysticEmptyVariant } from '@template/mystic';
 import { displayTitle, monoLabel, roadTrip, theme } from '@template/mobile-ui';
 import { MYSTIC_EMPTY_ILLUSTRATIONS } from '../../constants/emptyIllustrations';
+import { NativeFadeIn } from '../motion/NativeFadeIn';
 type Props = {
   variant: MysticEmptyVariant;
   title?: string;
@@ -30,7 +31,8 @@ export function NativeEmptyState({
     MYSTIC_EMPTY_ILLUSTRATIONS[content.illustration] ?? MYSTIC_EMPTY_ILLUSTRATIONS['visits.jpg'];
 
   return (
-    <View
+    <NativeFadeIn
+      rise
       style={[styles.wrap, compact && styles.wrapCompact]}
       accessibilityRole="summary"
       accessibilityLabel={`${heading}. ${body}`}
@@ -38,6 +40,7 @@ export function NativeEmptyState({
       {kicker ? <Text style={styles.eyebrow}>{kicker}</Text> : null}
       <View style={[styles.artFrame, compact && styles.artFrameCompact]}>
         <View style={styles.artPlumAccent} />
+        <View style={styles.artGoldRule} />
         <Image
           source={source}
           style={styles.art}
@@ -50,7 +53,7 @@ export function NativeEmptyState({
       <Text style={[styles.title, compact && styles.titleCompact]}>{heading}</Text>
       <Text style={[styles.body, compact && styles.bodyCompact]}>{body}</Text>
       {action ? <View style={styles.action}>{action}</View> : null}
-    </View>
+    </NativeFadeIn>
   );
 }
 
@@ -93,6 +96,16 @@ const styles = StyleSheet.create({
     width: 4,
     backgroundColor: theme.plum,
     zIndex: 1,
+  },
+  artGoldRule: {
+    position: 'absolute',
+    left: 4,
+    top: 0,
+    bottom: 0,
+    width: 2,
+    backgroundColor: theme.gold,
+    zIndex: 1,
+    opacity: 0.85,
   },
   art: {
     width: '100%',

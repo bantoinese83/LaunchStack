@@ -143,3 +143,46 @@ ON CONFLICT (workspace_id, user_id) DO NOTHING;
 INSERT INTO public.mystic_studio_settings (workspace_id)
 VALUES ('33333333-3333-3333-3333-333333333333')
 ON CONFLICT (workspace_id) DO NOTHING;
+
+-- Demo Mystic clients + referral ledger (admin refers two friends this month)
+INSERT INTO public.mystic_client_profiles (
+  user_id, workspace_id, phone, referral_code, referral_count
+)
+VALUES
+  (
+    '00000000-0000-0000-0000-000000000001',
+    '33333333-3333-3333-3333-333333333333',
+    '3125550101',
+    'MYSTICADMIN',
+    2
+  ),
+  (
+    '00000000-0000-0000-0000-000000000002',
+    '33333333-3333-3333-3333-333333333333',
+    '3125550102',
+    'MYSTICLUKE1',
+    0
+  )
+ON CONFLICT (user_id) DO NOTHING;
+
+INSERT INTO public.mystic_referrals (
+  id, workspace_id, referrer_user_id, referred_name, credited, created_at
+)
+VALUES
+  (
+    '44444444-4444-4444-4444-444444444401',
+    '33333333-3333-3333-3333-333333333333',
+    '00000000-0000-0000-0000-000000000001',
+    'Jordan Lee',
+    false,
+    timezone('utc'::text, now()) - interval '3 days'
+  ),
+  (
+    '44444444-4444-4444-4444-444444444402',
+    '33333333-3333-3333-3333-333333333333',
+    '00000000-0000-0000-0000-000000000001',
+    'Sam Rivera',
+    false,
+    timezone('utc'::text, now()) - interval '1 day'
+  )
+ON CONFLICT (id) DO NOTHING;

@@ -193,12 +193,21 @@ export class MysticAppointmentService {
     return data as MysticAppointmentRow;
   }
 
-  async markNoShowDepositCaptured(id: string) {
+  /**
+   * Door-timer expiry / manual no-show.
+   *
+   * `depositCaptured` must reflect whether money actually moved. It used to be
+   * hardcoded `true`, so a visit with no payment intent (or a zero deposit) was
+   * recorded as "deposit captured" — which misleads the studio and, worse, the
+   * `!deposit_captured` guard in captureAppointmentDeposit then blocked any later
+   * legitimate capture.
+   */
+  async markNoShow(id: string, options: { depositCaptured?: boolean } = {}) {
     const { data, error } = await this.supabase
       .from('mystic_appointments')
       .update({
         status: 'no_show',
-        deposit_captured: true,
+        deposit_captured: options.depositCaptured ?? false,
         updated_at: new Date().toISOString(),
       })
       .eq('id', id)

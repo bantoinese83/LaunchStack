@@ -1,6 +1,33 @@
 import type { ServiceId } from './catalog';
 import { getServiceById } from './catalog';
 
+/** Studio timezone — Mystic runs Chicago house calls. */
+export const MYSTIC_STUDIO_TIME_ZONE = 'America/Chicago';
+
+/**
+ * Hour of day (0–23) for an instant in a given timezone.
+ *
+ * `Date#getHours()` reads the *runtime* timezone: the visitor's browser on the
+ * client, UTC on Vercel. The same booking therefore priced differently on each
+ * side of checkout and the server rejected it as "Quote expired". Always price
+ * against the studio's timezone instead.
+ */
+export function zonedHour(at: Date, timeZone: string = MYSTIC_STUDIO_TIME_ZONE): number {
+  try {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone,
+      hour: 'numeric',
+      hourCycle: 'h23',
+    }).formatToParts(at);
+    const hour = Number.parseInt(parts.find((p) => p.type === 'hour')?.value ?? '', 10);
+    // Some ICU builds emit "24" for midnight under hour12:false.
+    if (Number.isFinite(hour)) return hour % 24;
+  } catch {
+    /* unknown timezone — fall through to the runtime hour */
+  }
+  return at.getHours();
+}
+
 /** Defaults from discovery — override via admin settings when wired to Supabase. */
 export const DEFAULT_SURCHARGE_RULES = {
   eveningStartHour: 20,
@@ -59,6 +86,8 @@ export type BookingQuoteInput = {
   tipCents?: number;
   winterBufferMode?: boolean;
   rules?: SurchargeRules;
+  /** Override the studio timezone (tests / multi-market). */
+  timeZone?: string;
 };
 
 export type BookingQuote = {
@@ -76,7 +105,7 @@ export function computeBookingQuote(input: BookingQuoteInput): BookingQuote {
   const surcharges: SurchargeLine[] = [];
   const exempt = input.entitlement === 'membership' || input.entitlement === 'package';
 
-  if (!exempt && input.scheduledAt.getHours() >= rules.eveningStartHour) {
+  if (!exempt && zonedHour(input.scheduledAt, input.timeZone) >= rules.eveningStartHour) {
     surcharges.push({
       code: 'evening',
       label: `After ${rules.eveningStartHour}:00 house call`,

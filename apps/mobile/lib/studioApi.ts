@@ -106,12 +106,15 @@ export async function sendStudioMessage(workspaceId: string, clientUserId: strin
   return res.json();
 }
 
-export async function fetchStudioAnalytics(workspaceId: string) {
+export async function fetchStudioAnalytics(
+  workspaceId: string,
+  period: 'mtd' | '7d' | '30d' = 'mtd'
+) {
   const base = requireAppUrl();
-  const res = await fetch(
-    `${base}/api/mystic/analytics/summary?workspaceId=${encodeURIComponent(workspaceId)}`,
-    { headers: await authHeaders() }
-  );
+  const qs = new URLSearchParams({ workspaceId, period });
+  const res = await fetch(`${base}/api/mystic/analytics/summary?${qs}`, {
+    headers: await authHeaders(),
+  });
   return res.json();
 }
 
@@ -229,5 +232,52 @@ export async function fetchReferralDashboard(workspaceId: string, month: string)
     `${base}/api/mystic/referrals?workspaceId=${encodeURIComponent(workspaceId)}&view=dashboard&month=${month}`,
     { headers: await authHeaders() }
   );
-  return res.json();
+  const data = (await res.json()) as {
+    dashboard?: {
+      referrers?: {
+        name: string;
+        total: number;
+        pending: number;
+        credited: number;
+        referrerUserId?: string;
+      }[];
+      recent?: {
+        id: string;
+        referred_name: string;
+        credited: boolean;
+        created_at: string;
+      }[];
+    };
+    error?: string;
+  };
+  if (!res.ok) throw new Error(data.error ?? 'Could not load referrals');
+  return data;
+}
+
+export async function fetchAiStopBrief(workspaceId: string, appointmentId: string, force = false) {
+  const base = requireAppUrl();
+  const res = await fetch(`${base}/api/mystic/ai/stop-brief`, {
+    method: 'POST',
+    headers: await authHeaders(),
+    body: JSON.stringify({ workspaceId, appointmentId, force }),
+  });
+  const data = (await res.json()) as {
+    brief?: { headline: string; bullets: string[]; bring?: string; vibe?: string };
+    cached?: boolean;
+    error?: string;
+  };
+  if (!res.ok) throw new Error(data.error ?? 'Could not load stop brief');
+  return data;
+}
+
+export async function fetchAiMessageSuggest(workspaceId: string, clientUserId: string) {
+  const base = requireAppUrl();
+  const res = await fetch(`${base}/api/mystic/ai/message-suggest`, {
+    method: 'POST',
+    headers: await authHeaders(),
+    body: JSON.stringify({ workspaceId, clientUserId }),
+  });
+  const data = (await res.json()) as { replies?: string[]; error?: string };
+  if (!res.ok) throw new Error(data.error ?? 'Could not draft replies');
+  return data;
 }

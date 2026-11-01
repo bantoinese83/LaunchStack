@@ -51,7 +51,11 @@ export async function POST(req: Request) {
 
     if (clientProfile?.phone) {
       try {
-        await notifyDoorTimer({ phone: clientProfile.phone, minutes });
+        await notifyDoorTimer({
+          phone: clientProfile.phone,
+          minutes,
+          smsOptIn: clientProfile.marketing_sms !== false,
+        });
       } catch (err) {
         console.warn('[mystic.doorTimer] SMS failed', err);
       }

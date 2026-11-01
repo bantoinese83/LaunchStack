@@ -1,5 +1,13 @@
-import React from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View, type ViewStyle } from 'react-native';
+import React, { useRef } from 'react';
+import {
+  ActivityIndicator,
+  Animated,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  type ViewStyle,
+} from 'react-native';
 import { nativeBtn3dStyles } from '../nativeBtn3d';
 import { theme } from '../theme';
 
@@ -19,10 +27,22 @@ export const NativeButton: React.FC<NativeButtonProps> = ({
   isLoading,
   disabled,
   style,
+  onPressIn,
+  onPressOut,
   ...props
 }) => {
   const isDisabled = Boolean(disabled || isLoading);
   const spinnerColor = variant === 'primary' || variant === 'danger' ? theme.paper : theme.ink;
+  const scale = useRef(new Animated.Value(1)).current;
+
+  function animateTo(to: number) {
+    Animated.spring(scale, {
+      toValue: to,
+      useNativeDriver: true,
+      friction: 7,
+      tension: 220,
+    }).start();
+  }
 
   return (
     <Pressable
@@ -31,6 +51,14 @@ export const NativeButton: React.FC<NativeButtonProps> = ({
       accessibilityState={{ disabled: isDisabled, busy: Boolean(isLoading) }}
       accessibilityLabel={isLoading ? `${title}, loading` : title}
       style={style}
+      onPressIn={(e) => {
+        if (!isDisabled) animateTo(0.97);
+        onPressIn?.(e);
+      }}
+      onPressOut={(e) => {
+        animateTo(1);
+        onPressOut?.(e);
+      }}
       {...props}
     >
       {({ pressed }) => {
@@ -40,16 +68,18 @@ export const NativeButton: React.FC<NativeButtonProps> = ({
           isDisabled
         );
         return (
-          <View style={[wrap, isDisabled && styles.disabled]}>
-            <View style={lip} pointerEvents="none" />
-            <View style={face}>
-              {isLoading ? (
-                <ActivityIndicator color={spinnerColor} />
-              ) : (
-                <Text style={label}>{title}</Text>
-              )}
+          <Animated.View style={{ transform: [{ scale }] }}>
+            <View style={[wrap, isDisabled && styles.disabled]}>
+              <View style={lip} pointerEvents="none" />
+              <View style={face}>
+                {isLoading ? (
+                  <ActivityIndicator color={spinnerColor} />
+                ) : (
+                  <Text style={label}>{title}</Text>
+                )}
+              </View>
             </View>
-          </View>
+          </Animated.View>
         );
       }}
     </Pressable>

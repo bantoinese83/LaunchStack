@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server';
 import { MysticAppointmentService, createSupabaseAdminClient } from '@template/api';
-import { buildTimeSlotsForDate, getServiceById, DEFAULT_SURCHARGE_RULES } from '@template/mystic';
+import {
+  buildTimeSlotsForDate,
+  getServiceById,
+  zonedDayRangeIso,
+  DEFAULT_SURCHARGE_RULES,
+} from '@template/mystic';
 import { z } from 'zod';
 import { SERVICE_IDS } from '@template/mystic';
 import { firstZodIssueMessage } from '@template/validation';
@@ -48,8 +53,10 @@ export async function GET(req: Request) {
 
     const useWinterBuffer = parsed.data.winterBuffer ?? settings?.winter_buffer_enabled ?? false;
 
-    const dayStart = `${parsed.data.date}T00:00:00.000Z`;
-    const dayEnd = `${parsed.data.date}T23:59:59.999Z`;
+    // Query the studio's local calendar day, not the UTC day: a 19:00 Chicago visit
+    // is 00:00Z the following day, so a UTC window silently missed evening bookings
+    // and offered their slot to the next client.
+    const { from: dayStart, to: dayEnd } = zonedDayRangeIso(parsed.data.date);
 
     const { data: rows, error } = await admin
       .from('mystic_appointments')
@@ -61,17 +68,16 @@ export async function GET(req: Request) {
 
     if (error) throw error;
 
-    const bookedStarts = (rows ?? []).map((row) => new Date(row.starts_at as string));
+    // Keep each visit's real length — the overlap check used to assume 60 minutes.
+    const booked = (rows ?? []).map((row) => ({
+      start: new Date(row.starts_at as string),
+      durationMinutes: row.duration_minutes ?? undefined,
+    }));
     const buffer = useWinterBuffer
       ? DEFAULT_SURCHARGE_RULES.winterTravelBufferMinutes
       : DEFAULT_SURCHARGE_RULES.defaultTravelBufferMinutes;
 
-    const slots = buildTimeSlotsForDate(
-      parsed.data.date,
-      service.durationMinutes,
-      buffer,
-      bookedStarts
-    );
+    const slots = buildTimeSlotsForDate(parsed.data.date, service.durationMinutes, buffer, booked);
 
     return NextResponse.json({ slots, bufferMinutes: buffer });
   } catch (err) {

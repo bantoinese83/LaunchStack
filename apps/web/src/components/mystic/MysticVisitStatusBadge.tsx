@@ -10,11 +10,13 @@ const toneClass: Record<VisitStatusTone, string> = {
 
 export function MysticVisitStatusBadge({ status }: { status: string }) {
   const tone = visitStatusTone(status);
+  const label = visitStatusLabel(status);
   return (
     <span
-      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${toneClass[tone]}`}
+      title={label}
+      className={`inline-flex max-w-full items-center rounded-full border px-2.5 py-0.5 text-[11px] font-medium leading-tight whitespace-nowrap ${toneClass[tone]}`}
     >
-      {visitStatusLabel(status)}
+      {label}
     </span>
   );
 }

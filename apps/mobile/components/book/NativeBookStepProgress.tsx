@@ -1,5 +1,6 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import {
   BOOKING_FLOW_STEPS,
   BOOKING_FLOW_STEP_HINT,
@@ -15,9 +16,19 @@ type Props = {
   onStepChange?: (step: BookingFlowStep) => void;
 };
 
+const STEP_ICON: Record<
+  BookingFlowStep,
+  React.ComponentProps<typeof MaterialCommunityIcons>['name']
+> = {
+  service: 'content-cut',
+  datetime: 'calendar-clock',
+  location: 'map-marker',
+  details: 'clipboard-text-outline',
+  review: 'credit-card-outline',
+};
+
 export function NativeBookStepProgress({ step, onStepChange }: Props) {
   const currentIndex = bookingFlowStepIndex(step);
-  const progress = ((currentIndex + 1) / BOOKING_FLOW_STEPS.length) * 100;
 
   return (
     <View
@@ -25,21 +36,18 @@ export function NativeBookStepProgress({ step, onStepChange }: Props) {
       accessibilityRole="progressbar"
       accessibilityValue={{ min: 1, max: BOOKING_FLOW_STEPS.length, now: currentIndex + 1 }}
     >
-      <View style={styles.track}>
-        <View style={[styles.fill, { width: `${progress}%` }]} />
-      </View>
       <View style={styles.steps}>
         {BOOKING_FLOW_STEPS.map((id, index) => {
           const done = index < currentIndex;
           const active = index === currentIndex;
           const reachable = onStepChange && canNavigateToBookingStep(step, id);
+          const iconName = done ? 'check' : STEP_ICON[id];
+          const iconColor = active ? theme.paper : done ? theme.accent : theme.muted;
           const dot = (
-            <View style={[styles.dot, active && styles.dotActive, done && styles.dotDone]}>
-              <Text
-                style={[styles.dotText, active && styles.dotTextOn, done && styles.dotTextDone]}
-              >
-                {done ? '✓' : index + 1}
-              </Text>
+            <View
+              style={[styles.dot, active && styles.dotActive, done && !active && styles.dotDone]}
+            >
+              <MaterialCommunityIcons name={iconName} size={16} color={iconColor} />
             </View>
           );
           return (
@@ -63,6 +71,14 @@ export function NativeBookStepProgress({ step, onStepChange }: Props) {
           );
         })}
       </View>
+      <View style={styles.serrated} accessibilityElementsHidden>
+        {BOOKING_FLOW_STEPS.map((id, index) => (
+          <View
+            key={id}
+            style={[styles.tooth, index <= currentIndex ? styles.toothOn : styles.toothOff]}
+          />
+        ))}
+      </View>
       <Text style={styles.hint}>{BOOKING_FLOW_STEP_HINT[step]}</Text>
     </View>
   );
@@ -70,45 +86,44 @@ export function NativeBookStepProgress({ step, onStepChange }: Props) {
 
 const styles = StyleSheet.create({
   wrap: { marginBottom: 20 },
-  track: {
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: theme.line,
-    overflow: 'hidden',
-  },
-  fill: {
-    height: '100%',
-    backgroundColor: theme.gold,
-    borderRadius: 0,
-  },
   steps: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 12,
     gap: 4,
   },
   stepCol: { flex: 1, alignItems: 'center', minWidth: 0 },
   dot: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: theme.line,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     backgroundColor: theme.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  dotActive: { backgroundColor: theme.plum, borderColor: theme.plum },
-  dotDone: { backgroundColor: theme.goldSoft, borderColor: theme.gold },
-  dotText: { fontSize: 11, fontWeight: '600', color: theme.muted },
-  dotTextOn: { color: theme.paper },
-  dotTextDone: { color: theme.plum },
+  dotActive: { backgroundColor: theme.accent },
+  dotDone: { backgroundColor: theme.accentSoft },
   stepLabel: {
     marginTop: 4,
     fontSize: 9,
     color: theme.muted,
     textAlign: 'center',
   },
-  stepLabelActive: { color: theme.plum, fontWeight: '600' },
+  stepLabelActive: { color: theme.ink, fontWeight: '600' },
+  serrated: {
+    flexDirection: 'row',
+    gap: 4,
+    marginTop: 12,
+  },
+  tooth: {
+    flex: 1,
+    height: 5,
+    borderRadius: 2,
+  },
+  toothOn: {
+    backgroundColor: theme.gold,
+  },
+  toothOff: {
+    backgroundColor: theme.line,
+  },
   hint: { ...monoLabel, color: theme.plum, marginTop: 10, fontSize: 12 },
 });

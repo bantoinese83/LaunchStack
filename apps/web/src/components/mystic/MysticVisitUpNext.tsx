@@ -17,7 +17,8 @@ import { MysticVisitStatusBadge } from '@/components/mystic/MysticVisitStatusBad
 import { MysticMagneticLink } from '@/components/mystic/MysticMagneticButton';
 import { MysticServiceIllustration } from '@/components/mystic/illustrations/MysticServiceIllustration';
 import { MysticStylistChip } from '@/components/mystic/MysticStylistChip';
-import { mysticFlatRow, mysticLiveHighlight } from '@/components/mystic/mystic-styles';
+import { MysticVisitPrep } from '@/components/mystic/MysticVisitPrep';
+import { mysticLiveHighlight } from '@/components/mystic/mystic-styles';
 
 type Visit = {
   id: string;
@@ -48,7 +49,7 @@ export function MysticVisitUpNext({ visit }: { visit: Visit }) {
       <h2 id="visit-up-next-heading" className="type-eyebrow text-plum">
         Up next
       </h2>
-      <div className={`${mysticFlatRow} mt-2 pb-6 ${live ? mysticLiveHighlight : ''}`}>
+      <div className={`mt-2 rounded-2xl p-4 sm:p-5 ${live ? mysticLiveHighlight : 'bg-surface'}`}>
         <div className="flex flex-wrap items-start justify-between gap-2">
           <p className="font-display text-lg font-medium text-ink">
             {formatVisitWhen(visit.starts_at)}
@@ -79,6 +80,7 @@ export function MysticVisitUpNext({ visit }: { visit: Visit }) {
             />
           </div>
         ) : null}
+        {!live ? <MysticVisitPrep className="mt-4" /> : null}
         <div className="mt-4 flex flex-wrap gap-3 text-sm">
           <Link href={`/visits#${visit.id}`} className="font-medium text-accent underline">
             View details

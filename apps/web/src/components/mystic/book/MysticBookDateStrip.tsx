@@ -47,10 +47,10 @@ export function MysticBookDateStrip({ value, onChange, days = 14 }: Props) {
               aria-label={isWeekend ? `${label} (unavailable)` : label}
               onClick={() => onChange(iso)}
               className={cn(
-                'flex w-[4.25rem] shrink-0 flex-col items-center rounded-2xl border px-2 py-3 text-center transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/45 focus-visible:ring-offset-2',
+                'flex w-[4.25rem] shrink-0 flex-col items-center rounded-2xl px-2 py-3 text-center transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/45 focus-visible:ring-offset-2',
                 active
-                  ? 'border-shell bg-shell text-paper shadow-sm'
-                  : 'border-line/80 bg-surface text-ink hover:border-accent/35',
+                  ? 'bg-shell text-paper shadow-[0_10px_24px_-14px_rgba(26,31,24,0.65)]'
+                  : 'bg-surface text-ink hover:bg-accent-soft/60',
                 isWeekend && 'cursor-not-allowed opacity-40'
               )}
             >

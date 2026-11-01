@@ -15,9 +15,16 @@ import {
   type ServiceId,
 } from '@template/mystic';
 import { NativeButton, monoLabel, roadTrip, theme } from '@template/mobile-ui';
+import { NativeAiOrb } from '../mystic/NativeAiOrb';
 import { NativeInspoGallery } from '../mystic/NativeInspoGallery';
 import { NativeUserAvatar } from '../mystic/NativeUserAvatar';
-import { fetchAppointmentInspo, shareStylistLocation, studioPost } from '../../lib/studioApi';
+import { useStudioAccess } from '../../hooks/useStudioAccess';
+import {
+  fetchAiStopBrief,
+  fetchAppointmentInspo,
+  shareStylistLocation,
+  studioPost,
+} from '../../lib/studioApi';
 
 export type StudioClientRow = {
   user_id: string;
@@ -52,9 +59,25 @@ export function NativeStudioOps({
   hideGlobalEta?: boolean;
 }) {
   const router = useRouter();
+  const { workspaceId } = useStudioAccess();
   const [eta, setEta] = useState('20');
   const [message, setMessage] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [briefBusyId, setBriefBusyId] = useState<string | null>(null);
+  const [briefs, setBriefs] = useState<
+    Record<
+      string,
+      {
+        headline: string;
+        bullets: string[];
+        bring?: string;
+        opener?: string;
+        watchouts?: string[];
+        kit?: string[];
+        vibe?: string;
+      }
+    >
+  >({});
   const [inspoById, setInspoById] = useState<Record<string, { id: string; public_url: string }[]>>(
     {}
   );
@@ -140,6 +163,26 @@ export function NativeStudioOps({
     setBusyId(null);
     setMessage(result.ok ? 'Location updated' : (result.error ?? 'Update failed'));
     onChanged();
+  }
+
+  async function loadBrief(appointmentId: string) {
+    if (!workspaceId) return;
+    setBriefBusyId(appointmentId);
+    setMessage(null);
+    try {
+      const data = await fetchAiStopBrief(
+        workspaceId,
+        appointmentId,
+        Boolean(briefs[appointmentId])
+      );
+      if (data.brief) {
+        setBriefs((prev) => ({ ...prev, [appointmentId]: data.brief! }));
+      }
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : 'Could not load brief');
+    } finally {
+      setBriefBusyId(null);
+    }
   }
 
   async function run(id: string, path: string, body: Record<string, unknown>, success: string) {
@@ -233,6 +276,43 @@ export function NativeStudioOps({
               <Text style={styles.link}>Message client</Text>
             </Pressable>
             <NativeInspoGallery photos={inspoById[row.id] ?? []} label="Client inspo" />
+            <Pressable onPress={() => void loadBrief(row.id)} style={styles.briefBtn}>
+              <NativeAiOrb active={briefBusyId === row.id} size="xs" label="AI stop brief" />
+              <Text style={styles.link}>
+                {briefBusyId === row.id
+                  ? 'AI thinking…'
+                  : briefs[row.id]
+                    ? 'Refresh AI brief'
+                    : 'AI stop brief'}
+              </Text>
+            </Pressable>
+            {briefs[row.id] ? (
+              <View style={styles.briefBox}>
+                <Text style={styles.briefHeadline}>{briefs[row.id]!.headline}</Text>
+                {briefs[row.id]!.bullets.map((b) => (
+                  <Text key={b} style={styles.briefBullet}>
+                    • {b}
+                  </Text>
+                ))}
+                {briefs[row.id]!.opener ? (
+                  <Text style={styles.briefBring}>Opener: {briefs[row.id]!.opener}</Text>
+                ) : null}
+                {briefs[row.id]!.bring ? (
+                  <Text style={styles.briefBring}>Bring: {briefs[row.id]!.bring}</Text>
+                ) : null}
+                {briefs[row.id]!.kit?.length ? (
+                  <Text style={styles.briefBullet}>Kit: {briefs[row.id]!.kit!.join(' · ')}</Text>
+                ) : null}
+                {briefs[row.id]!.watchouts?.length ? (
+                  <Text style={styles.briefBullet}>
+                    Watch: {briefs[row.id]!.watchouts!.join(' · ')}
+                  </Text>
+                ) : null}
+                {briefs[row.id]!.vibe ? (
+                  <Text style={styles.briefBullet}>Vibe: {briefs[row.id]!.vibe}</Text>
+                ) : null}
+              </View>
+            ) : null}
             <View style={styles.actions}>
               <NativeButton
                 title="On the way"
@@ -312,9 +392,8 @@ const styles = StyleSheet.create({
   },
   cardLive: {
     backgroundColor: theme.goldSoft,
-    borderLeftWidth: 3,
-    borderLeftColor: theme.gold,
-    paddingLeft: 12,
+    borderRadius: theme.radii.md,
+    paddingHorizontal: 12,
   },
   title: { fontWeight: '600', color: theme.ink, textTransform: 'capitalize' },
   clientRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 },
@@ -331,6 +410,19 @@ const styles = StyleSheet.create({
     color: theme.accent,
     textDecorationLine: 'underline',
   },
+  briefBtn: { marginTop: 8, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  briefBox: {
+    marginTop: 8,
+    padding: 10,
+    borderRadius: theme.radii.md,
+    borderWidth: 1,
+    borderColor: theme.line,
+    backgroundColor: theme.surface,
+    gap: 4,
+  },
+  briefHeadline: { fontWeight: '600', color: theme.ink, fontSize: 13 },
+  briefBullet: { fontSize: 12, color: theme.muted },
+  briefBring: { marginTop: 4, fontSize: 12, color: theme.chalk },
   actions: { marginTop: 12, gap: 8 },
   actionBtn: { width: '100%' },
 });

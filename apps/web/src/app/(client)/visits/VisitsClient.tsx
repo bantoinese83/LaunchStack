@@ -23,7 +23,7 @@ import {
 } from '@/components/mystic/MysticLiveMapEmbed';
 import { MysticPageIntro } from '@/components/mystic/MysticPageIntro';
 import { MysticEmptyState } from '@/components/mystic/MysticEmptyState';
-import { MysticMagneticLink } from '@/components/mystic/MysticMagneticButton';
+import { MysticMagneticButton, MysticMagneticLink } from '@/components/mystic/MysticMagneticButton';
 import { MysticInspoGallery } from '@/components/mystic/MysticInspoGallery';
 import { MysticClientPage } from '@/components/mystic/MysticClientPage';
 import { useDeferredEffect } from '@/lib/react/useDeferredEffect';
@@ -31,7 +31,6 @@ import { MysticVisitUpNext } from '@/components/mystic/MysticVisitUpNext';
 import { MysticServiceIllustration } from '@/components/mystic/illustrations/MysticServiceIllustration';
 import { MysticStylistChip } from '@/components/mystic/MysticStylistChip';
 import {
-  mysticFlatRow,
   mysticInput,
   mysticLiveHighlight,
   mysticSegmentShell,
@@ -123,6 +122,7 @@ export function VisitsClient() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [tab, setTab] = useState<VisitTab>('upcoming');
+  const [releasingHold, setReleasingHold] = useState(false);
 
   const load = useCallback(
     (opts?: { silent?: boolean }) => {
@@ -149,6 +149,27 @@ export function VisitsClient() {
     },
     [router]
   );
+
+  async function releasePendingHold() {
+    setReleasingHold(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/mystic/appointments/release-checkout', { method: 'POST' });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(
+          data.error ?? 'Could not release hold — message Luke if the slot still looks taken.'
+        );
+        return;
+      }
+      load({ silent: true });
+      router.push('/book');
+    } catch {
+      setError('Could not release hold — check your connection and try again.');
+    } finally {
+      setReleasingHold(false);
+    }
+  }
 
   useDeferredEffect(() => load(), [load]);
 
@@ -228,7 +249,7 @@ export function VisitsClient() {
       {loading ? (
         <ul className="flex flex-col gap-4" aria-busy="true">
           {[0, 1].map((i) => (
-            <li key={i} className={`${mysticFlatRow} h-36 animate-pulse`} />
+            <li key={i} className="h-36 animate-pulse rounded-2xl bg-surface" />
           ))}
         </ul>
       ) : null}
@@ -253,7 +274,7 @@ export function VisitsClient() {
       {tab === 'upcoming' && listRows.length > 0 ? (
         <h2 className="type-eyebrow text-muted">All upcoming</h2>
       ) : null}
-      <ul className="flex flex-col divide-y divide-line/80 border-y border-line/80">
+      <ul className="flex flex-col gap-3">
         {listRows.map((row) => {
           let serviceName = row.service_id;
           try {
@@ -267,7 +288,7 @@ export function VisitsClient() {
             <li
               key={row.id}
               id={row.id}
-              className={`${mysticFlatRow} ${live ? mysticLiveHighlight : ''}`}
+              className={`rounded-2xl bg-surface p-4 ${live ? mysticLiveHighlight : ''}`}
             >
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div className="flex min-w-0 flex-1 items-center gap-3">
@@ -286,9 +307,26 @@ export function VisitsClient() {
                   : ''}
               </p>
               {row.status === 'pending' ? (
-                <p className="mt-2 rounded-xl border border-line bg-paper px-3 py-2 text-xs text-muted">
-                  Payment processing — this visit will confirm once checkout completes.
-                </p>
+                <div className="mt-2 space-y-2 rounded-xl border border-line bg-paper px-3 py-3">
+                  <p className="text-xs text-muted">
+                    Checkout wasn&apos;t finished — unpaid holds auto-cancel after about 90 minutes.
+                    Finish payment from booking, or release this slot and choose a new time.
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <MysticMagneticLink href="/book" size="sm">
+                      Back to booking
+                    </MysticMagneticLink>
+                    <MysticMagneticButton
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      disabled={releasingHold}
+                      onClick={() => void releasePendingHold()}
+                    >
+                      {releasingHold ? 'Releasing…' : 'Release slot & book again'}
+                    </MysticMagneticButton>
+                  </div>
+                </div>
               ) : null}
               <p className="mt-1 text-sm">{formatUsd(row.quote_cents)}</p>
               {row.status === 'door_timer_active' && row.door_timer_ends_at ? (

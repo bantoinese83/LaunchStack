@@ -1,24 +1,29 @@
 import React from 'react';
-import { StyleSheet, Text, View, type ViewStyle } from 'react-native';
+import { StyleSheet, Text, type ViewStyle } from 'react-native';
 import { roadTrip } from '@template/mobile-ui';
+import { NativeRoadStripe } from './NativeRoadStripe';
+import { NativeFadeIn } from '../motion/NativeFadeIn';
 
 type Props = {
   kicker: string;
   title: string;
   lede?: string;
   style?: ViewStyle;
+  /** Hide the gold/plum/sage stripe (rare). */
+  hideStripe?: boolean;
 };
 
-export function NativeScreenHeader({ kicker, title, lede, style }: Props) {
+export function NativeScreenHeader({ kicker, title, lede, style, hideStripe = false }: Props) {
   return (
-    <View style={[styles.wrap, style]}>
+    <NativeFadeIn style={[styles.wrap, style]}>
+      {!hideStripe ? <NativeRoadStripe compact /> : null}
       <Text style={roadTrip.kicker}>{kicker}</Text>
       <Text style={roadTrip.title}>{title}</Text>
       {lede ? <Text style={roadTrip.lede}>{lede}</Text> : null}
-    </View>
+    </NativeFadeIn>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: { marginBottom: 8, width: '100%' },
+  wrap: { marginBottom: 12, width: '100%' },
 });

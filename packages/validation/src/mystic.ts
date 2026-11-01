@@ -27,8 +27,17 @@ const mysticDistanceMilesSchema = z
     }
   });
 
-/** Seed Mystic workspace id is not RFC-4122; accept it plus standard UUIDs. */
-export const mysticWorkspaceIdSchema = z.union([z.literal(MYSTIC_DEFAULT_WORKSPACE_ID), z.uuid()]);
+/**
+ * Seed ids (workspace + auth users) are UUID-shaped but often not RFC-4122.
+ * Zod 4 `z.uuid()` rejects them with "Invalid UUID" — use `z.guid()` for auth/user ids.
+ */
+export const mysticUserIdSchema = z.guid({ error: 'Invalid user id' });
+
+/** Seed Mystic workspace id is not RFC-4122; accept it plus GUID / UUID strings. */
+export const mysticWorkspaceIdSchema = z.union([
+  z.literal(MYSTIC_DEFAULT_WORKSPACE_ID),
+  z.guid({ error: 'Invalid workspace id' }),
+]);
 
 const uniqueTagsRefine = (tags: string[], ctx: z.RefinementCtx) => {
   if (new Set(tags).size !== tags.length) {
@@ -136,7 +145,7 @@ export const mysticInspoBatchSchema = z.object({
 export const mysticSendMessageSchema = z.object({
   workspaceId: mysticWorkspaceIdSchema,
   /** Omit when the authenticated client is messaging Luke. */
-  clientUserId: z.uuid().optional(),
+  clientUserId: mysticUserIdSchema.optional(),
   body: z
     .string()
     .transform((s) => s.trim())

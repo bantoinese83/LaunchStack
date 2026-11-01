@@ -70,6 +70,7 @@ export function MysticMessageThread({
   const [body, setBody] = useState('');
   const [sending, setSending] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
+  const [failedBody, setFailedBody] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const endRef = useRef<HTMLLIElement>(null);
 
@@ -77,11 +78,12 @@ export function MysticMessageThread({
     endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }, [messages.length, sending]);
 
-  async function send() {
-    const trimmed = body.trim();
+  async function send(override?: string) {
+    const trimmed = (override ?? body).trim();
     if (!trimmed || sending) return;
     setSending(true);
     setStatus(null);
+    setFailedBody(null);
     const result = await onSend(trimmed);
     setSending(false);
     if (result.ok) {
@@ -89,6 +91,7 @@ export function MysticMessageThread({
       setStatus('Sent');
       window.setTimeout(() => setStatus(null), 2500);
     } else {
+      setFailedBody(trimmed);
       setStatus(result.error ?? 'Could not send');
     }
   }
@@ -106,7 +109,9 @@ export function MysticMessageThread({
         <span>
           {lastUpdatedAt
             ? `Updated ${formatMessageTimestamp(new Date(lastUpdatedAt).toISOString())}`
-            : 'Private thread with your stylist'}
+            : mode === 'studio'
+              ? 'Client thread'
+              : 'Private thread with your stylist'}
         </span>
         {onRefresh ? (
           <button
@@ -126,7 +131,16 @@ export function MysticMessageThread({
       >
         {messages.length === 0 ? (
           <div className="p-4">
-            <MysticEmptyState variant={emptyVariant} compact />
+            <MysticEmptyState
+              variant={emptyVariant}
+              compact
+              title={mode === 'studio' ? 'Start the thread' : undefined}
+              description={
+                mode === 'studio'
+                  ? 'No messages yet — send a quick note or parking tip below.'
+                  : undefined
+              }
+            />
           </div>
         ) : (
           <ul className="flex max-h-[min(52vh,420px)] flex-1 flex-col gap-2 overflow-y-auto p-4">
@@ -152,7 +166,7 @@ export function MysticMessageThread({
                       className={`rounded-2xl px-3 py-2 text-sm ${
                         isSelf
                           ? 'rounded-br-md bg-accent text-paper'
-                          : 'rounded-bl-md border border-line/80 bg-paper text-ink'
+                          : 'rounded-bl-md bg-accent-soft text-ink'
                       }`}
                     >
                       <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-wide opacity-80">
@@ -213,9 +227,22 @@ export function MysticMessageThread({
         {sending ? 'Sending…' : 'Send message'}
       </MysticMagneticButton>
       {status ? (
-        <p className={`mt-2 text-sm ${status === 'Sent' ? 'text-chalk' : 'text-danger'}`}>
-          {status}
-        </p>
+        <div
+          className={`mt-2 flex flex-wrap items-center gap-3 text-sm ${
+            status === 'Sent' ? 'text-chalk' : 'text-danger'
+          }`}
+        >
+          <p>{status === 'Sent' ? status : `Send failed — ${status}`}</p>
+          {failedBody && status !== 'Sent' ? (
+            <button
+              type="button"
+              className="font-medium text-accent underline"
+              onClick={() => void send(failedBody)}
+            >
+              Retry
+            </button>
+          ) : null}
+        </div>
       ) : null}
     </div>
   );

@@ -19,19 +19,20 @@ export const roadTrip = StyleSheet.create({
   stripeSage: { flex: 3, backgroundColor: theme.accent },
   kicker: {
     ...monoLabel,
-    color: theme.plum,
+    color: theme.chalk,
     marginBottom: 6,
   },
   title: {
     ...displayTitle,
     color: theme.ink,
-    letterSpacing: -0.8,
+    letterSpacing: -0.9,
   },
   lede: {
     marginTop: 8,
     fontSize: 15,
     lineHeight: 22,
     color: theme.muted,
+    maxWidth: 340,
   },
   hairline: {
     height: StyleSheet.hairlineWidth,
@@ -54,9 +55,7 @@ export const roadTrip = StyleSheet.create({
   },
   flatRowSelected: {
     backgroundColor: theme.goldSoft,
-    borderLeftWidth: 3,
-    borderLeftColor: theme.gold,
-    paddingLeft: 13,
+    borderRadius: theme.radii.md,
   },
   flatInput: {
     borderWidth: 0,
@@ -119,6 +118,6 @@ export const roadTripSegment = StyleSheet.create({
     color: theme.muted,
   },
   tabTextActive: {
-    color: theme.plum,
+    color: theme.ink,
   },
 });

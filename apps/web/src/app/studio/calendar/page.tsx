@@ -7,7 +7,7 @@ export default function StudioCalendarPage() {
     <div>
       <MysticStudioPageHeader
         title="Calendar"
-        description="Next 7 days — reschedule, cancel, or message clients from each visit."
+        description="Month grid or day timeline — tap a visit to manage it."
       />
       <MysticStudioSection>
         <StudioCalendar />

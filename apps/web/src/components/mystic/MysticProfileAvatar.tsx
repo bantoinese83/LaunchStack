@@ -2,8 +2,7 @@
 
 import Image from 'next/image';
 import { useRef, useState } from 'react';
-import { parseDiceBearAvatarUrl } from '@template/mystic';
-import { MysticDiceBearPicker } from '@/components/mystic/MysticDiceBearPicker';
+import { MysticAvatarMarquee } from '@/components/mystic/MysticAvatarMarquee';
 
 type Props = {
   avatarUrl: string | null;
@@ -26,7 +25,6 @@ export function MysticProfileAvatar({
   const url = uploadedUrl ?? avatarUrl;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [diceOpen, setDiceOpen] = useState(false);
   const initial = (name?.trim()?.[0] ?? '?').toUpperCase();
   const seedDefault = diceBearDefaultSeed?.trim() || name?.trim() || 'mystic';
 
@@ -58,37 +56,31 @@ export function MysticProfileAvatar({
     await uploadFile(file);
   }
 
-  async function saveDiceBear(nextUrl: string) {
-    const parsed = parseDiceBearAvatarUrl(nextUrl);
-    if (!parsed) {
-      setError('Invalid DiceBear avatar');
-      return;
-    }
+  async function saveGenerated(style: string, seed: string) {
     setBusy(true);
     setError(null);
     try {
       const res = await fetch('/api/profile/avatar', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ style: parsed.style, seed: parsed.seed }),
+        body: JSON.stringify({ style, seed }),
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error ?? 'Could not save avatar');
+        setError(data.error ?? 'Could not save');
         return;
       }
       setUploadedUrl(data.url);
       onUploaded?.(data.url);
-      setDiceOpen(false);
     } catch {
-      setError('Could not save avatar');
+      setError('Could not save');
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <div className="flex flex-col items-center gap-3">
+    <div className="flex w-full flex-col items-center gap-4">
       <div
         className="relative overflow-hidden rounded-full border-2 border-line bg-accent-soft"
         style={{ width: size, height: size }}
@@ -121,7 +113,7 @@ export function MysticProfileAvatar({
           className="rounded-full border border-line bg-paper px-3 py-1.5 text-xs font-medium hover:bg-accent-soft"
           onClick={() => cameraRef.current?.click()}
         >
-          Take selfie
+          Selfie
         </button>
         <button
           type="button"
@@ -129,15 +121,7 @@ export function MysticProfileAvatar({
           className="rounded-full border border-line bg-paper px-3 py-1.5 text-xs font-medium hover:bg-accent-soft"
           onClick={() => uploadRef.current?.click()}
         >
-          Upload photo
-        </button>
-        <button
-          type="button"
-          disabled={busy}
-          className="rounded-full border border-accent bg-accent-soft px-3 py-1.5 text-xs font-medium text-accent"
-          onClick={() => setDiceOpen(true)}
-        >
-          DiceBear
+          Photo
         </button>
       </div>
 
@@ -157,20 +141,14 @@ export function MysticProfileAvatar({
         onChange={(ev) => void onPick(ev)}
       />
 
-      <p className="text-center text-xs text-muted">
-        Photo uploads go to your profile storage. DiceBear avatars are saved as a link — Luke sees
-        either in Studio.
-      </p>
-      {error ? <p className="text-xs text-danger">{error}</p> : null}
-
-      <MysticDiceBearPicker
-        open={diceOpen}
-        onClose={() => setDiceOpen(false)}
-        initialUrl={url}
+      <MysticAvatarMarquee
         defaultSeed={seedDefault}
-        onSave={saveDiceBear}
+        selectedUrl={url}
         busy={busy}
+        onPick={(style, seed) => void saveGenerated(style, seed)}
       />
+
+      {error ? <p className="text-xs text-danger">{error}</p> : null}
     </div>
   );
 }

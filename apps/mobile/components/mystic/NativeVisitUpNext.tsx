@@ -15,6 +15,7 @@ import { NativeDoorTimerBanner } from '../visits/NativeDoorTimerBanner';
 import { NativeLiveMap } from '../visits/NativeLiveMap';
 import { NativeServiceIllustration } from './NativeServiceIllustration';
 import { NativeStylistChip } from './NativeStylistChip';
+import { NativeVisitPrep } from './NativeVisitPrep';
 
 type Visit = {
   id: string;
@@ -73,6 +74,7 @@ export function NativeVisitUpNext({ visit }: { visit: Visit }) {
             destination={visitAddressDestination(visit.address)}
           />
         ) : null}
+        {!live ? <NativeVisitPrep /> : null}
         <View style={styles.actions}>
           <Pressable onPress={() => router.push('/(app)/(tabs)/messages')}>
             <Text style={styles.link}>Message Luke</Text>
@@ -99,10 +101,9 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   liveRing: {
-    borderLeftWidth: 3,
-    borderLeftColor: theme.gold,
-    paddingLeft: 4,
+    borderRadius: theme.radii.md,
     backgroundColor: theme.goldSoft,
+    paddingHorizontal: 4,
   },
   when: { fontWeight: '600', fontSize: 17, color: theme.ink },
   serviceRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 8 },

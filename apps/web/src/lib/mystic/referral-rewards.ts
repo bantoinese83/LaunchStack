@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { MysticCreditsService } from '@template/api';
-import { DEFAULT_REFERRAL_REWARD_AFTER } from '@template/mystic';
+import { DEFAULT_REFERRAL_REWARD_AFTER, rewardBatchesDue } from '@template/mystic';
 
 export async function applyReferralRewardsIfDue(admin: SupabaseClient, workspaceId: string) {
   const { data: settings } = await admin
@@ -10,12 +10,15 @@ export async function applyReferralRewardsIfDue(admin: SupabaseClient, workspace
     .maybeSingle();
   const threshold = settings?.referral_reward_after ?? DEFAULT_REFERRAL_REWARD_AFTER;
 
-  const { data: referrers } = await admin
+  const { data: pendingRows } = await admin
     .from('mystic_referrals')
     .select('referrer_user_id')
-    .eq('workspace_id', workspaceId);
+    .eq('workspace_id', workspaceId)
+    .eq('credited', false);
 
-  const uniqueReferrers = [...new Set((referrers ?? []).map((r) => r.referrer_user_id as string))];
+  const uniqueReferrers = [
+    ...new Set((pendingRows ?? []).map((r) => r.referrer_user_id as string)),
+  ];
 
   for (const referrerUserId of uniqueReferrers) {
     const { count } = await admin
@@ -26,9 +29,9 @@ export async function applyReferralRewardsIfDue(admin: SupabaseClient, workspace
       .eq('credited', false);
 
     const pending = count ?? 0;
-    if (pending < threshold) continue;
+    const batches = rewardBatchesDue(pending, threshold);
+    if (batches < 1) continue;
 
-    const batches = Math.floor(pending / threshold);
     await new MysticCreditsService(admin).grantCredit({
       workspaceId,
       userId: referrerUserId,

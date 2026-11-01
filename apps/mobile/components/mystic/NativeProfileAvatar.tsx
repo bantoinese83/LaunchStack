@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Image, StyleSheet, Text, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { parseDiceBearAvatarUrl } from '@template/mystic';
 import { NativeButton, theme } from '@template/mobile-ui';
-import { NativeDiceBearPicker } from './NativeDiceBearPicker';
+import { NativeAvatarMarquee } from './NativeAvatarMarquee';
+import { NativePermissionPrimer } from '../motion/NativePermissionPrimer';
+import { hapticSuccess } from '../../lib/haptics';
 import { saveDiceBearAvatar, uploadProfileAvatar } from '../../lib/mysticApi';
 
 type Props = {
@@ -13,6 +14,8 @@ type Props = {
   onUploaded?: (url: string) => void;
 };
 
+type PendingSource = 'library' | 'camera' | null;
+
 export function NativeProfileAvatar({ avatarUrl, name, diceBearDefaultSeed, onUploaded }: Props) {
   const [url, setUrl] = useState<string | null>(avatarUrl);
   useEffect(() => {
@@ -20,7 +23,7 @@ export function NativeProfileAvatar({ avatarUrl, name, diceBearDefaultSeed, onUp
   }, [avatarUrl]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [diceVisible, setDiceVisible] = useState(false);
+  const [pendingSource, setPendingSource] = useState<PendingSource>(null);
   const initial = (name?.trim()?.[0] ?? '?').toUpperCase();
   const seedDefault = diceBearDefaultSeed?.trim() || name?.trim() || 'mystic';
 
@@ -33,11 +36,12 @@ export function NativeProfileAvatar({ avatarUrl, name, diceBearDefaultSeed, onUp
       setError(res.error ?? 'Upload failed');
       return;
     }
+    hapticSuccess();
     setUrl(res.url);
     onUploaded?.(res.url);
   }
 
-  async function pickLibrary() {
+  async function runLibrary() {
     setError(null);
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) {
@@ -54,7 +58,7 @@ export function NativeProfileAvatar({ avatarUrl, name, diceBearDefaultSeed, onUp
     await uploadFromAsset(result.assets[0]);
   }
 
-  async function takeSelfie() {
+  async function runCamera() {
     setError(null);
     const perm = await ImagePicker.requestCameraPermissionsAsync();
     if (!perm.granted) {
@@ -70,23 +74,36 @@ export function NativeProfileAvatar({ avatarUrl, name, diceBearDefaultSeed, onUp
     await uploadFromAsset(result.assets[0]);
   }
 
-  async function confirmDiceBear(nextUrl: string) {
-    const parsed = parseDiceBearAvatarUrl(nextUrl);
-    if (!parsed) {
-      setError('Invalid DiceBear avatar');
+  async function pickLibrary() {
+    const existing = await ImagePicker.getMediaLibraryPermissionsAsync();
+    if (!existing.granted) {
+      setPendingSource('library');
       return;
     }
+    await runLibrary();
+  }
+
+  async function takeSelfie() {
+    const existing = await ImagePicker.getCameraPermissionsAsync();
+    if (!existing.granted) {
+      setPendingSource('camera');
+      return;
+    }
+    await runCamera();
+  }
+
+  async function pickGenerated(style: string, seed: string) {
     setBusy(true);
     setError(null);
-    const res = await saveDiceBearAvatar(parsed.style, parsed.seed);
+    const res = await saveDiceBearAvatar(style, seed);
     setBusy(false);
     if (res.error || !res.url) {
-      setError(res.error ?? 'Could not save avatar');
+      setError(res.error ?? 'Could not save');
       return;
     }
+    hapticSuccess();
     setUrl(res.url);
     onUploaded?.(res.url);
-    setDiceVisible(false);
   }
 
   return (
@@ -114,33 +131,50 @@ export function NativeProfileAvatar({ avatarUrl, name, diceBearDefaultSeed, onUp
           disabled={busy}
         />
         <NativeButton
-          title="Upload"
+          title="Photo"
           variant="secondary"
           onPress={() => void pickLibrary()}
           disabled={busy}
         />
-        <NativeButton title="DiceBear" onPress={() => setDiceVisible(true)} disabled={busy} />
       </View>
 
-      <Text style={styles.hint}>
-        Uploads use profile storage; DiceBear saves as a link. Luke sees either in Studio.
-      </Text>
+      <NativeAvatarMarquee
+        defaultSeed={seedDefault}
+        selectedUrl={url}
+        busy={busy}
+        onPick={(style, seed) => void pickGenerated(style, seed)}
+      />
+
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
-      <NativeDiceBearPicker
-        visible={diceVisible}
-        onClose={() => setDiceVisible(false)}
-        initialUrl={url}
-        defaultSeed={seedDefault}
-        onSave={(next) => void confirmDiceBear(next)}
-        saving={busy}
+      <NativePermissionPrimer
+        visible={pendingSource === 'library'}
+        title="Add a photo"
+        body="Choose a headshot from your library."
+        confirmLabel="Continue"
+        onCancel={() => setPendingSource(null)}
+        onConfirm={() => {
+          setPendingSource(null);
+          void runLibrary();
+        }}
+      />
+      <NativePermissionPrimer
+        visible={pendingSource === 'camera'}
+        title="Take a selfie"
+        body="Snap a quick headshot in-app."
+        confirmLabel="Continue"
+        onCancel={() => setPendingSource(null)}
+        onConfirm={() => {
+          setPendingSource(null);
+          void runCamera();
+        }}
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: { alignItems: 'center', marginBottom: 16 },
+  wrap: { alignItems: 'center', marginBottom: 16, width: '100%' },
   ring: {
     width: 96,
     height: 96,
@@ -160,6 +194,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   actions: { marginTop: 12, width: '100%', gap: 8 },
-  hint: { marginTop: 8, fontSize: 12, color: theme.muted, textAlign: 'center' },
-  error: { marginTop: 4, fontSize: 12, color: theme.danger },
+  error: { marginTop: 8, fontSize: 12, color: theme.danger },
 });

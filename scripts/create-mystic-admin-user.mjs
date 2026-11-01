@@ -3,10 +3,13 @@
  * Creates a confirmed Supabase user with super_admin + Mystic studio owner.
  * Usage: node scripts/create-mystic-admin-user.mjs [email] [password]
  */
-import { createClient } from '@supabase/supabase-js';
+import { createRequire } from 'node:module';
 import { randomBytes } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+
+const require = createRequire(resolve('apps/web/package.json'));
+const { createClient } = require('@supabase/supabase-js');
 
 const MYSTIC_WORKSPACE_ID = '33333333-3333-3333-3333-333333333333';
 

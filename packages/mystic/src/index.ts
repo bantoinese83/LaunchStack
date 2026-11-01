@@ -13,6 +13,7 @@ export * from './booking-limits';
 export * from './empty-states';
 export * from './studio-board';
 export * from './studio-brief';
+export * from './studio-analytics';
 export * from './icons';
 export * from './dicebear';
 export * from './address';
