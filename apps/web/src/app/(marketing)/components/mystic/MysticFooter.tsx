@@ -7,6 +7,11 @@ import { MysticMagneticLink } from '@/components/mystic/MysticMagneticButton';
 import { MysticSignInOrAccountNav } from '@/components/mystic/MysticSignInOrAccountNav';
 import { cn } from '@/lib/utils';
 import { MysticFooterBlockWordmark } from '@/components/mystic/MysticFooterBlockWordmark';
+import {
+  MysticFooterPatternLayers,
+  useFooterPatternPointer,
+} from '@/components/mystic/MysticFooterPatternLayers';
+import { Highlighter } from '@/components/ui/highlighter';
 
 const linkCols = [
   {
@@ -45,22 +50,27 @@ type FooterProps = {
 /** Editorial footer — 21st-inspired outline wordmark + CTA band (scrollxui / balick patterns). */
 export function MysticFooter({ initialSignedIn = false }: FooterProps) {
   const year = new Date().getFullYear();
+  const patternPointer = useFooterPatternPointer();
 
   return (
-    <footer className="mystic-footer-shell mystic-footer-grain mystic-pattern-band relative overflow-x-hidden border-t border-gold/15 text-paper">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 mystic-pattern-overlapping-cubes opacity-[0.52]"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 bg-gradient-to-b from-shell/55 via-shell/15 to-shell/70"
-      />
+    <footer
+      className="mystic-footer-shell mystic-footer-grain mystic-pattern-band relative overflow-x-hidden border-t border-gold/15 text-paper"
+      style={patternPointer.style}
+      onMouseMove={patternPointer.onMouseMove}
+      onMouseLeave={patternPointer.onMouseLeave}
+    >
+      <MysticFooterPatternLayers />
       <div className="relative z-10 mx-auto max-w-6xl px-5 md:px-8">
         <div className="flex flex-col gap-8 border-b border-white/10 py-14 md:flex-row md:items-end md:justify-between md:py-16">
           <div className="max-w-md">
             <p className="type-eyebrow text-gold">House calls · Chicago</p>
-            <h2 className="type-hand-lg mt-3 text-paper">Your next blowout starts here.</h2>
+            <h2 className="type-hand-lg mt-3 text-paper">
+              Your next{' '}
+              <Highlighter action="highlight" color="rgba(196, 169, 98, 0.5)" isView>
+                blowout
+              </Highlighter>{' '}
+              starts here.
+            </h2>
             <p className="mt-3 flex items-center gap-2 text-sm text-paper/60">
               <MapPin className="h-3.5 w-3.5 shrink-0 text-gold/80" aria-hidden />
               River North & mapped house-call area

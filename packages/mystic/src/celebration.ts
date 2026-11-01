@@ -1,6 +1,6 @@
 import { MYSTIC_MEMBERSHIPS, MYSTIC_PACKAGES, type MembershipId, type PackageId } from './catalog';
 
-export type MysticCelebrationKind = 'booking' | 'membership' | 'package';
+export type MysticCelebrationKind = 'booking' | 'membership' | 'package' | 'onboarding';
 
 export type MysticCelebrationContent = {
   eyebrow: string;
@@ -12,6 +12,13 @@ export function getCelebrationContent(
   kind: MysticCelebrationKind,
   productId?: string
 ): MysticCelebrationContent {
+  if (kind === 'onboarding') {
+    return {
+      eyebrow: 'All set',
+      title: 'Ready to book',
+      body: 'Your profile is saved — pick a time and Luke comes to you.',
+    };
+  }
   if (kind === 'booking') {
     return {
       eyebrow: 'Confirmed',

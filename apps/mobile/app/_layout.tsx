@@ -6,8 +6,17 @@ import { useFonts, Caveat_500Medium, Caveat_600SemiBold } from '@expo-google-fon
 import * as SplashScreen from 'expo-splash-screen';
 import { NativeButton, displayTitle, theme } from '@template/mobile-ui';
 import { StyleSheet, Text, View } from 'react-native';
+import Animated, {
+  Easing,
+  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { MysticPressProvider } from '../components/motion/MysticPressProvider';
-import { NativeLaunchSplash } from '../components/mystic/NativeLaunchSplash';
+import { NativeFlowerField } from '../components/mystic/NativeFlowerField';
+import { NativeLaunchSplashContent } from '../components/mystic/NativeLaunchSplashContent';
 
 SplashScreen.preventAutoHideAsync().catch(() => {
   /* dev reload */
@@ -23,55 +32,109 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
   );
 }
 
-const LAUNCH_MIN_MS = 2200;
+/** Let launch blooms mostly open before crossfade (~3.6s bloom + stagger). */
+const LAUNCH_HOLD_MS = 3000;
+const LAUNCH_FADE_MS = 650;
 
-export default function RootLayout() {
+function RootLayoutInner() {
   const [fontsLoaded] = useFonts({
     Caveat_500Medium,
     Caveat_600SemiBold,
   });
-  const [launchDone, setLaunchDone] = useState(false);
+  const [appInteractive, setAppInteractive] = useState(false);
+  const [flowerMode, setFlowerMode] = useState<'launch' | 'idle'>('launch');
+  const splashOpacity = useSharedValue(1);
+  const appOpacity = useSharedValue(0);
 
   useEffect(() => {
     if (!fontsLoaded) return;
-    const started = Date.now();
-    const finish = () => {
+    const hold = setTimeout(() => {
       void SplashScreen.hideAsync();
-      setLaunchDone(true);
-    };
-    const elapsed = Date.now() - started;
-    const wait = Math.max(0, LAUNCH_MIN_MS - elapsed);
-    const timer = setTimeout(finish, wait);
-    return () => clearTimeout(timer);
-  }, [fontsLoaded]);
+      appOpacity.value = withTiming(1, {
+        duration: LAUNCH_FADE_MS,
+        easing: Easing.out(Easing.cubic),
+      });
+      splashOpacity.value = withTiming(
+        0,
+        { duration: LAUNCH_FADE_MS, easing: Easing.out(Easing.cubic) },
+        (finished) => {
+          if (finished) runOnJS(setAppInteractive)(true);
+        }
+      );
+    }, LAUNCH_HOLD_MS);
+    return () => clearTimeout(hold);
+  }, [appOpacity, fontsLoaded, splashOpacity]);
 
-  if (!fontsLoaded || !launchDone) {
-    return <NativeLaunchSplash />;
-  }
+  useEffect(() => {
+    if (!appInteractive) return;
+    const id = setTimeout(() => setFlowerMode('idle'), 500);
+    return () => clearTimeout(id);
+  }, [appInteractive]);
+
+  const splashLayerStyle = useAnimatedStyle(() => ({
+    opacity: splashOpacity.value,
+  }));
+
+  const appLayerStyle = useAnimatedStyle(() => ({
+    opacity: appOpacity.value,
+  }));
 
   return (
-    <MysticPressProvider>
-      <StatusBar style="dark" />
-      <Stack
-        screenOptions={{
-          headerStyle: { backgroundColor: theme.paper },
-          headerTintColor: theme.ink,
-          headerTitleStyle: { fontWeight: '600' },
-          contentStyle: { backgroundColor: theme.paper },
-          headerShadowVisible: false,
-          animation: 'fade_from_bottom',
-        }}
-      >
-        <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="auth/callback" options={{ headerShown: false, title: 'Sign in' }} />
-        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-        <Stack.Screen name="(app)" options={{ headerShown: false }} />
-      </Stack>
-    </MysticPressProvider>
+    <View style={styles.shell}>
+      <NativeFlowerField mode={flowerMode} count={24} opacity={0.72} />
+      {fontsLoaded ? (
+        <Animated.View
+          style={[StyleSheet.absoluteFill, appLayerStyle]}
+          pointerEvents={appInteractive ? 'auto' : 'none'}
+        >
+          <MysticPressProvider>
+            <StatusBar style="dark" />
+            <Stack
+              screenOptions={{
+                headerStyle: { backgroundColor: theme.paper },
+                headerTintColor: theme.ink,
+                headerTitleStyle: { fontWeight: '600' },
+                contentStyle: { backgroundColor: 'transparent' },
+                headerShadowVisible: false,
+                animation: 'fade',
+              }}
+            >
+              <Stack.Screen name="index" options={{ headerShown: false }} />
+              <Stack.Screen
+                name="auth/callback"
+                options={{ headerShown: false, title: 'Sign in' }}
+              />
+              <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+              <Stack.Screen name="(app)" options={{ headerShown: false }} />
+            </Stack>
+          </MysticPressProvider>
+        </Animated.View>
+      ) : null}
+      {fontsLoaded ? (
+        <Animated.View
+          style={[StyleSheet.absoluteFill, splashLayerStyle]}
+          pointerEvents={appInteractive ? 'none' : 'auto'}
+        >
+          <NativeLaunchSplashContent />
+        </Animated.View>
+      ) : null}
+    </View>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <SafeAreaProvider>
+      <RootLayoutInner />
+    </SafeAreaProvider>
   );
 }
 
 const styles = StyleSheet.create({
+  shell: {
+    flex: 1,
+    backgroundColor: theme.paper,
+  },
   container: {
     flex: 1,
     alignItems: 'center',

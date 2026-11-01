@@ -2,8 +2,6 @@ import React, { useMemo, useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { buildDiceBearGallery, parseDiceBearAvatarUrl } from '@template/mystic';
 import { monoLabel, theme } from '@template/mobile-ui';
-import { NativeRoadStripe } from './NativeRoadStripe';
-
 type Props = {
   defaultSeed: string;
   selectedUrl: string | null;
@@ -24,7 +22,6 @@ export function NativeAvatarMarquee({ defaultSeed, selectedUrl, busy = false, on
 
   return (
     <View style={styles.wrap}>
-      <NativeRoadStripe compact style={styles.stripe} />
       <View style={styles.header}>
         <Text style={styles.kicker}>Looks</Text>
         <Pressable
@@ -69,7 +66,6 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: theme.line,
   },
-  stripe: { marginBottom: 10 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',

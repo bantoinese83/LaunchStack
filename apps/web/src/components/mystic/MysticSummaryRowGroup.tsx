@@ -8,17 +8,17 @@ export type SummaryRow = {
   onEdit?: () => void;
 };
 
-/** Soft stacked review rows — tap to jump back in the flow (no divider rules). */
+/** Stacked review rows — flat list, tap to jump back in the flow. */
 export function MysticSummaryRowGroup({ rows }: { rows: SummaryRow[] }) {
   return (
-    <ul className="flex flex-col gap-2">
+    <ul className="divide-y divide-line/70 border-y border-line/70">
       {rows.map((row) => (
         <li key={row.id}>
           {row.onEdit ? (
             <button
               type="button"
               onClick={row.onEdit}
-              className="flex w-full items-center justify-between gap-3 rounded-2xl bg-surface px-4 py-3.5 text-left transition hover:bg-accent-soft/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+              className="flex w-full items-center justify-between gap-3 py-4 text-left transition hover:bg-accent-soft/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-inset"
             >
               <SummaryRowContent row={row} />
               <span className="shrink-0 text-sm text-muted" aria-hidden>
@@ -26,7 +26,7 @@ export function MysticSummaryRowGroup({ rows }: { rows: SummaryRow[] }) {
               </span>
             </button>
           ) : (
-            <div className="rounded-2xl bg-surface px-4 py-3.5">
+            <div className="py-4">
               <SummaryRowContent row={row} />
             </div>
           )}

@@ -16,6 +16,22 @@ export const MYSTIC_PLANS_TRUST = [
   'Cancel membership anytime',
 ] as const;
 
+export const MYSTIC_PLANS_MEMBERSHIP_SECTION = {
+  eyebrow: 'Monthly memberships',
+  title: 'Glow & Luxe',
+  description:
+    'Recurring visits each month — travel and evening fees waived when you book on plan.',
+} as const;
+
+export const MYSTIC_PLANS_PACKAGES_SECTION = {
+  eyebrow: 'Prepaid packages',
+  title: 'Try Luke or gift credits',
+  description: 'Pay once — use your visits within six months. Same fee waivers when you book.',
+} as const;
+
+export const MYSTIC_PLANS_REFERRAL_FOOTNOTE =
+  'Refer a friend — both earn rewards after a first completed visit.';
+
 export const MYSTIC_PLANS_SECTION_IDS = {
   memberships: 'monthly-memberships',
   packages: 'blowout-packages',

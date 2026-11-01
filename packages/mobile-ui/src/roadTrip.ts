@@ -7,16 +7,6 @@ export const roadTrip = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.paper,
   },
-  stripe: {
-    flexDirection: 'row',
-    height: 3,
-    marginBottom: 14,
-    overflow: 'hidden',
-    borderRadius: 1,
-  },
-  stripeGold: { flex: 5, backgroundColor: theme.gold },
-  stripePlum: { flex: 2, backgroundColor: theme.plum },
-  stripeSage: { flex: 3, backgroundColor: theme.accent },
   kicker: {
     ...monoLabel,
     color: theme.chalk,

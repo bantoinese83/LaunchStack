@@ -14,7 +14,6 @@ export const NATIVE_PLANS_MEMBERSHIP_IMAGE: Record<MembershipId, ImageSourceProp
 export const NATIVE_PLANS_PACKAGES_SECTION_IMAGE: ImageSourcePropType = heroBlowout;
 
 export const NATIVE_PLANS_STRIP_IMAGE: ImageSourcePropType = heroBlowout;
-
 export const NATIVE_PLANS_PACKAGE_ROW_IMAGE: Record<PackageId, ImageSourcePropType> = {
   pack_4: blowoutCard,
   pack_6: dryStyleCard,

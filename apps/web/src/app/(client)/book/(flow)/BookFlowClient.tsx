@@ -35,6 +35,7 @@ import {
   type AppointmentTagId,
   toggleAppointmentTag,
   defaultBookingDateIso,
+  BOOKING_FLOW_STEPS,
   type BookingFlowStep,
   type ServiceId,
   type SurchargeRules,
@@ -315,6 +316,11 @@ export function BookFlowClient() {
     return Number.isNaN(at.getTime()) ? null : at;
   }, [date, time]);
 
+  const selectedService = useMemo(
+    () => MYSTIC_SERVICES.find((s) => s.id === serviceId),
+    [serviceId]
+  );
+
   const quoteWithoutTip = useMemo(() => {
     if (!scheduledAt) return null;
     return computeBookingQuote({
@@ -571,9 +577,15 @@ export function BookFlowClient() {
         ) : null}
         {step === 'service' && (
           <section className="w-full space-y-6">
+            <div>
+              <h2 className="font-display text-2xl text-ink">Select a service</h2>
+              <p className="mt-1 text-sm text-muted">
+                One visit, one service — add details on the next steps.
+              </p>
+            </div>
             <MysticBookPlansPromo />
             <div
-              className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6"
+              className="mx-auto grid w-full max-w-2xl grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6"
               role="listbox"
               aria-label="Choose a service"
             >
@@ -597,6 +609,14 @@ export function BookFlowClient() {
             <MysticBookStepActions
               onBack={() => router.back()}
               onContinue={() => setStep('datetime')}
+              selectionSummary={
+                selectedService
+                  ? {
+                      primary: formatUsd(selectedService.priceCents),
+                      secondary: `1 service · ${selectedService.durationMinutes} min`,
+                    }
+                  : undefined
+              }
             />
           </section>
         )}
@@ -831,6 +851,12 @@ export function BookFlowClient() {
 
         {step === 'review' && quote && scheduledAt && (
           <section className="w-full space-y-4 pb-28">
+            <div>
+              <p className="type-eyebrow text-plum">
+                Step {BOOKING_FLOW_STEPS.length} of {BOOKING_FLOW_STEPS.length}
+              </p>
+              <h2 className="mt-1 font-display text-2xl text-ink">Review and checkout</h2>
+            </div>
             <MysticSummaryRowGroup
               rows={[
                 {
@@ -904,7 +930,7 @@ export function BookFlowClient() {
                 </span>
               ) : null}
             </label>
-            <div className="rounded-2xl bg-surface p-5">
+            <div className="border-t border-line/70 pt-6">
               <p className="type-eyebrow text-plum">Payment</p>
               <ul className="mt-3 space-y-2 text-sm">
                 <li className="flex justify-between gap-3">
@@ -1025,7 +1051,7 @@ export function BookFlowClient() {
               </p>
             </div>
 
-            <div className="space-y-4 rounded-2xl bg-paper/80 p-5 text-sm">
+            <div className="space-y-4 border-t border-line/70 pt-6 text-sm">
               {HOUSE_CALL_POLICIES.map((policy) => (
                 <div key={policy.id}>
                   <p className="font-medium text-ink">{policy.title}</p>
@@ -1060,8 +1086,16 @@ export function BookFlowClient() {
               </Alert>
             ) : null}
 
-            <div className="sticky bottom-3 z-10 space-y-2 rounded-2xl bg-surface/95 p-3 shadow-[0_16px_48px_-20px_rgba(26,31,24,0.4)] backdrop-blur-md">
+            <div className="sticky bottom-0 z-10 -mx-1 space-y-2 border-t border-line/80 bg-paper/95 px-1 pt-4 pb-3 backdrop-blur-sm">
               <MysticSecureBookingLine className="px-1" />
+              <div className="flex items-baseline justify-between gap-3 px-1" aria-live="polite">
+                <span className="text-xl font-semibold tabular-nums text-ink">
+                  {formatUsd(quote.totalCents)}
+                </span>
+                <span className="text-right text-xs text-muted">
+                  {quote.totalCents === 0 ? 'No payment due today' : 'Due now · deposit + balance'}
+                </span>
+              </div>
               <div className="flex gap-3">
                 <MysticMagneticButton
                   type="button"

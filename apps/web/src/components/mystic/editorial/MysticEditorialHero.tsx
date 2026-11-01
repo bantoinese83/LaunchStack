@@ -6,6 +6,9 @@ import { MysticHeroBackground } from '@/components/mystic/editorial/MysticHeroBa
 import { MysticHeroCornerMeta } from '@/components/mystic/editorial/MysticHeroCornerMeta';
 import { cn } from '@/lib/utils';
 import { MysticMagneticButton, MysticMagneticLink } from '@/components/mystic/MysticMagneticButton';
+import { Highlighter } from '@/components/ui/highlighter';
+import { TextAnimate } from '@/components/ui/text-animate';
+import { MysticBookHeroStrip } from '@/components/mystic/editorial/MysticBookHeroStrip';
 
 type Props = {
   onAboutLuke: () => void;
@@ -41,17 +44,68 @@ export function MysticEditorialHero({ onAboutLuke }: Props) {
             variants={fade}
             className="relative flex flex-col items-start gap-5 pt-8 sm:pt-10 md:pt-12 lg:pt-14"
           >
-            <p className="type-eyebrow text-plum">Mobile house calls · Chicago</p>
+            <TextAnimate
+              as="p"
+              by="word"
+              animation="blurIn"
+              once
+              duration={0.55}
+              className="type-eyebrow text-plum"
+            >
+              Mobile house calls · Chicago
+            </TextAnimate>
             <hr className="mystic-editorial-rule max-w-[12rem]" />
             <h1 className="type-display-hero text-ink">
-              House-call hair
-              <span className="type-hand-hero mt-1 block text-chalk">in Chicago.</span>
+              <Highlighter action="underline" color="#7a8f6e" strokeWidth={2} isView>
+                <TextAnimate
+                  as="span"
+                  by="word"
+                  animation="blurInUp"
+                  accessible={false}
+                  once
+                  duration={0.65}
+                  className="inline"
+                >
+                  House-call hair
+                </TextAnimate>
+              </Highlighter>
+              <span className="type-hand-hero mt-1 block text-plum">
+                <Highlighter
+                  action="highlight"
+                  color="rgba(248, 243, 230, 0.95)"
+                  strokeWidth={1.75}
+                  animationDuration={700}
+                  isView
+                >
+                  <TextAnimate
+                    as="span"
+                    by="word"
+                    animation="blurInUp"
+                    accessible={false}
+                    once
+                    delay={0.12}
+                    duration={0.5}
+                    className="inline"
+                  >
+                    in Chicago.
+                  </TextAnimate>
+                </Highlighter>
+              </span>
             </h1>
-            <p className="type-lede max-w-md">
+            <TextAnimate
+              as="p"
+              by="word"
+              animation="fadeIn"
+              once
+              delay={0.18}
+              duration={0.85}
+              className="type-lede max-w-md"
+            >
               Blowouts, cuts, updos, and dry styling at your door in Chicago and River North. Book
               online, share inspo photos, and Luke arrives with a full pro kit.
-            </p>
-            <div className="mt-1 flex flex-wrap items-center gap-3">
+            </TextAnimate>
+            <MysticBookHeroStrip />
+            <div className="mt-4 flex flex-wrap items-center gap-3">
               <MysticMagneticLink href="/book">Book a house call</MysticMagneticLink>
               <MysticMagneticLink href="#memberships" variant="secondary">
                 Memberships

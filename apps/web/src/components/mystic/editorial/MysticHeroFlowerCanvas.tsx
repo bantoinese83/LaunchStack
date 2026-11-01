@@ -6,22 +6,28 @@ import { cn } from '@/lib/utils';
 import {
   createFlowerField,
   drawHeroFlowers,
+  drawLiveHeroFlowers,
   flowerCountForSize,
-  heroBloomScrollProgress,
+  initLiveFlowerField,
+  pruneLiveFlowers,
   scrollProgressFullyBloomed,
+  spawnLiveFlower,
+  type LiveFlowerSpec,
 } from '@/components/mystic/editorial/mystic-hero-flowers';
 import {
   getMarketingCanvasDpr,
   subscribeManagedCanvasLoop,
 } from '@/lib/mystic/managed-canvas-loop';
-import { subscribeScrollResize } from '@/lib/mystic/throttled-scroll';
 
 type Props = {
   className?: string;
 };
 
+const SPAWN_INTERVAL_MS = 850;
+const SPAWN_JITTER_MS = 950;
+
 /**
- * Hero flower field — scroll-staggered bloom; loop pauses off-screen / hidden tab.
+ * Hero flower field — live blooms spawn, open, fade, and respawn across the canvas.
  */
 export function MysticHeroFlowerCanvas({ className }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -36,24 +42,15 @@ export function MysticHeroFlowerCanvas({ className }: Props) {
     const ctx = canvas.getContext('2d', { alpha: true });
     if (!ctx) return;
 
-    const section = wrap.closest('section');
-    if (!section) return;
-
-    let flowers = createFlowerField(1, 1, 1);
+    let staticFlowers = createFlowerField(1, 1, 1);
+    let liveFlowers: LiveFlowerSpec[] = [];
+    let maxLive = 40;
+    let nextFlowerId = 0;
+    let nextSpawnMs = 0;
     let cw = 0;
     let ch = 0;
     let ro: ResizeObserver | undefined;
-    let scrollProgress = reduceMotion ? scrollProgressFullyBloomed() : 0;
-    let lastPaintProgress = -1;
-    let lastIdlePaintMs = 0;
-
-    const readScrollProgress = () => {
-      if (reduceMotion) {
-        scrollProgress = scrollProgressFullyBloomed();
-        return;
-      }
-      scrollProgress = heroBloomScrollProgress(section);
-    };
+    let baseAlpha = reduceMotion ? 0.38 : 0.48;
 
     const layoutCanvas = () => {
       const dpr = getMarketingCanvasDpr(2);
@@ -72,61 +69,63 @@ export function MysticHeroFlowerCanvas({ className }: Props) {
       ctx.shadowOffsetX = 1;
       ctx.shadowOffsetY = 2;
       ctx.shadowColor = 'rgba(26, 31, 24, 0.22)';
-      ctx.globalAlpha = reduceMotion ? 0.38 : 0.48;
+      ctx.globalAlpha = baseAlpha;
       return true;
     };
 
-    const paint = (timeMs: number) => {
+    const paintStatic = () => {
       if (cw < 1 || ch < 1) return;
-      drawHeroFlowers(ctx, cw, ch, flowers, scrollProgress, {
-        timeMs,
-        idleMotion: !reduceMotion,
+      drawHeroFlowers(ctx, cw, ch, staticFlowers, scrollProgressFullyBloomed(), {
+        idleMotion: false,
       });
     };
 
-    const paintIfNeeded = (timeMs: number) => {
-      const progressDelta = Math.abs(scrollProgress - lastPaintProgress);
-      const scrolling = progressDelta > 0.0015;
-      const idleDue = !reduceMotion && timeMs - lastIdlePaintMs >= 36;
-      if (!scrolling && !idleDue) return;
-      paint(timeMs);
-      if (scrolling) lastPaintProgress = scrollProgress;
-      lastIdlePaintMs = timeMs;
+    const tickLiveSpawns = (timeMs: number) => {
+      if (liveFlowers.length >= maxLive) return;
+      if (timeMs < nextSpawnMs) return;
+      liveFlowers.push(spawnLiveFlower(cw, ch, timeMs, nextFlowerId++));
+      nextSpawnMs = timeMs + SPAWN_INTERVAL_MS + Math.random() * SPAWN_JITTER_MS;
+    };
+
+    const paintLive = (timeMs: number) => {
+      if (cw < 1 || ch < 1) return;
+      tickLiveSpawns(timeMs);
+      liveFlowers = pruneLiveFlowers(liveFlowers, timeMs);
+      drawLiveHeroFlowers(ctx, cw, ch, liveFlowers, timeMs, { idleMotion: true });
     };
 
     const initField = () => {
       if (!layoutCanvas()) return;
       const mobile = window.matchMedia('(max-width: 768px)').matches;
       const base = flowerCountForSize(cw, ch);
-      const count = Math.max(28, Math.round(base * (mobile ? 0.78 : 1)));
-      flowers = createFlowerField(cw, ch, count);
-      readScrollProgress();
-      lastPaintProgress = -1;
-      paint(0);
+      maxLive = Math.max(24, Math.round(base * (mobile ? 0.72 : 1)));
+
+      if (reduceMotion) {
+        staticFlowers = createFlowerField(cw, ch, maxLive);
+        paintStatic();
+        return;
+      }
+
+      const now = performance.now();
+      liveFlowers = initLiveFlowerField(cw, ch, Math.round(maxLive * 0.55), now, nextFlowerId);
+      nextFlowerId += liveFlowers.length;
+      nextSpawnMs = now + 300 + Math.random() * 500;
+      paintLive(now);
     };
 
-    const start = () => {
-      initField();
-      readScrollProgress();
-      paintIfNeeded(performance.now());
-    };
+    initField();
 
-    start();
+    const unsubLoop = reduceMotion
+      ? () => {}
+      : subscribeManagedCanvasLoop(wrap, paintLive, {
+          rootMargin: '80px 0px',
+          maxFps: 50,
+        });
 
-    const unsubScroll = subscribeScrollResize(() => {
-      readScrollProgress();
-    });
-
-    const unsubLoop = subscribeManagedCanvasLoop(wrap, paintIfNeeded, {
-      rootMargin: '80px 0px',
-      maxFps: 50,
-    });
-
-    ro = new ResizeObserver(start);
+    ro = new ResizeObserver(initField);
     ro.observe(wrap);
 
     return () => {
-      unsubScroll();
       unsubLoop();
       ro?.disconnect();
     };

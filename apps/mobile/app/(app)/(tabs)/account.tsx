@@ -1,9 +1,10 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Pressable, RefreshControl, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { createSupabaseMobileClient } from '@template/api/mobile';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import {
+  MYSTIC_ACCOUNT_PAGE,
   MYSTIC_PLANS_ACCOUNT_NUDGE,
   formatUsPhoneInput,
   stripUsPhoneDigits,
@@ -39,8 +40,10 @@ export default function AccountTab() {
     marketingEmail: true,
   });
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [savedFlash, setSavedFlash] = useState(false);
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const [referralCopy, setReferralCopy] = useState<string | null>(null);
@@ -49,19 +52,20 @@ export default function AccountTab() {
   const [creditsSummary, setCreditsSummary] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const load = useCallback(async (opts?: { silent?: boolean }) => {
+    if (!opts?.silent) setLoading(true);
+    setLoadError(null);
     try {
       const supabase = createSupabaseMobileClient();
       const { data: session } = await supabase.auth.getSession();
       const user = session.session?.user;
       if (!user) {
-        setLoading(false);
+        setLoadError('Sign in to view your profile');
         return;
       }
       const data = await fetchClientProfile();
       if (data.error) {
-        setStatus({ kind: 'error', text: data.error });
+        setLoadError(data.error);
         return;
       }
       const p = data.profile;
@@ -86,20 +90,29 @@ export default function AccountTab() {
           (sum: number, c: { blowouts_remaining: number }) => sum + c.blowouts_remaining,
           0
         );
-        if (total > 0) {
-          setCreditsSummary(`${total} blowout credit${total === 1 ? '' : 's'} active`);
-        }
+        setCreditsSummary(
+          total > 0 ? `${total} blowout credit${total === 1 ? '' : 's'} active` : null
+        );
+      } else {
+        setCreditsSummary(null);
       }
     } catch {
-      setStatus({ kind: 'error', text: 'Set EXPO_PUBLIC_APP_URL and sign in' });
+      setLoadError('Set EXPO_PUBLIC_APP_URL and sign in');
     } finally {
-      setLoading(false);
+      if (!opts?.silent) setLoading(false);
+      setRefreshing(false);
     }
   }, []);
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  const phoneDigits = stripUsPhoneDigits(form.phone);
+  const profileIncomplete = useMemo(
+    () => !loading && (!form.fullName.trim() || phoneDigits.length < 10),
+    [form.fullName, loading, phoneDigits.length]
+  );
 
   async function saveProfile() {
     setSaving(true);
@@ -115,6 +128,7 @@ export default function AccountTab() {
       });
       if (!result.ok) {
         setStatus({ kind: 'error', text: result.error ?? 'Could not save' });
+        setSavedFlash(false);
         return;
       }
       setStatus({ kind: 'ok', text: 'Profile updated' });
@@ -123,7 +137,10 @@ export default function AccountTab() {
       setTimeout(() => setSavedFlash(false), 4000);
       if (result.profile?.referral_code) setReferralCode(result.profile.referral_code);
       if (result.profile?.phone) {
-        setForm((prev) => ({ ...prev, phone: formatUsPhoneInput(result.profile!.phone!) }));
+        setForm((prev) => ({
+          ...prev,
+          phone: formatUsPhoneInput(result.profile!.phone!),
+        }));
       }
     } catch {
       setStatus({ kind: 'error', text: 'Could not save — check connection' });
@@ -142,9 +159,41 @@ export default function AccountTab() {
     return <NativeSalonLoader copyKey="profile" fill />;
   }
 
+  if (loadError) {
+    return (
+      <NativeScreenShell>
+        <View style={styles.errorBox}>
+          <Text style={styles.errorText}>{loadError}</Text>
+          <NativeButton title="Try again" onPress={() => void load()} style={styles.retryBtn} />
+        </View>
+      </NativeScreenShell>
+    );
+  }
+
   return (
-    <NativeScreenShell>
-      <NativeScreenHeader kicker="Account" title="Your profile" />
+    <NativeScreenShell
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={() => {
+            setRefreshing(true);
+            void load({ silent: true });
+          }}
+          tintColor={theme.plum}
+        />
+      }
+    >
+      <NativeScreenHeader
+        kicker={MYSTIC_ACCOUNT_PAGE.eyebrow}
+        title={MYSTIC_ACCOUNT_PAGE.title}
+        lede={MYSTIC_ACCOUNT_PAGE.lede}
+      />
+
+      {profileIncomplete ? (
+        <View style={styles.incompleteBanner} accessibilityRole="summary">
+          <Text style={styles.incompleteText}>{MYSTIC_ACCOUNT_PAGE.incompleteHint}</Text>
+        </View>
+      ) : null}
 
       {referralCode ? (
         <NativeReferralShareCard
@@ -155,7 +204,9 @@ export default function AccountTab() {
         />
       ) : null}
       {creditsSummary ? (
-        <Text style={styles.credits}>{creditsSummary}</Text>
+        <View style={styles.creditsCard}>
+          <Text style={styles.credits}>{creditsSummary}</Text>
+        </View>
       ) : (
         <Pressable
           style={styles.plansNudge}
@@ -168,15 +219,17 @@ export default function AccountTab() {
         </Pressable>
       )}
 
-      <NativeProfileAvatar
-        avatarUrl={avatarUrl}
-        name={form.fullName}
-        diceBearDefaultSeed={form.fullName || form.email}
-        onUploaded={setAvatarUrl}
-      />
+      <View style={styles.avatarCard}>
+        <NativeProfileAvatar
+          avatarUrl={avatarUrl}
+          name={form.fullName}
+          diceBearDefaultSeed={form.fullName || form.email}
+          onUploaded={setAvatarUrl}
+        />
+      </View>
 
       <View style={styles.field}>
-        <Text style={styles.label}>Full name</Text>
+        <Text style={styles.label}>Full name *</Text>
         <TextInput
           value={form.fullName}
           onChangeText={(fullName) => setForm({ ...form, fullName })}
@@ -187,7 +240,7 @@ export default function AccountTab() {
         />
       </View>
       <View style={styles.field}>
-        <Text style={styles.label}>Email</Text>
+        <Text style={styles.label}>Email *</Text>
         <TextInput
           value={form.email}
           onChangeText={(email) => setForm({ ...form, email })}
@@ -199,7 +252,7 @@ export default function AccountTab() {
         />
       </View>
       <View style={styles.field}>
-        <Text style={styles.label}>Mobile</Text>
+        <Text style={styles.label}>Mobile * (SMS updates)</Text>
         <TextInput
           value={form.phone}
           onChangeText={(phone) => setForm({ ...form, phone: formatUsPhoneInput(phone) })}
@@ -229,7 +282,9 @@ export default function AccountTab() {
             onValueChange={(marketingSms) => setForm({ ...form, marketingSms })}
             trackColor={{ true: theme.accent, false: theme.line }}
           />
-          <Text style={styles.switchLabel}>SMS appointment updates</Text>
+          <Text style={styles.switchLabel}>
+            Text me appointment updates (on the way, arrival, confirmations).
+          </Text>
         </View>
         <View style={styles.switchRow}>
           <Switch
@@ -237,7 +292,7 @@ export default function AccountTab() {
             onValueChange={(marketingEmail) => setForm({ ...form, marketingEmail })}
             trackColor={{ true: theme.accent, false: theme.line }}
           />
-          <Text style={styles.switchLabel}>Email offers & reminders</Text>
+          <Text style={styles.switchLabel}>Email me offers & reminders</Text>
         </View>
       </View>
 
@@ -247,22 +302,54 @@ export default function AccountTab() {
           <MaterialCommunityIcons name="check-circle" size={22} color={theme.accent} />
           <Text style={styles.savedBannerText}>{status.text}</Text>
         </View>
-      ) : status ? (
-        <Text
-          style={[styles.status, status.kind === 'error' && styles.statusError]}
-          accessibilityRole="alert"
-        >
+      ) : status?.kind === 'error' ? (
+        <Text style={[styles.status, styles.statusError]} accessibilityRole="alert">
           {status.text}
         </Text>
       ) : null}
 
-      <View style={styles.links}>
-        <Pressable style={styles.linkRow} onPress={() => router.push('/(app)/(tabs)/membership')}>
+      <Text style={styles.shortcutsTitle}>Shortcuts</Text>
+      <View style={styles.shortcuts}>
+        <Pressable
+          style={styles.shortcutRow}
+          onPress={() => router.push('/(app)/(tabs)/visits')}
+          accessibilityRole="button"
+        >
+          <Text style={styles.link}>My visits</Text>
+          <MaterialCommunityIcons name="chevron-right" size={20} color={theme.muted} />
+        </Pressable>
+        <Pressable
+          style={styles.shortcutRow}
+          onPress={() => router.push('/(app)/(tabs)/messages')}
+          accessibilityRole="button"
+        >
+          <Text style={styles.link}>Messages</Text>
+          <MaterialCommunityIcons name="chevron-right" size={20} color={theme.muted} />
+        </Pressable>
+        <Pressable
+          style={styles.shortcutRow}
+          onPress={() => router.push('/(app)/(tabs)/book')}
+          accessibilityRole="button"
+        >
+          <Text style={styles.link}>Book again</Text>
+          <MaterialCommunityIcons name="chevron-right" size={20} color={theme.muted} />
+        </Pressable>
+        <Pressable
+          style={styles.shortcutRow}
+          onPress={() => router.push('/(app)/(tabs)/membership')}
+          accessibilityRole="button"
+        >
           <Text style={styles.link}>Plans & packages</Text>
+          <MaterialCommunityIcons name="chevron-right" size={20} color={theme.muted} />
         </Pressable>
         {!studioAccessLoading && isManager ? (
-          <Pressable style={styles.linkRow} onPress={() => router.push('/(app)/(tabs)/studio')}>
+          <Pressable
+            style={styles.shortcutRow}
+            onPress={() => router.push('/(app)/(tabs)/studio')}
+            accessibilityRole="button"
+          >
             <Text style={styles.link}>Open Studio</Text>
+            <MaterialCommunityIcons name="chevron-right" size={20} color={theme.muted} />
           </Pressable>
         ) : null}
       </View>
@@ -278,37 +365,42 @@ export default function AccountTab() {
 }
 
 const styles = StyleSheet.create({
-  loadingWrap: {
-    flex: 1,
+  errorBox: {
+    marginTop: 24,
+    padding: 20,
+    borderRadius: theme.radii.lg,
+    backgroundColor: theme.surface,
     alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: theme.paper,
   },
-  referralBox: {
+  errorText: { color: theme.danger, fontSize: 14, textAlign: 'center' },
+  retryBtn: { marginTop: 16, alignSelf: 'stretch' },
+  incompleteBanner: {
+    marginBottom: 16,
+    padding: 12,
+    borderRadius: theme.radii.lg,
     backgroundColor: theme.goldSoft,
-    borderRadius: theme.radii.md,
+    borderWidth: 1,
+    borderColor: theme.gold,
+  },
+  incompleteText: { fontSize: 13, lineHeight: 18, color: theme.ink },
+  avatarCard: {
+    marginBottom: 8,
+    paddingVertical: 16,
     paddingHorizontal: 12,
-    paddingVertical: 14,
+    borderRadius: theme.radii.lg,
+    backgroundColor: theme.surface,
+  },
+  creditsCard: {
     marginBottom: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: theme.radii.lg,
+    backgroundColor: theme.surface,
   },
-  referralHint: { fontSize: 12, color: theme.muted },
-  referralRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 8 },
-  referralCode: { fontSize: 18, fontWeight: '600', fontFamily: 'monospace', color: theme.ink },
-  referralProgress: { marginTop: 10, fontSize: 12, color: theme.muted, lineHeight: 18 },
-  copyBtn: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: theme.plum,
-  },
-  copyText: { fontSize: 12, color: theme.plum, fontWeight: '600' },
   credits: {
-    marginBottom: 16,
-    paddingVertical: 10,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: theme.line,
     color: theme.chalk,
     fontSize: 13,
+    fontWeight: '600',
   },
   plansNudge: {
     marginBottom: 16,
@@ -357,14 +449,21 @@ const styles = StyleSheet.create({
     borderColor: theme.accent,
   },
   savedBannerText: { flex: 1, fontSize: 15, fontWeight: '600', color: theme.ink },
-  links: {
-    flexDirection: 'column',
-    gap: 0,
-    marginTop: 24,
+  shortcutsTitle: {
+    ...monoLabel,
+    marginTop: 28,
+    marginBottom: 8,
+    fontSize: 10,
+    color: theme.muted,
+  },
+  shortcuts: {
     ...roadTrip.section,
     paddingHorizontal: 0,
   },
-  linkRow: {
+  shortcutRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingVertical: 14,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: theme.line,

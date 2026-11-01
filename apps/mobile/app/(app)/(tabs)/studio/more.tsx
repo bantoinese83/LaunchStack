@@ -5,7 +5,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { formatStudioAnalyticsRate, formatUsd } from '@template/mystic';
 import { monoLabel, theme } from '@template/mobile-ui';
 import { NativeSalonLoader } from '../../../../components/mystic/NativeSalonLoader';
-import { NativeRoadStripe } from '../../../../components/mystic/NativeRoadStripe';
 import { NativePressableScale } from '../../../../components/motion/NativePressableScale';
 import { NativeFadeIn } from '../../../../components/motion/NativeFadeIn';
 import { hapticSoft } from '../../../../lib/haptics';
@@ -65,7 +64,6 @@ export default function StudioMoreScreen() {
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.container}>
       <NativeFadeIn>
-        <NativeRoadStripe compact />
         <Text style={styles.section}>{analytics?.periodLabel ?? 'This month'}</Text>
         {analyticsError ? (
           <Text style={styles.error}>{analyticsError}</Text>

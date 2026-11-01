@@ -1,3 +1,4 @@
+import { MysticClientPage } from '@/components/mystic/MysticClientPage';
 import { WelcomeClient } from './WelcomeClient';
 
 export const metadata = {
@@ -5,5 +6,9 @@ export const metadata = {
 };
 
 export default function WelcomePage() {
-  return <WelcomeClient />;
+  return (
+    <MysticClientPage width="wide" loose>
+      <WelcomeClient />
+    </MysticClientPage>
+  );
 }

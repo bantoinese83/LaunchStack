@@ -52,9 +52,9 @@ export function MysticReferralShareCard({
       <p className="type-eyebrow text-plum">{MYSTIC_REFERRAL_SHARE.inviteTitle}</p>
       <p className="mt-1 text-muted">{MYSTIC_REFERRAL_SHARE.inviteBody}</p>
 
-      <div className="mt-5 flex flex-col items-center gap-4 sm:flex-row sm:items-start sm:justify-center">
+      <div className="mt-5 flex flex-col items-center gap-6 lg:flex-row lg:items-start lg:justify-between lg:gap-10">
         <MysticReferralQr url={inviteUrl} size={140} label={referralCode} />
-        <div className="flex w-full max-w-[220px] flex-col gap-2 sm:pt-2">
+        <div className="grid w-full max-w-md grid-cols-2 gap-2 sm:max-w-lg lg:ml-auto lg:max-w-xl lg:pt-1">
           <button
             type="button"
             onClick={() => void copy(inviteUrl, 'Link copied')}

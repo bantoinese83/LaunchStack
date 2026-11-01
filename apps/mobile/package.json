@@ -9,6 +9,7 @@
     "start:clean": "expo start --clear",
     "android": "expo run:android",
     "ios": "expo run:ios",
+    "ios:install": "expo run:ios --device \"iPhone 18 Pro Max\"",
     "ios:sim": "expo run:ios --device \"iPhone 18 Pro Max\"",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",

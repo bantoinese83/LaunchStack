@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { memo, useEffect, useMemo } from 'react';
 import { StyleSheet, useWindowDimensions, View, type ViewStyle } from 'react-native';
 import Svg, { Circle, Ellipse, G } from 'react-native-svg';
 import Animated, {
@@ -24,11 +24,21 @@ type Props = {
   style?: ViewStyle;
 };
 
-function BloomFlower({ flower, mode }: { flower: MobileFlowerSeed; mode: Mode }) {
+const BloomFlower = memo(function BloomFlower({
+  flower,
+  mode,
+}: {
+  flower: MobileFlowerSeed;
+  mode: Mode;
+}) {
   const bloom = useSharedValue(0);
 
   useEffect(() => {
-    const open = withTiming(1, { duration: 2400, easing: Easing.out(Easing.cubic) });
+    const openMs = mode === 'launch' ? 3600 : 2800;
+    const open = withTiming(1, {
+      duration: openMs,
+      easing: Easing.bezier(0.22, 1, 0.36, 1),
+    });
     if (mode === 'idle') {
       bloom.value = withDelay(
         flower.bloomDelayMs,
@@ -49,10 +59,13 @@ function BloomFlower({ flower, mode }: { flower: MobileFlowerSeed; mode: Mode })
     bloom.value = withDelay(flower.bloomDelayMs, open);
   }, [bloom, flower.bloomDelayMs, mode]);
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: 0.1 + bloom.value * 0.9 }],
-    opacity: 0.2 + Math.min(bloom.value, 1) * 0.75,
-  }));
+  const animatedStyle = useAnimatedStyle(() => {
+    const t = Math.min(bloom.value, 1);
+    return {
+      transform: [{ scale: 0.08 + t * 0.92 }],
+      opacity: 0.12 + t * 0.8,
+    };
+  });
 
   const { size, petals, petalColor, centerColor } = flower;
   const half = size / 2;
@@ -90,7 +103,7 @@ function BloomFlower({ flower, mode }: { flower: MobileFlowerSeed; mode: Mode })
       </Svg>
     </Animated.View>
   );
-}
+});
 
 /** Staggered SVG blooms — lightweight stand-in for web canvas hero field. */
 export function NativeFlowerField({
@@ -102,7 +115,11 @@ export function NativeFlowerField({
 }: Props) {
   const { width, height } = useWindowDimensions();
   const flowers = useMemo(
-    () => buildMobileFlowerField(width, height * 1.05, count),
+    () =>
+      buildMobileFlowerField(width, height * 1.05, count, {
+        maxBloomDelayMs: 1400,
+        staggerMs: 28,
+      }),
     [width, height, count]
   );
 

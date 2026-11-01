@@ -2,8 +2,11 @@ import Link from 'next/link';
 import type { MembershipId, MysticMembership, MysticPackage, PackageId } from '@template/mystic';
 import {
   MYSTIC_PLANS_MEMBERSHIP_IMAGE,
+  MYSTIC_PLANS_MEMBERSHIP_SECTION,
+  MYSTIC_PLANS_PACKAGES_SECTION,
   MYSTIC_PLANS_PACKAGES_SECTION_IMAGE,
   MYSTIC_PLANS_PACKAGE_ROW_SERVICE,
+  MYSTIC_PLANS_REFERRAL_FOOTNOTE,
   MYSTIC_PLANS_SECTION_IDS,
   MYSTIC_STYLIST,
   formatUsd,
@@ -66,9 +69,9 @@ export function MysticPricingTiers({ memberships, packages, checkout }: Props) {
     <div className="space-y-16 md:space-y-20">
       <div id={MYSTIC_PLANS_SECTION_IDS.memberships} className="scroll-mt-28">
         <PlansSectionIntro
-          eyebrow="Monthly memberships"
-          title="Glow & Luxe"
-          description="Recurring visits each month — travel and evening fees waived when you book on plan."
+          eyebrow={MYSTIC_PLANS_MEMBERSHIP_SECTION.eyebrow}
+          title={MYSTIC_PLANS_MEMBERSHIP_SECTION.title}
+          description={MYSTIC_PLANS_MEMBERSHIP_SECTION.description}
           imageSrc={MYSTIC_PLANS_MEMBERSHIP_IMAGE.glow}
           imageAlt={`${MYSTIC_STYLIST.name} on a house call`}
         />
@@ -103,10 +106,8 @@ export function MysticPricingTiers({ memberships, packages, checkout }: Props) {
                   </p>
                   <ul className="mt-4 flex flex-col gap-2 text-sm text-ink/85 sm:flex-row sm:flex-wrap sm:gap-x-4 sm:gap-y-1">
                     {plan.perks.map((perk) => (
-                      <li key={perk} className="flex items-start gap-1.5">
-                        <span className="text-gold" aria-hidden>
-                          ✦
-                        </span>
+                      <li key={perk} className="flex items-start gap-2">
+                        <span className="mt-2 size-1 shrink-0 rounded-full bg-gold" aria-hidden />
                         {perk}
                       </li>
                     ))}
@@ -147,9 +148,9 @@ export function MysticPricingTiers({ memberships, packages, checkout }: Props) {
 
       <div id={MYSTIC_PLANS_SECTION_IDS.packages} className="scroll-mt-28">
         <PlansSectionIntro
-          eyebrow="Prepaid packages"
-          title="Try Luke or gift credits"
-          description="Pay once — use your visits within six months. Same fee waivers when you book."
+          eyebrow={MYSTIC_PLANS_PACKAGES_SECTION.eyebrow}
+          title={MYSTIC_PLANS_PACKAGES_SECTION.title}
+          description={MYSTIC_PLANS_PACKAGES_SECTION.description}
           imageSrc={MYSTIC_PLANS_PACKAGES_SECTION_IMAGE}
           imageAlt={`${MYSTIC_STYLIST.name} — house-call stylist`}
         />
@@ -222,8 +223,8 @@ export function MysticPricingTiers({ memberships, packages, checkout }: Props) {
           })}
         </ul>
         <p className="mt-8 text-sm leading-relaxed text-muted">
-          Refer a friend — both earn rewards after a first completed visit.{' '}
-          <Link href="/book" className="text-chalk underline-offset-4 hover:underline">
+          {MYSTIC_PLANS_REFERRAL_FOOTNOTE}{' '}
+          <Link href="/book" className="font-medium text-plum underline-offset-4 hover:underline">
             Enter a name at checkout
           </Link>
           .

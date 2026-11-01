@@ -1,11 +1,14 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Image, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, Platform, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   MYSTIC_MEMBERSHIPS,
   MYSTIC_PACKAGES,
   MYSTIC_PLANS_CHOOSER,
+  MYSTIC_PLANS_MEMBERSHIP_SECTION,
+  MYSTIC_PLANS_PACKAGES_SECTION,
   MYSTIC_PLANS_PAGE,
+  MYSTIC_PLANS_REFERRAL_FOOTNOTE,
   MYSTIC_PLANS_TRUST,
   formatUsd,
   getCelebrationContent,
@@ -21,7 +24,7 @@ import {
   NATIVE_PLANS_PACKAGE_ROW_IMAGE,
   NATIVE_PLANS_STRIP_IMAGE,
 } from '../../lib/plans-images';
-import { NativeButton, monoLabel, theme } from '@template/mobile-ui';
+import { NativeButton, displayTitle, monoLabel, theme } from '@template/mobile-ui';
 import { MYSTIC_TAB_BAR_SCROLL_PADDING } from '../navigation/mysticTabBarIcon';
 import { NativeCelebrationBurst } from '../mystic/NativeCelebrationBurst';
 import { NativeScreenHeader } from '../mystic/NativeScreenHeader';
@@ -41,6 +44,7 @@ export function NativePlansScreen() {
   const [burstKey, setBurstKey] = useState(0);
   const [creditTotal, setCreditTotal] = useState<number | null>(null);
   const [checkoutBusy, setCheckoutBusy] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   const successKind = useMemo((): MysticCelebrationKind | null => {
     if (params.success !== '1') return null;
@@ -51,20 +55,27 @@ export function NativePlansScreen() {
 
   const celebration = successKind ? getCelebrationContent(successKind, params.id) : null;
 
-  const loadCredits = useCallback(() => {
-    void fetchMyCredits()
-      .then((data) => {
-        const list = (Array.isArray(data.credits) ? data.credits : []) as {
-          blowouts_remaining?: number;
-        }[];
-        let sum = 0;
-        for (const c of list) {
-          if (typeof c.blowouts_remaining === 'number') sum += c.blowouts_remaining;
-        }
-        setCreditTotal(sum);
-      })
-      .catch(() => setCreditTotal(null));
+  const loadCredits = useCallback(async () => {
+    try {
+      const data = await fetchMyCredits();
+      const list = (Array.isArray(data.credits) ? data.credits : []) as {
+        blowouts_remaining?: number;
+      }[];
+      let sum = 0;
+      for (const c of list) {
+        if (typeof c.blowouts_remaining === 'number') sum += c.blowouts_remaining;
+      }
+      setCreditTotal(sum);
+    } catch {
+      setCreditTotal(null);
+    }
   }, []);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadCredits();
+    setRefreshing(false);
+  }, [loadCredits]);
 
   useEffect(() => {
     loadCredits();
@@ -142,6 +153,13 @@ export function NativePlansScreen() {
       style={styles.scroll}
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={() => void onRefresh()}
+          tintColor={theme.plum}
+        />
+      }
     >
       <NativeCelebrationBurst fire={celebrate} burstKey={burstKey} />
       <NativeScreenHeader
@@ -236,10 +254,9 @@ export function NativePlansScreen() {
 
       <View style={styles.sectionIntro}>
         <View style={styles.sectionIntroText}>
-          <Text style={styles.section}>Monthly memberships</Text>
-          <Text style={styles.sectionHint}>
-            Recurring visits each month — travel and evening fees waived when you book on plan.
-          </Text>
+          <Text style={styles.section}>{MYSTIC_PLANS_MEMBERSHIP_SECTION.eyebrow}</Text>
+          <Text style={styles.sectionTitle}>{MYSTIC_PLANS_MEMBERSHIP_SECTION.title}</Text>
+          <Text style={styles.sectionHint}>{MYSTIC_PLANS_MEMBERSHIP_SECTION.description}</Text>
         </View>
         <Image
           source={NATIVE_PLANS_MEMBERSHIP_IMAGE.glow}
@@ -265,9 +282,10 @@ export function NativePlansScreen() {
             house call only
           </Text>
           {plan.perks.map((perk) => (
-            <Text key={perk} style={styles.perk}>
-              ✦ {perk}
-            </Text>
+            <View key={perk} style={styles.perkRow}>
+              <View style={styles.perkDot} />
+              <Text style={styles.perk}>{perk}</Text>
+            </View>
           ))}
           <NativeButton
             title={membershipSubscribeLabel(plan.name)}
@@ -281,10 +299,9 @@ export function NativePlansScreen() {
 
       <View style={styles.sectionIntro}>
         <View style={styles.sectionIntroText}>
-          <Text style={styles.section}>Prepaid packages</Text>
-          <Text style={styles.sectionHint}>
-            Pay once — use visits within six months. Same fee waivers when you book.
-          </Text>
+          <Text style={styles.section}>{MYSTIC_PLANS_PACKAGES_SECTION.eyebrow}</Text>
+          <Text style={styles.sectionTitle}>{MYSTIC_PLANS_PACKAGES_SECTION.title}</Text>
+          <Text style={styles.sectionHint}>{MYSTIC_PLANS_PACKAGES_SECTION.description}</Text>
         </View>
         <Image
           source={NATIVE_PLANS_PACKAGES_SECTION_IMAGE}
@@ -305,7 +322,8 @@ export function NativePlansScreen() {
           <View style={styles.packMain}>
             <Text style={styles.packTitle}>{packageRowTitle(pack.blowoutCount)}</Text>
             <Text style={styles.packMeta}>
-              {formatUsd(pack.pricePerBlowoutCents)} each · {pack.savingsLabel}
+              {formatUsd(pack.pricePerBlowoutCents)} each · {pack.savingsLabel} · valid{' '}
+              {pack.expiresMonths} months
             </Text>
             <Text style={styles.packPrice}>{formatUsd(pack.priceCents)}</Text>
           </View>
@@ -320,6 +338,18 @@ export function NativePlansScreen() {
         </View>
       ))}
 
+      <Text style={styles.referralFootnote}>
+        {MYSTIC_PLANS_REFERRAL_FOOTNOTE}{' '}
+        <Text
+          style={styles.referralLink}
+          onPress={() => router.push('/(app)/(tabs)/book')}
+          accessibilityRole="link"
+        >
+          Enter a name at checkout
+        </Text>
+        .
+      </Text>
+
       {status ? (
         <Text style={styles.status} accessibilityRole="alert">
           {status}
@@ -332,7 +362,14 @@ export function NativePlansScreen() {
 const styles = StyleSheet.create({
   scroll: { flex: 1, backgroundColor: theme.paper },
   content: { padding: 20, paddingBottom: MYSTIC_TAB_BAR_SCROLL_PADDING + 24 },
-  trustRow: { marginTop: 16, gap: 6 },
+  trustRow: {
+    marginTop: 16,
+    gap: 8,
+    paddingVertical: 14,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.line,
+  },
   trustItem: { ...monoLabel, fontSize: 10, color: theme.muted },
   creditsCard: {
     marginTop: 16,
@@ -428,7 +465,16 @@ const styles = StyleSheet.create({
   successBody: { fontSize: 14, lineHeight: 20, color: theme.muted, marginTop: 8, marginBottom: 12 },
   dismiss: { marginTop: 8 },
   section: { ...monoLabel, color: theme.muted },
-  sectionHint: { fontSize: 13, lineHeight: 18, color: theme.muted },
+  sectionTitle: { ...displayTitle, fontSize: 22, lineHeight: 28, color: theme.ink, marginTop: 4 },
+  sectionHint: { fontSize: 13, lineHeight: 18, color: theme.muted, marginTop: 4 },
+  perkRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginTop: 6 },
+  perkDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: theme.gold,
+    marginTop: 7,
+  },
   card: {
     backgroundColor: theme.accentSoft,
     borderRadius: theme.radii.lg,
@@ -454,7 +500,14 @@ const styles = StyleSheet.create({
   price: { fontSize: 22, fontWeight: '600', marginTop: 6, color: theme.ink },
   per: { fontSize: 14, fontWeight: '400', color: theme.muted },
   detail: { marginTop: 6, color: theme.muted, fontSize: 13 },
-  perk: { marginTop: 4, fontSize: 13, color: theme.ink },
+  perk: { flex: 1, fontSize: 13, lineHeight: 18, color: theme.ink },
+  referralFootnote: {
+    marginTop: 20,
+    fontSize: 13,
+    lineHeight: 20,
+    color: theme.muted,
+  },
+  referralLink: { fontWeight: '600', color: theme.plum },
   packPhotoWrap: {
     position: 'relative',
     width: 112,

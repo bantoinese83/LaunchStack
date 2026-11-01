@@ -1,5 +1,6 @@
 import React from 'react';
 import { ScrollView, View, type RefreshControlProps } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { nativeScreenStyles } from './nativeScreenStyles';
 
 type Props = {
@@ -9,10 +10,18 @@ type Props = {
 
 /** Centered content column with consistent horizontal padding */
 export function NativeScreenShell({ children, refreshControl }: Props) {
+  const insets = useSafeAreaInsets();
+
   return (
     <ScrollView
       style={nativeScreenStyles.scroll}
-      contentContainerStyle={nativeScreenStyles.container}
+      contentContainerStyle={[
+        nativeScreenStyles.container,
+        {
+          paddingTop: Math.max(insets.top, 8) + 8,
+          paddingBottom: Math.max(insets.bottom, 16) + 32,
+        },
+      ]}
       keyboardShouldPersistTaps="handled"
       refreshControl={refreshControl}
     >

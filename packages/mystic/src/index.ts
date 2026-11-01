@@ -29,6 +29,7 @@ export * from './dicebear';
 export * from './address';
 export * from './messages';
 export * from './phone';
+export * from './account-ui';
 export * from './loading-copy';
 export * from './studio-scheduling';
 export * from './menu-overrides';

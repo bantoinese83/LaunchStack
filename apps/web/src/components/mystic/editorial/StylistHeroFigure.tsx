@@ -1,10 +1,10 @@
 'use client';
 
-import Image from 'next/image';
-import { AnimatePresence, motion, useInView, useReducedMotion } from 'framer-motion';
-import { useEffect, useRef, useState } from 'react';
-import { useDeferredEffect } from '@/lib/react/useDeferredEffect';
-import { MysticHeroPhotoGrid } from '@/components/mystic/editorial/MysticHeroPhotoGrid';
+import Link from 'next/link';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { useEffect, useState } from 'react';
+import { PixelImage } from '@/components/ui/pixel-image';
+import { SpinningText } from '@/components/ui/spinning-text';
 import { MYSTIC_MARKETING_IMAGES } from '@/lib/mystic/marketing-images';
 import { cn } from '@/lib/utils';
 
@@ -21,17 +21,10 @@ const SCENE_LABELS = [
 
 const ROTATE_MS = 6500;
 
-/** Editorial hero — cycles AI scenes inspired by Luke's headshot (real photo still used for avatars). */
+/** Editorial hero — cycles AI scenes with Magic UI pixel reveal. */
 export function StylistHeroFigure({ className }: Props) {
   const reduce = useReducedMotion();
   const [index, setIndex] = useState(0);
-  const [mounted, setMounted] = useState(false);
-  const frameRef = useRef<HTMLDivElement>(null);
-  const inView = useInView(frameRef, { once: true, margin: '-20px' });
-
-  useDeferredEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     if (reduce || SCENES.length < 2) return;
@@ -50,33 +43,54 @@ export function StylistHeroFigure({ className }: Props) {
         aria-hidden
         className="absolute inset-[8%] -z-10 rounded-[2rem] bg-gradient-to-br from-accent-soft/60 via-gold-soft/50 to-transparent blur-2xl"
       />
-      <div
-        ref={frameRef}
-        className="absolute inset-0 overflow-hidden rounded-[1.75rem] ring-1 ring-line/35 shadow-[0_28px_60px_-28px_rgba(26,31,24,0.4)]"
-      >
+      <div className="absolute inset-0 overflow-hidden rounded-[1.75rem] ring-1 ring-line/35 shadow-[0_28px_60px_-28px_rgba(26,31,24,0.4)]">
         <AnimatePresence mode="sync">
           <motion.div
             key={src}
             className="absolute inset-0"
-            initial={reduce ? false : { opacity: 0, scale: 1.04 }}
-            animate={{ opacity: 1, scale: 1 }}
+            initial={reduce ? false : { opacity: 0 }}
+            animate={{ opacity: 1 }}
             exit={reduce ? undefined : { opacity: 0 }}
-            transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
           >
-            <Image
+            <PixelImage
               src={src}
               alt={alt}
-              fill
-              className="object-cover object-[center_20%]"
-              sizes="(max-width:1024px) 90vw, 420px"
-              priority={index === 0}
+              grid="8x8"
+              grayscaleAnimation={!reduce}
+              pixelFadeInDuration={reduce ? 0 : 900}
+              maxAnimationDelay={reduce ? 0 : 1000}
+              colorRevealDelay={reduce ? 0 : 1100}
+              imageClassName="object-[center_20%]"
             />
           </motion.div>
         </AnimatePresence>
-        {mounted ? <MysticHeroPhotoGrid active={inView} /> : null}
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-paper/45 via-transparent to-paper/5" />
       </div>
-      {mounted && !reduce && SCENES.length > 1 ? (
+      {!reduce ? (
+        <Link
+          href="/book"
+          className="absolute -right-2 top-3 z-30 flex size-[8.5rem] items-center justify-center sm:-right-4 sm:top-5 sm:size-[9.5rem]"
+          aria-label="Book a Mystic house call"
+        >
+          <SpinningText
+            duration={18}
+            radius={5.5}
+            reverse
+            className="size-full font-sans text-[0.625rem] font-semibold uppercase text-plum sm:text-[0.6875rem]"
+          >
+            book · mystic · house call ·
+          </SpinningText>
+        </Link>
+      ) : (
+        <Link
+          href="/book"
+          className="absolute right-3 top-6 z-30 rounded-full border border-line/60 bg-paper/95 px-3 py-1.5 font-sans text-[0.6875rem] font-semibold uppercase tracking-wider text-plum shadow-sm"
+        >
+          Book
+        </Link>
+      )}
+      {!reduce && SCENES.length > 1 ? (
         <div
           className="absolute -bottom-1 left-1/2 z-20 flex -translate-x-1/2 gap-1.5"
           role="tablist"

@@ -44,10 +44,29 @@ export type FlowerSpec = {
   wobblePhase: number;
 };
 
-const BLOOM_WINDOW = 0.16;
+/** Time-driven hero blooms — spawn, open, hold, fade, repeat. */
+export type LiveFlowerSpec = FlowerSpec & {
+  id: number;
+  bornMs: number;
+  fadeStartMs: number;
+  fadeDurationMs: number;
+};
 
-function easeOutCubic(t: number) {
+export const LIVE_BLOOM_MS = 2600;
+export const LIVE_FADE_MS = 3400;
+export const LIVE_HOLD_MS_MIN = 7000;
+export const LIVE_HOLD_MS_MAX = 18000;
+
+const BLOOM_WINDOW = 0.22;
+
+export function easeOutCubic(t: number) {
   return 1 - (1 - t) ** 3;
+}
+
+/** Slow time-based bloom on first paint (combined with scroll in the hero canvas). */
+export function heroEntranceBloomProgress(timeMs: number, startMs: number, durationMs = 5600) {
+  if (durationMs <= 0) return 0;
+  return easeOutCubic(clamp01((timeMs - startMs) / durationMs)) * 1.12;
 }
 
 function clamp01(n: number) {
@@ -81,30 +100,81 @@ function pickColor() {
   return MYSTIC_HERO_FLOWER_COLORS[randomInt(0, MYSTIC_HERO_FLOWER_COLORS.length - 1)];
 }
 
+function randomFlowerSpec(width: number, height: number, margin = 24): FlowerSpec {
+  const w = Math.max(1, width);
+  const h = Math.max(1, height);
+  const flower: FlowerSpec = {
+    cx: randomInt(margin, Math.max(margin, w - margin)),
+    cy: randomInt(margin, Math.max(margin, h - margin)),
+    R: randomInt(18, 46),
+    Ri: randomInt(5, 7) / 10,
+    k: randomInt(5, 10) / 10,
+    ki: randomInt(2, 7) / 100,
+    K: randomInt(5, 16) / 10,
+    fs: pickColor(),
+    cs: pickColor(),
+    nP: randomInt(4, 10),
+    spacing: randomInt(4, 10),
+    bloomGate: 0,
+    kStart: 0,
+    RStart: 0,
+    kTarget: 0,
+    RTarget: 0,
+    wobblePhase: 0,
+  };
+  finalizeBloomTargets(flower, w, h);
+  return flower;
+}
+
+export function spawnLiveFlower(
+  width: number,
+  height: number,
+  bornMs: number,
+  id: number
+): LiveFlowerSpec {
+  const base = randomFlowerSpec(width, height);
+  const hold = LIVE_HOLD_MS_MIN + Math.random() * (LIVE_HOLD_MS_MAX - LIVE_HOLD_MS_MIN);
+  return {
+    ...base,
+    id,
+    bornMs,
+    fadeStartMs: bornMs + LIVE_BLOOM_MS + hold,
+    fadeDurationMs: LIVE_FADE_MS,
+  };
+}
+
+export function initLiveFlowerField(
+  width: number,
+  height: number,
+  count: number,
+  nowMs: number,
+  startId = 0
+): LiveFlowerSpec[] {
+  const flowers: LiveFlowerSpec[] = [];
+  for (let i = 0; i < count; i++) {
+    const stagger = Math.random() * 9000;
+    flowers.push(spawnLiveFlower(width, height, nowMs - stagger, startId + i));
+  }
+  return flowers;
+}
+
+export function liveFlowerProgress(flower: LiveFlowerSpec, timeMs: number) {
+  const bloom = easeOutCubic(clamp01((timeMs - flower.bornMs) / LIVE_BLOOM_MS));
+  let alpha = 1;
+  if (timeMs > flower.fadeStartMs) {
+    alpha = 1 - easeOutCubic(clamp01((timeMs - flower.fadeStartMs) / flower.fadeDurationMs));
+  }
+  return { t: bloom, alpha };
+}
+
+export function pruneLiveFlowers(flowers: LiveFlowerSpec[], timeMs: number) {
+  return flowers.filter((f) => liveFlowerProgress(f, timeMs).alpha > 0.015);
+}
+
 export function createFlowerField(width: number, height: number, count: number): FlowerSpec[] {
   const flowers: FlowerSpec[] = [];
   for (let i = 0; i < count; i++) {
-    const flower: FlowerSpec = {
-      cx: randomInt(0, width),
-      cy: randomInt(0, height),
-      R: randomInt(20, 50),
-      Ri: randomInt(5, 7) / 10,
-      k: randomInt(5, 10) / 10,
-      ki: randomInt(2, 7) / 100,
-      K: randomInt(5, 16) / 10,
-      fs: pickColor(),
-      cs: pickColor(),
-      nP: randomInt(4, 10),
-      spacing: randomInt(4, 10),
-      bloomGate: 0,
-      kStart: 0,
-      RStart: 0,
-      kTarget: 0,
-      RTarget: 0,
-      wobblePhase: 0,
-    };
-    finalizeBloomTargets(flower, width, height);
-    flowers.push(flower);
+    flowers.push(randomFlowerSpec(width, height));
   }
   flowers.sort((a, b) => a.bloomGate - b.bloomGate);
   return flowers;
@@ -186,6 +256,37 @@ export type DrawFlowersOptions = {
  * Draw flowers at bloom amount driven by scroll progress (0–1 through the hero).
  * Each flower opens over `BLOOM_WINDOW` of that progress, staggered by `bloomGate`.
  */
+function drawFlowerAtProgress(
+  ctx: CanvasRenderingContext2D,
+  flower: FlowerSpec,
+  t: number,
+  timeMs: number,
+  idleMotion: boolean,
+  alpha: number
+) {
+  if (t <= 0.001 || alpha <= 0.01) return;
+
+  let k = flower.kStart + (flower.kTarget - flower.kStart) * t;
+  let R = flower.RStart + (flower.RTarget - flower.RStart) * t;
+
+  if (idleMotion && t >= 0.92 && timeMs > 0) {
+    const breathe = Math.sin(timeMs * 0.0012 + flower.wobblePhase) * 0.022;
+    k *= 1 + breathe;
+    R *= 1 + breathe * 0.6;
+  }
+
+  const prevAlpha = ctx.globalAlpha;
+  ctx.globalAlpha = prevAlpha * alpha;
+
+  const petals = buildPetals(R, k, flower.cx, flower.cy, flower.nP, flower.spacing);
+  ctx.fillStyle = flower.fs;
+  for (const petal of petals) {
+    drawCurve(ctx, petal);
+  }
+  drawCenter(ctx, k, flower.cx, flower.cy, flower.cs);
+  ctx.globalAlpha = prevAlpha;
+}
+
 export function drawHeroFlowers(
   ctx: CanvasRenderingContext2D,
   width: number,
@@ -200,21 +301,25 @@ export function drawHeroFlowers(
   for (const flower of flowers) {
     const local = clamp01((scrollProgress - flower.bloomGate) / BLOOM_WINDOW);
     const t = easeOutCubic(local);
-    let k = flower.kStart + (flower.kTarget - flower.kStart) * t;
-    let R = flower.RStart + (flower.RTarget - flower.RStart) * t;
+    drawFlowerAtProgress(ctx, flower, t, timeMs, idleMotion, 1);
+  }
+}
 
-    if (idleMotion && local >= 1 && timeMs > 0) {
-      const breathe = Math.sin(timeMs * 0.0012 + flower.wobblePhase) * 0.022;
-      k *= 1 + breathe;
-      R *= 1 + breathe * 0.6;
-    }
+/** Continuous bloom field — each flower opens on its own timeline. */
+export function drawLiveHeroFlowers(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  flowers: LiveFlowerSpec[],
+  timeMs: number,
+  options: DrawFlowersOptions = {}
+) {
+  const { idleMotion = true } = options;
+  ctx.clearRect(0, 0, width, height);
 
-    const petals = buildPetals(R, k, flower.cx, flower.cy, flower.nP, flower.spacing);
-    ctx.fillStyle = flower.fs;
-    for (const petal of petals) {
-      drawCurve(ctx, petal);
-    }
-    drawCenter(ctx, k, flower.cx, flower.cy, flower.cs);
+  for (const flower of flowers) {
+    const { t, alpha } = liveFlowerProgress(flower, timeMs);
+    drawFlowerAtProgress(ctx, flower, t, timeMs, idleMotion, alpha);
   }
 }
 

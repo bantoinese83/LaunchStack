@@ -25,11 +25,6 @@ export function MysticAvatarMarquee({ defaultSeed, selectedUrl, busy = false, on
 
   return (
     <div className="w-full border-t border-line/70 pt-4">
-      <div className="mb-3 flex h-0.5 w-[4.5rem] overflow-hidden rounded-[1px]" aria-hidden>
-        <span className="h-full flex-[5] bg-gold" />
-        <span className="h-full flex-[2] bg-plum" />
-        <span className="h-full flex-[3] bg-accent" />
-      </div>
       <div className="flex items-center justify-between gap-2">
         <p className="type-eyebrow text-chalk">Looks</p>
         <button

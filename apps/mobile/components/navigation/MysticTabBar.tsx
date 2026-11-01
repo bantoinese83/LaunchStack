@@ -41,11 +41,6 @@ export function MysticTabBar(props: {
 
   return (
     <View style={[styles.shell, { paddingBottom: bottomPad }]} accessibilityRole="tablist">
-      <View style={styles.pinstripe} accessibilityElementsHidden importantForAccessibility="no">
-        <View style={styles.pinGold} />
-        <View style={styles.pinPlum} />
-        <View style={styles.pinSage} />
-      </View>
       <View style={styles.row}>
         {state.routes.map((route, index) => {
           const focused = state.index === index;
@@ -102,7 +97,6 @@ export function MysticTabBar(props: {
               >
                 {label}
               </Text>
-              <View style={[styles.tick, focused ? styles.tickOn : styles.tickOff]} />
             </NativePressableScale>
           );
         })}
@@ -114,16 +108,10 @@ export function MysticTabBar(props: {
 const styles = StyleSheet.create({
   shell: {
     backgroundColor: theme.paper,
-    paddingTop: 0,
+    paddingTop: 8,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: theme.line,
   },
-  pinstripe: {
-    flexDirection: 'row',
-    height: 2,
-    width: '100%',
-  },
-  pinGold: { flex: 5, backgroundColor: theme.gold },
-  pinPlum: { flex: 2, backgroundColor: theme.plum },
-  pinSage: { flex: 3, backgroundColor: theme.accent },
   row: {
     flexDirection: 'row',
     alignItems: 'stretch',
@@ -161,18 +149,5 @@ const styles = StyleSheet.create({
   labelOff: {
     color: theme.muted,
     fontWeight: '500',
-  },
-  tick: {
-    marginTop: 3,
-    height: 2,
-    borderRadius: 1,
-  },
-  tickOn: {
-    width: 16,
-    backgroundColor: theme.gold,
-  },
-  tickOff: {
-    width: 16,
-    backgroundColor: 'transparent',
   },
 });

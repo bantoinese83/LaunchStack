@@ -18,6 +18,8 @@ export const MYSTIC_MARKETING_IMAGES = {
   authVideo: '/marketing/auth-bg.mp4',
   /** Brand logo fallback when marketing photos are missing */
   logo: '/brand/mystic-hair-logo-light.png',
+  /** Gold M mark — hero spinning-text badge center */
+  markGold: '/brand/mystic-mark-gold.png',
 } as const;
 
 export type PixabayAttribution = {

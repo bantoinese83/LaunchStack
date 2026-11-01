@@ -3,7 +3,14 @@ import { Platform, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeButton, theme } from '@template/mobile-ui';
 
-export const NATIVE_BOOK_STICKY_ACTIONS_HEIGHT = 88;
+export const NATIVE_BOOK_STICKY_ACTIONS_HEIGHT = 112;
+
+export type NativeBookSelectionSummary = {
+  /** Primary line — usually formatted price. */
+  primary: string;
+  /** Secondary — e.g. duration or item count. */
+  secondary?: string;
+};
 
 type Props = {
   onBack: () => void;
@@ -14,6 +21,8 @@ type Props = {
   continueLoading?: boolean;
   continueContent?: React.ReactNode;
   footer?: string;
+  /** Fresha-style total row above Continue (service / checkout steps). */
+  selectionSummary?: NativeBookSelectionSummary;
 };
 
 /** Fixed back / continue bar — stays visible while scrolling long book steps. */
@@ -26,6 +35,7 @@ export function NativeBookStepActions({
   continueLoading,
   continueContent,
   footer,
+  selectionSummary,
 }: Props) {
   const insets = useSafeAreaInsets();
   const bottomPad = Math.max(insets.bottom, 12);
@@ -40,6 +50,14 @@ export function NativeBookStepActions({
         <Text style={styles.footer} accessibilityLiveRegion="polite">
           {footer}
         </Text>
+      ) : null}
+      {selectionSummary ? (
+        <View style={styles.summaryRow} accessibilityLiveRegion="polite">
+          <Text style={styles.summaryPrimary}>{selectionSummary.primary}</Text>
+          {selectionSummary.secondary ? (
+            <Text style={styles.summarySecondary}>{selectionSummary.secondary}</Text>
+          ) : null}
+        </View>
       ) : null}
       <View style={styles.row}>
         <NativeButton title={backLabel} variant="secondary" onPress={onBack} style={styles.half} />
@@ -63,16 +81,11 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     zIndex: 20,
-    paddingTop: 10,
+    paddingTop: 12,
     paddingHorizontal: 16,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: theme.line,
-    backgroundColor: Platform.OS === 'ios' ? 'rgba(250,248,244,0.94)' : theme.paper,
-    shadowColor: '#1a1f18',
-    shadowOpacity: 0.1,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: -4 },
-    elevation: 12,
+    backgroundColor: Platform.OS === 'ios' ? 'rgba(250,248,244,0.96)' : theme.paper,
   },
   footer: {
     marginBottom: 8,
@@ -80,6 +93,26 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
     color: theme.muted,
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    gap: 12,
+    marginBottom: 10,
+    paddingHorizontal: 2,
+  },
+  summaryPrimary: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: theme.ink,
+    letterSpacing: -0.3,
+  },
+  summarySecondary: {
+    fontSize: 13,
+    color: theme.muted,
+    flexShrink: 1,
+    textAlign: 'right',
   },
   row: { flexDirection: 'row', gap: 10 },
   half: { flex: 1 },

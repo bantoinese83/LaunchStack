@@ -71,14 +71,6 @@ export function NativeBookStepProgress({ step, onStepChange }: Props) {
           );
         })}
       </View>
-      <View style={styles.serrated} accessibilityElementsHidden>
-        {BOOKING_FLOW_STEPS.map((id, index) => (
-          <View
-            key={id}
-            style={[styles.tooth, index <= currentIndex ? styles.toothOn : styles.toothOff]}
-          />
-        ))}
-      </View>
       <Text style={styles.hint}>{BOOKING_FLOW_STEP_HINT[step]}</Text>
     </View>
   );
@@ -109,21 +101,5 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   stepLabelActive: { color: theme.ink, fontWeight: '600' },
-  serrated: {
-    flexDirection: 'row',
-    gap: 4,
-    marginTop: 12,
-  },
-  tooth: {
-    flex: 1,
-    height: 5,
-    borderRadius: 2,
-  },
-  toothOn: {
-    backgroundColor: theme.gold,
-  },
-  toothOff: {
-    backgroundColor: theme.line,
-  },
   hint: { ...monoLabel, color: theme.plum, marginTop: 10, fontSize: 12 },
 });

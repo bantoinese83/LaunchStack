@@ -30,7 +30,15 @@ export function MysticBookStepProgress({ step, onStepChange }: Props) {
 
   return (
     <div className="mb-8 w-full">
-      <ol className="flex items-start justify-between gap-1" aria-label="Booking steps">
+      <ol
+        className="flex items-start justify-between gap-1"
+        aria-label="Booking steps"
+        role="progressbar"
+        aria-valuemin={1}
+        aria-valuemax={BOOKING_FLOW_STEPS.length}
+        aria-valuenow={currentIndex + 1}
+        aria-valuetext={`Step ${currentIndex + 1} of ${BOOKING_FLOW_STEPS.length}: ${BOOKING_FLOW_STEP_HINT[step]}`}
+      >
         {BOOKING_FLOW_STEPS.map((id, index) => {
           const done = index < currentIndex;
           const active = index === currentIndex;
@@ -85,32 +93,7 @@ export function MysticBookStepProgress({ step, onStepChange }: Props) {
         })}
       </ol>
 
-      {/* Serrated progress — one tooth per step (not a single continuous bar) */}
-      <div
-        className="mt-4 flex w-full items-end gap-1.5"
-        role="progressbar"
-        aria-valuemin={1}
-        aria-valuemax={BOOKING_FLOW_STEPS.length}
-        aria-valuenow={currentIndex + 1}
-        aria-valuetext={`Step ${currentIndex + 1} of ${BOOKING_FLOW_STEPS.length}: ${BOOKING_FLOW_STEP_HINT[step]}`}
-      >
-        {BOOKING_FLOW_STEPS.map((id, index) => {
-          const on = index <= currentIndex;
-          const tall = index === currentIndex;
-          return (
-            <span
-              key={id}
-              className={[
-                'block min-w-0 flex-1 rounded-sm transition-all duration-300 ease-out',
-                tall ? 'h-2.5' : 'h-1.5',
-                on ? 'bg-gradient-to-r from-accent to-gold' : 'bg-line/80',
-              ].join(' ')}
-            />
-          );
-        })}
-      </div>
-
-      <p className="mt-2.5 text-center text-sm text-muted sm:text-left">
+      <p className="mt-3 text-center text-sm text-muted sm:text-left">
         {BOOKING_FLOW_STEP_HINT[step]}
       </p>
     </div>

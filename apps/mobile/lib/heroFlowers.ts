@@ -24,12 +24,15 @@ export type MobileFlowerSeed = {
   wobblePhase: number;
 };
 
-/** Deterministic field — stable across re-renders. */
+/** Stagger blooms across the splash window (ms). */
 export function buildMobileFlowerField(
   width: number,
   height: number,
-  count = 28
+  count = 28,
+  options?: { maxBloomDelayMs?: number; staggerMs?: number }
 ): MobileFlowerSeed[] {
+  const maxBloomDelayMs = options?.maxBloomDelayMs ?? 2200;
+  const staggerMs = options?.staggerMs ?? 35;
   const flowers: MobileFlowerSeed[] = [];
   let seed = 915_337;
   const rand = () => {
@@ -49,7 +52,7 @@ export function buildMobileFlowerField(
       petals: 4 + Math.floor(rand() * 7),
       petalColor: MYSTIC_HERO_FLOWER_COLORS[petalIdx],
       centerColor: MYSTIC_HERO_FLOWER_COLORS[centerIdx],
-      bloomDelayMs: Math.floor(rand() * 2200) + i * 35,
+      bloomDelayMs: Math.floor(rand() * maxBloomDelayMs) + i * staggerMs,
       wobblePhase: rand() * Math.PI * 2,
     });
   }

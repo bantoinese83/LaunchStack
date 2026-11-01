@@ -10,6 +10,9 @@ export default defineConfig({
   use: {
     baseURL: 'http://localhost:3000',
     trace: 'on-first-retry',
+    extraHTTPHeaders: {
+      'x-mystic-e2e': '1',
+    },
   },
   projects: [
     {
@@ -22,5 +25,8 @@ export default defineConfig({
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,
+    env: {
+      MYSTIC_E2E: '1',
+    },
   },
 });

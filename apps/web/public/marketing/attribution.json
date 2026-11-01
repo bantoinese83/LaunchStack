@@ -2,6 +2,18 @@
   "source": "Pixabay",
   "license": "Pixabay Content License",
   "fetchedAt": "2026-11-01T16:45:50.540Z",
+  "customServiceCards": {
+    "license": "Proprietary — Mystic Hair Co. marketing (AI-assisted editorial)",
+    "updatedAt": "2026-11-01T22:00:00.000Z",
+    "stylistReference": ["stylist-hero-house-call.jpg", "luke-avatar.jpg"],
+    "paths": [
+      "service-cards/blowout.jpg",
+      "service-cards/haircut.jpg",
+      "service-cards/updo.jpg",
+      "service-cards/dry-style.jpg"
+    ],
+    "note": "House-call menu + book-flow thumbs; diverse clients, non-stock editorial look."
+  },
   "items": [
     {
       "id": 4556486,

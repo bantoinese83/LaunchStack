@@ -90,12 +90,14 @@ export function NativeBookingCopilot({ fabBottomOffset = 24, ...props }: Props) 
     <>
       <Pressable
         onPress={() => setOpen(true)}
-        style={[styles.fab, { bottom: fabBottomOffset }]}
+        style={[styles.edgeTab, { bottom: fabBottomOffset }]}
         accessibilityRole="button"
         accessibilityLabel="Open booking copilot"
       >
         <NativeAiOrb active={props.busy} size="xs" label="" />
-        <Text style={styles.fabLabel}>Copilot</Text>
+        <Text style={styles.edgeTabLabel} numberOfLines={1}>
+          AI
+        </Text>
       </Pressable>
 
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
@@ -131,28 +133,36 @@ export function NativeBookingCopilot({ fabBottomOffset = 24, ...props }: Props) 
 }
 
 const styles = StyleSheet.create({
-  fab: {
+  edgeTab: {
     position: 'absolute',
-    right: 16,
-    bottom: 24,
+    right: 0,
     zIndex: 40,
-    flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    justifyContent: 'center',
+    gap: 4,
     paddingVertical: 10,
-    paddingLeft: 10,
-    paddingRight: 16,
-    borderRadius: 999,
+    paddingLeft: 8,
+    paddingRight: 6,
+    borderTopLeftRadius: 12,
+    borderBottomLeftRadius: 12,
     backgroundColor: theme.surface,
     borderWidth: StyleSheet.hairlineWidth,
+    borderRightWidth: 0,
     borderColor: theme.line,
     shadowColor: '#1a1f18',
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 6,
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    shadowOffset: { width: -2, height: 2 },
+    elevation: 4,
+    minWidth: 44,
   },
-  fabLabel: { fontSize: 14, fontWeight: '600', color: theme.ink },
+  edgeTabLabel: {
+    fontSize: 9,
+    fontWeight: '700',
+    letterSpacing: 0.8,
+    color: theme.muted,
+    textTransform: 'uppercase',
+  },
   modalRoot: { flex: 1, flexDirection: 'row', justifyContent: 'flex-end' },
   backdrop: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(26,31,24,0.45)' },
   panel: {

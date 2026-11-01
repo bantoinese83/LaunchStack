@@ -672,6 +672,9 @@ body {
 }
 
 .mystic-footer-shell {
+  --mystic-pattern-mx: 0.5;
+  --mystic-pattern-my: 0.5;
+  --mystic-pattern-hover: 0;
   background:
     radial-gradient(ellipse 80% 50% at 50% 100%, rgba(196, 169, 98, 0.12), transparent 55%),
     radial-gradient(ellipse 40% 30% at 0% 0%, rgba(122, 143, 110, 0.08), transparent 50%),
@@ -792,6 +795,67 @@ body {
       var(--mystic-cube-c3) 0
     );
   background-size: calc(var(--mystic-cube-s) * 1.73205080757) var(--mystic-cube-s);
+}
+
+/* Slow tile drift + light sweep — footer / pattern bands */
+.mystic-pattern-overlapping-cubes--live {
+  animation: mystic-cube-pattern-drift 56s linear infinite;
+}
+
+.mystic-footer-pattern-parallax {
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  transform: translate(
+      calc((var(--mystic-pattern-mx) - 0.5) * 32px * var(--mystic-pattern-hover)),
+      calc((var(--mystic-pattern-my) - 0.5) * 32px * var(--mystic-pattern-hover))
+    )
+    scale(calc(1 + 0.035 * var(--mystic-pattern-hover)));
+  transform-origin: calc(var(--mystic-pattern-mx) * 100%) calc(var(--mystic-pattern-my) * 100%);
+  will-change: transform;
+}
+
+.mystic-footer-pattern-spotlight {
+  opacity: calc(0.62 * var(--mystic-pattern-hover));
+  transition: opacity 0.4s ease;
+  background: radial-gradient(
+    circle clamp(160px, 38vw, 480px) at calc(var(--mystic-pattern-mx) * 100%)
+      calc(var(--mystic-pattern-my) * 100%),
+    color-mix(in srgb, var(--gold) 26%, transparent) 0%,
+    color-mix(in srgb, var(--accent) 14%, transparent) 38%,
+    transparent 70%
+  );
+  mix-blend-mode: soft-light;
+}
+
+.mystic-footer-pattern-shimmer {
+  background: linear-gradient(
+    108deg,
+    transparent 38%,
+    color-mix(in srgb, var(--gold) 14%, transparent) 46%,
+    color-mix(in srgb, var(--paper) 22%, transparent) 50%,
+    color-mix(in srgb, var(--gold) 10%, transparent) 54%,
+    transparent 62%
+  );
+  background-size: 220% 100%;
+  mix-blend-mode: soft-light;
+  opacity: calc(0.55 + 0.25 * var(--mystic-pattern-hover));
+  transition: opacity 0.4s ease;
+  animation: mystic-footer-pattern-shimmer 11s ease-in-out infinite;
+}
+
+@keyframes mystic-cube-pattern-drift {
+  to {
+    background-position: calc(var(--mystic-cube-s) * 1.73205080757) var(--mystic-cube-s);
+  }
+}
+
+@keyframes mystic-footer-pattern-shimmer {
+  0%,
+  100% {
+    background-position: 180% 0;
+  }
+  50% {
+    background-position: -80% 0;
+  }
 }
 
 /* Braided lines — https://css-pattern.com/two-braided-lines/ */
@@ -1016,28 +1080,6 @@ body {
   border-radius: inherit;
   background: linear-gradient(90deg, var(--accent), var(--gold));
   transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-/* Serrated booking stepper — one tooth per step */
-.mystic-progress-serrated {
-  display: flex;
-  gap: 0.4rem;
-  width: 100%;
-}
-
-.mystic-progress-tooth {
-  flex: 1;
-  height: 6px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--line) 80%, transparent);
-  transition:
-    background 0.35s cubic-bezier(0.22, 1, 0.36, 1),
-    transform 0.35s cubic-bezier(0.34, 1.45, 0.64, 1);
-}
-
-.mystic-progress-tooth-on {
-  background: linear-gradient(90deg, var(--accent), var(--gold));
-  transform: scaleY(1.15);
 }
 
 /* Door timer running out — same bar, warning palette. */
@@ -1639,5 +1681,17 @@ body {
   .launchstack-mark--animated .launchstack-mark__dot {
     animation: none !important;
     opacity: 1;
+  }
+  .mystic-pattern-overlapping-cubes--live,
+  .mystic-footer-pattern-shimmer {
+    animation: none !important;
+  }
+  .mystic-footer-pattern-shimmer,
+  .mystic-footer-pattern-spotlight {
+    opacity: 0;
+  }
+  .mystic-footer-pattern-parallax {
+    transform: none !important;
+    transition: none !important;
   }
 }

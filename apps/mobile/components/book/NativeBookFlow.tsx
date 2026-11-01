@@ -52,7 +52,7 @@ import {
   type ServiceId,
   type SurchargeRules,
 } from '@template/mystic';
-import { NativeButton, roadTrip, theme } from '@template/mobile-ui';
+import { monoLabel, NativeButton, roadTrip, theme } from '@template/mobile-ui';
 import { NativeScreenHeader } from '../mystic/NativeScreenHeader';
 import { NativeStylistChip } from '../mystic/NativeStylistChip';
 import { NativeAddressMapPreview } from '../maps/NativeAddressMapPreview';
@@ -520,9 +520,27 @@ export function NativeBookFlow() {
     }
   }
 
+  const selectedService = useMemo(
+    () => MYSTIC_SERVICES.find((s) => s.id === serviceId),
+    [serviceId]
+  );
+
   function renderStickyStepActions() {
     if (step === 'service') {
-      return <NativeBookStepActions onBack={goBack} onContinue={goNext} />;
+      return (
+        <NativeBookStepActions
+          onBack={goBack}
+          onContinue={goNext}
+          selectionSummary={
+            selectedService
+              ? {
+                  primary: formatUsd(selectedService.priceCents),
+                  secondary: `1 service · ${selectedService.durationMinutes} min`,
+                }
+              : undefined
+          }
+        />
+      );
     }
     if (step === 'datetime') {
       return (
@@ -560,11 +578,17 @@ export function NativeBookFlow() {
         serviceId === 'blowout' &&
         tipCents === 0 &&
         tipPreset !== 'custom';
+      const payTotalCents =
+        activeEntitlement !== 'none' && serviceId === 'blowout' ? tipCents : quote.totalCents;
       return (
         <NativeBookStepActions
           onBack={goBack}
           onContinue={() => void checkout()}
-          continueLabel={confirmNoPay ? 'Confirm booking' : 'Pay with Stripe'}
+          continueLabel={confirmNoPay ? 'Confirm booking' : 'Pay now'}
+          selectionSummary={{
+            primary: formatUsd(payTotalCents),
+            secondary: confirmNoPay ? 'No payment due today' : 'Due now · deposit + balance',
+          }}
           continueContent={
             confirmNoPay ? undefined : (
               <NativePayWithStripeLabel
@@ -643,9 +667,10 @@ export function NativeBookFlow() {
 
         {step === 'service' && (
           <>
+            <Text style={styles.sectionLabel}>Select a service</Text>
             <NativeBookPlansPromo />
             <View
-              style={styles.serviceGrid}
+              style={styles.serviceList}
               accessibilityRole="list"
               accessibilityLabel="Choose a service"
             >
@@ -655,12 +680,12 @@ export function NativeBookFlow() {
                   service={service}
                   selected={serviceId === service.id}
                   onSelect={() => setServiceId(service.id)}
+                  variant="list"
                 />
               ))}
             </View>
             <Text style={styles.serviceHint}>
-              Tap a service to select. Open Details for the full menu write-up — same info as
-              flipping a card on web.
+              Tap + to select. Full menu details open Luke's write-up for each service.
             </Text>
           </>
         )}
@@ -822,10 +847,12 @@ export function NativeBookFlow() {
 
         {step === 'review' && quote && scheduledAt && (
           <>
+            <Text style={styles.checkoutKicker}>
+              Step {BOOKING_FLOW_STEPS.length} of {BOOKING_FLOW_STEPS.length}
+            </Text>
+            <Text style={styles.checkoutTitle}>Review and checkout</Text>
             <View style={styles.summary}>
-              <Text style={styles.summaryTitle}>
-                {MYSTIC_SERVICES.find((s) => s.id === serviceId)?.name}
-              </Text>
+              <Text style={styles.summaryTitle}>{selectedService?.name ?? serviceId}</Text>
               <Text style={styles.muted}>{formatVisitWhen(scheduledAt.toISOString())}</Text>
               <Text style={styles.muted}>
                 {address.line1}, {address.city}
@@ -1022,12 +1049,24 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
   },
-  serviceGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
+  serviceList: {
+    gap: 12,
     marginTop: 8,
     marginBottom: 8,
+  },
+  checkoutKicker: {
+    ...monoLabel,
+    fontSize: 11,
+    color: theme.plum,
+    marginTop: 4,
+  },
+  checkoutTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: theme.ink,
+    letterSpacing: -0.4,
+    marginTop: 4,
+    marginBottom: 12,
   },
   inspoRow: { marginTop: 8, marginBottom: 4 },
   inspoThumb: {
@@ -1057,13 +1096,13 @@ const styles = StyleSheet.create({
   slotText: roadTrip.chipText,
   slotTextActive: roadTrip.chipTextActive,
   summary: {
-    marginTop: 12,
-    paddingVertical: 16,
+    marginTop: 4,
+    paddingTop: 16,
+    paddingBottom: 16,
     paddingHorizontal: 0,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderColor: theme.gold,
-    backgroundColor: theme.goldSoft,
+    borderColor: theme.line,
   },
   summaryTitle: { fontWeight: '600', fontSize: 17 },
   summaryTotal: { fontSize: 26, fontWeight: '600', marginTop: 8 },
