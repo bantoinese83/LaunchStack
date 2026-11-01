@@ -77,10 +77,10 @@ export const MYSTIC_EMPTY_CONTENT: Record<MysticEmptyVariant, MysticEmptyContent
     compactDescription: 'Pick another day or check back later.',
   },
   shop: {
-    illustration: 'referrals.jpg',
+    illustration: 'visits.jpg',
     eyebrow: 'Shop',
     title: MYSTIC_SHOP_COMING_SOON.title,
-    description: MYSTIC_SHOP_COMING_SOON.description,
+    description: MYSTIC_SHOP_COMING_SOON.compactDescription,
     compactDescription: MYSTIC_SHOP_COMING_SOON.compactDescription,
   },
   generic: {
@@ -91,3 +91,26 @@ export const MYSTIC_EMPTY_CONTENT: Record<MysticEmptyVariant, MysticEmptyContent
     compactDescription: 'Nothing to show right now.',
   },
 };
+
+export type VisitsTabKey = 'upcoming' | 'past';
+
+/** Copy when one visits tab is empty but the other has rows. */
+export function visitsTabEmptyContent(
+  tab: VisitsTabKey
+): Pick<MysticEmptyContent, 'eyebrow' | 'title' | 'description' | 'compactDescription'> {
+  if (tab === 'upcoming') {
+    return {
+      eyebrow: 'Upcoming',
+      title: "You're all caught up",
+      description:
+        'Book again anytime — your next visit will show here with live map, timing, and inspo.',
+      compactDescription: 'No upcoming house calls on the calendar.',
+    };
+  }
+  return {
+    eyebrow: 'History',
+    title: 'No past visits yet',
+    description: 'Completed house calls appear here for history and inspo photos.',
+    compactDescription: 'Past appointments list here after your first visit.',
+  };
+}

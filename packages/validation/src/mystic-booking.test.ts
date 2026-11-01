@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { mysticCreateAppointmentSchema } from './mystic';
+import { mysticClientOnboardingSchema, mysticCreateAppointmentSchema } from './mystic';
 
 const validBase = {
   workspaceId: '33333333-3333-3333-3333-333333333333',
@@ -49,5 +49,29 @@ describe('mysticCreateAppointmentSchema', () => {
       tipCents: 50_001,
     });
     expect(parsed.success).toBe(false);
+  });
+});
+
+describe('mysticClientOnboardingSchema', () => {
+  it('accepts skip', () => {
+    expect(mysticClientOnboardingSchema.safeParse({ action: 'skip' }).success).toBe(true);
+  });
+
+  it('requires name and phone on complete', () => {
+    const ok = mysticClientOnboardingSchema.safeParse({
+      action: 'complete',
+      fullName: 'Lauren Smith',
+      phone: '3125550100',
+      marketingSms: true,
+    });
+    expect(ok.success).toBe(true);
+
+    const bad = mysticClientOnboardingSchema.safeParse({
+      action: 'complete',
+      fullName: 'L',
+      phone: '123',
+      marketingSms: false,
+    });
+    expect(bad.success).toBe(false);
   });
 });

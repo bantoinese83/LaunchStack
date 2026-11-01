@@ -36,6 +36,9 @@ import {
   shouldShowBookingPlansNudge,
   BOOKING_PLANS_NUDGE,
   BOOK_FLOW_COPY,
+  MYSTIC_REFERRAL_SHARE,
+  MYSTIC_REFERRAL_QUERY_PARAM,
+  referralCodeForCheckout,
   type MysticCreditRow,
   bookingSubtotalBeforeTip,
   buildTipChoiceFromUi,
@@ -43,6 +46,7 @@ import {
   resolveBookingTipCents,
   type AppointmentTagId,
   createCheckoutIdempotencyKey,
+  defaultBookingDateIso,
   toggleAppointmentTag,
   type BookingFlowStep,
   type ServiceId,
@@ -59,7 +63,10 @@ import { NativeBookEntitlementPicker } from './NativeBookEntitlementPicker';
 import { NativeBookServiceCard } from './NativeBookServiceCard';
 import { NativeBookStepBreadcrumb } from './NativeBookStepBreadcrumb';
 import { NativeBookStepProgress } from './NativeBookStepProgress';
+import { NativeBookTripSummary } from './NativeBookTripSummary';
+import { NativeBookStepActions, NATIVE_BOOK_STICKY_ACTIONS_HEIGHT } from './NativeBookStepActions';
 import { NativeBookingCopilot, type NativeBookingCopilotExtras } from './NativeBookingCopilot';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   askBookingConcierge,
   fetchAvailability,
@@ -73,20 +80,24 @@ import {
 } from '../../lib/mysticApi';
 import { openStripeCheckoutSession } from '../../lib/openStripeCheckout';
 import { NativePayWithStripeLabel } from '../mystic/NativeStripeWordmark';
-
-function tomorrowIsoDate() {
-  const d = new Date();
-  d.setDate(d.getDate() + 1);
-  return d.toISOString().slice(0, 10);
-}
+import { useReferralAttribution } from '../../hooks/useReferralAttribution';
+import { useValidatedReferralCode } from '../../hooks/useValidatedReferralCode';
+import { clearReferralAttribution } from '../../lib/referral-storage';
 
 export function NativeBookFlow() {
+  const insets = useSafeAreaInsets();
+  const scrollBottomPad = NATIVE_BOOK_STICKY_ACTIONS_HEIGHT + Math.max(insets.bottom, 12) + 16;
   const router = useRouter();
-  const searchParams = useLocalSearchParams<{ canceled?: string }>();
+  const searchParams = useLocalSearchParams<{ canceled?: string; ref?: string }>();
+  const { referralCode } = useReferralAttribution(
+    searchParams.ref ?? searchParams[MYSTIC_REFERRAL_QUERY_PARAM]
+  );
+  const { referralApplied } = useValidatedReferralCode(referralCode);
+  const checkoutReferralCode = referralApplied ? referralCode : null;
   const [step, setStep] = useState<BookingFlowStep>('service');
   const [geocodeBusy, setGeocodeBusy] = useState(false);
   const [serviceId, setServiceId] = useState<ServiceId>('blowout');
-  const [date, setDate] = useState(tomorrowIsoDate());
+  const [date, setDate] = useState(() => defaultBookingDateIso());
   const [slot, setSlot] = useState('');
   const [slots, setSlots] = useState<string[]>([]);
   const [entitlement, setEntitlement] = useState<'none' | 'membership' | 'package'>('none');
@@ -124,11 +135,14 @@ export function NativeBookFlow() {
     if (!url || !url.includes('canceled=1')) return;
     checkoutIdempotencyKey.current = null;
     const released = await releaseBookingCheckout();
-    setStatus(
-      released.ok
-        ? 'Checkout canceled — your hold was released. Pick a time and try again when ready.'
-        : 'Checkout canceled — we could not release your hold automatically. Pull to refresh Visits or message Luke if the slot still looks taken.'
-    );
+    if (released.ok) {
+      setStep('datetime');
+      setStatus('Checkout canceled — your hold was released. Pick a time and continue when ready.');
+    } else {
+      setStatus(
+        'Checkout canceled — we could not release your hold automatically. Pull to refresh Visits or message Luke if the slot still looks taken.'
+      );
+    }
   }, []);
 
   useEffect(() => {
@@ -370,7 +384,7 @@ export function NativeBookFlow() {
         surchargeJson: quote.surcharges,
         tipCents,
         tags,
-        referredByName: referredBy.trim() || undefined,
+        ...referralCodeForCheckout(checkoutReferralCode, referredBy),
         clientNotes:
           [address.notes?.trim(), tipPreset === 'cash' ? BOOK_FLOW_COPY.clientTipCashNote : null]
             .filter(Boolean)
@@ -380,7 +394,12 @@ export function NativeBookFlow() {
         useMobileCancelDeepLink: true,
       });
       if (result.status === 401) {
-        router.push('/(auth)/login');
+        const ref = checkoutReferralCode ?? referralCode;
+        router.push(
+          ref
+            ? (`/(auth)/login?ref=${encodeURIComponent(ref)}` as '/(auth)/login')
+            : '/(auth)/login'
+        );
         return;
       }
       if (!result.ok) {
@@ -407,6 +426,7 @@ export function NativeBookFlow() {
         const directSuccess =
           result.url.includes('/book/success') || result.url.includes('book/success');
         if (directSuccess) {
+          void clearReferralAttribution();
           router.replace({
             pathname: '/book/success',
             params: { appointment_id: appointmentId ?? '' },
@@ -415,6 +435,7 @@ export function NativeBookFlow() {
         }
         const session = await openStripeCheckoutSession(result.url, 'mystichair://book/success');
         if (session.ok) {
+          void clearReferralAttribution();
           router.replace({
             pathname: '/book/success',
             params: { appointment_id: appointmentId ?? '' },
@@ -448,12 +469,14 @@ export function NativeBookFlow() {
   const canContinueDatetime = Boolean(date && slot);
   const distanceVerified = !geocodeBusy && Boolean(distanceNote?.includes('(auto)'));
   const distanceOutOfArea = distanceVerified && !isWithinHouseCallServiceArea(miles);
+  const addressNotFound = Boolean(distanceNote?.toLowerCase().includes('not found'));
   const canContinueLocation = Boolean(
     address.line1.trim() &&
     address.state.length === 2 &&
     address.postalCode.length >= 5 &&
     distanceVerified &&
-    !distanceOutOfArea
+    !distanceOutOfArea &&
+    !addressNotFound
   );
 
   const entitlementNote = clientEntitlementSummary(activeEntitlement);
@@ -496,6 +519,72 @@ export function NativeBookFlow() {
     }
   }
 
+  function renderStickyStepActions() {
+    if (step === 'service') {
+      return <NativeBookStepActions onBack={goBack} onContinue={goNext} />;
+    }
+    if (step === 'datetime') {
+      return (
+        <NativeBookStepActions
+          onBack={goBack}
+          onContinue={goNext}
+          continueDisabled={!canContinueDatetime}
+          footer={!canContinueDatetime ? 'Choose a date and time to continue.' : undefined}
+        />
+      );
+    }
+    if (step === 'location') {
+      const footer = geocodeBusy
+        ? 'Checking your address…'
+        : distanceOutOfArea
+          ? 'This address is outside our house-call zone.'
+          : addressNotFound
+            ? 'We could not verify that address — check street and ZIP.'
+            : undefined;
+      return (
+        <NativeBookStepActions
+          onBack={goBack}
+          onContinue={goNext}
+          continueDisabled={!canContinueLocation || geocodeBusy}
+          footer={footer}
+        />
+      );
+    }
+    if (step === 'details') {
+      return <NativeBookStepActions onBack={goBack} onContinue={goNext} continueLabel="Review" />;
+    }
+    if (step === 'review' && quote && scheduledAt) {
+      const confirmNoPay =
+        activeEntitlement !== 'none' &&
+        serviceId === 'blowout' &&
+        tipCents === 0 &&
+        tipPreset !== 'custom';
+      return (
+        <NativeBookStepActions
+          onBack={goBack}
+          onContinue={() => void checkout()}
+          continueLabel={confirmNoPay ? 'Confirm booking' : 'Pay with Stripe'}
+          continueContent={
+            confirmNoPay ? undefined : (
+              <NativePayWithStripeLabel
+                logoHeight={14}
+                textStyle={{
+                  fontSize: 15,
+                  fontWeight: '600',
+                  letterSpacing: -0.2,
+                  color: theme.paper,
+                }}
+              />
+            )
+          }
+          continueDisabled={!policiesAccepted || distanceOutOfArea}
+          continueLoading={submitting}
+        />
+      );
+    }
+    return null;
+  }
+
   function renderPlansNudge(compact?: boolean) {
     if (!showPlansNudge) return null;
     return (
@@ -529,7 +618,7 @@ export function NativeBookFlow() {
     >
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={styles.container}
+        contentContainerStyle={[styles.container, { paddingBottom: scrollBottomPad }]}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
       >
@@ -543,6 +632,14 @@ export function NativeBookFlow() {
         ) : null}
         <NativeBookStepBreadcrumb step={step} onStepChange={setStep} />
         <NativeBookStepProgress step={step} onStepChange={setStep} />
+
+        <NativeBookTripSummary
+          step={step}
+          serviceId={serviceId}
+          scheduledAt={scheduledAt}
+          addressLine1={address.line1}
+          estimateCents={quoteWithoutTip ? tipSubtotalCents : null}
+        />
 
         {step === 'service' && (
           <>
@@ -564,10 +661,6 @@ export function NativeBookFlow() {
               Tap a service to select. Open Details for the full menu write-up — same info as
               flipping a card on web.
             </Text>
-            <View style={styles.rowButtons}>
-              <NativeButton title="Back" variant="secondary" onPress={goBack} style={styles.half} />
-              <NativeButton title="Continue" onPress={goNext} style={styles.half} />
-            </View>
           </>
         )}
 
@@ -628,15 +721,6 @@ export function NativeBookFlow() {
                 Evening and travel fees may apply when you book outside a plan.
               </Text>
             )}
-            <View style={styles.rowButtons}>
-              <NativeButton title="Back" variant="secondary" onPress={goBack} style={styles.half} />
-              <NativeButton
-                title="Continue"
-                onPress={goNext}
-                disabled={!canContinueDatetime}
-                style={styles.half}
-              />
-            </View>
           </>
         )}
 
@@ -668,21 +752,22 @@ export function NativeBookFlow() {
               returnKeyType="done"
               blurOnSubmit
             />
-            <View style={styles.rowButtons}>
-              <NativeButton title="Back" variant="secondary" onPress={goBack} style={styles.half} />
-              <NativeButton
-                title="Continue"
-                onPress={goNext}
-                disabled={!canContinueLocation}
-                style={styles.half}
-              />
-            </View>
           </>
         )}
 
         {step === 'details' && (
           <>
             <Text style={styles.sectionLabel}>{BOOK_FLOW_COPY.preferencesSection}</Text>
+            {referralApplied && referralCode ? (
+              <View style={styles.referralApplied}>
+                <Text style={styles.referralAppliedTitle}>
+                  {MYSTIC_REFERRAL_SHARE.appliedBadge}
+                </Text>
+                <Text style={styles.muted}>
+                  Code {referralCode} — {MYSTIC_REFERRAL_SHARE.appliedHint}
+                </Text>
+              </View>
+            ) : null}
             <View style={styles.slotRow}>
               {APPOINTMENT_TAGS.map((tag) => (
                 <Pressable
@@ -698,13 +783,15 @@ export function NativeBookFlow() {
                 </Pressable>
               ))}
             </View>
-            <TextInput
-              placeholder={BOOK_FLOW_COPY.referredByPlaceholder}
-              value={referredBy}
-              onChangeText={setReferredBy}
-              style={styles.input}
-              returnKeyType="done"
-            />
+            {!referralApplied ? (
+              <TextInput
+                placeholder={BOOK_FLOW_COPY.referredByPlaceholder}
+                value={referredBy}
+                onChangeText={setReferredBy}
+                style={styles.input}
+                returnKeyType="done"
+              />
+            ) : null}
             <NativeButton
               title={BOOK_FLOW_COPY.addInspoPhotos}
               variant="secondary"
@@ -729,10 +816,6 @@ export function NativeBookFlow() {
                 </ScrollView>
               </>
             ) : null}
-            <View style={styles.rowButtons}>
-              <NativeButton title="Back" variant="secondary" onPress={goBack} style={styles.half} />
-              <NativeButton title="Review" onPress={goNext} style={styles.half} />
-            </View>
           </>
         )}
 
@@ -865,40 +948,6 @@ export function NativeBookFlow() {
                 I agree to house-call policies and SMS updates.
               </Text>
             </View>
-            <View style={styles.rowButtons}>
-              <NativeButton title="Back" variant="secondary" onPress={goBack} style={styles.half} />
-              {activeEntitlement !== 'none' &&
-              serviceId === 'blowout' &&
-              tipCents === 0 &&
-              tipPreset !== 'custom' ? (
-                <NativeButton
-                  title="Confirm booking"
-                  onPress={checkout}
-                  isLoading={submitting}
-                  disabled={!policiesAccepted}
-                  style={styles.half}
-                />
-              ) : (
-                <NativeButton
-                  title="Pay with Stripe"
-                  content={
-                    <NativePayWithStripeLabel
-                      logoHeight={14}
-                      textStyle={{
-                        fontSize: 15,
-                        fontWeight: '600',
-                        letterSpacing: -0.2,
-                        color: theme.paper,
-                      }}
-                    />
-                  }
-                  onPress={checkout}
-                  isLoading={submitting}
-                  disabled={!policiesAccepted}
-                  style={styles.half}
-                />
-              )}
-            </View>
           </>
         )}
 
@@ -908,6 +957,7 @@ export function NativeBookFlow() {
           </Text>
         ) : null}
       </ScrollView>
+      {renderStickyStepActions()}
       <NativeBookingCopilot
         prompt={conciergePrompt}
         onPromptChange={setConciergePrompt}
@@ -916,6 +966,7 @@ export function NativeBookFlow() {
         extras={conciergeExtras}
         onSubmit={() => void submitConcierge()}
         onPickService={setServiceId}
+        fabBottomOffset={scrollBottomPad - 8}
       />
     </KeyboardAvoidingView>
   );
@@ -933,6 +984,16 @@ const styles = StyleSheet.create({
     borderRadius: theme.radii.md,
     marginBottom: 8,
   },
+  referralApplied: {
+    marginBottom: 12,
+    padding: 12,
+    borderRadius: theme.radii.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.plum,
+    backgroundColor: theme.goldSoft,
+    gap: 4,
+  },
+  referralAppliedTitle: { fontSize: 14, fontWeight: '600', color: theme.ink },
   plansNudge: {
     marginBottom: 12,
     padding: 14,
@@ -949,7 +1010,7 @@ const styles = StyleSheet.create({
   plansNudgeTitle: { fontSize: 16, fontWeight: '600', color: theme.ink },
   plansNudgeBtn: { alignSelf: 'flex-start', marginTop: 4 },
   plansNudgeHint: { fontSize: 12, color: theme.muted, lineHeight: 16 },
-  container: { padding: 20, paddingBottom: 48 },
+  container: { padding: 20 },
   configBanner: {
     marginBottom: 16,
     paddingVertical: 12,
@@ -1012,6 +1073,4 @@ const styles = StyleSheet.create({
   muted: { color: theme.muted, fontSize: 13, marginTop: 6 },
   dangerText: { color: theme.danger, marginTop: 6 },
   cta: { marginTop: 10 },
-  rowButtons: { flexDirection: 'row', gap: 10, marginTop: 16 },
-  half: { flex: 1 },
 });

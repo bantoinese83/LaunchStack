@@ -14,7 +14,7 @@ import {
   type StudioAppointment,
   type StudioClientRow,
 } from '../../../../components/studio/NativeStudioOps';
-import { NativeShimmerText } from '../../../../components/motion/NativeShimmerText';
+import { NativeSalonLoader } from '../../../../components/mystic/NativeSalonLoader';
 import { useStudioAccess } from '../../../../hooks/useStudioAccess';
 import { MYSTIC_TAB_BAR_SCROLL_PADDING } from '../../../../components/navigation/mysticTabBarIcon';
 import { fetchStudioAppointments, fetchStudioClients } from '../../../../lib/studioApi';
@@ -114,9 +114,7 @@ export default function StudioHomeScreen() {
 
       <View style={styles.boardBlock}>
         {loading && !hasBoard && !error ? (
-          <View style={styles.loadingPad}>
-            <NativeShimmerText>Checking this week’s road…</NativeShimmerText>
-          </View>
+          <NativeSalonLoader copyKey="board" style={{ paddingVertical: 16 }} />
         ) : null}
 
         {error ? (

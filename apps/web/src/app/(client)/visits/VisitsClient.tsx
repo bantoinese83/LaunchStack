@@ -13,6 +13,7 @@ import {
   partitionVisitsForTabs,
   pickUpNextVisit,
   visitStatusLabel,
+  visitsTabEmptyContent,
   type ServiceId,
 } from '@template/mystic';
 import { MysticVisitStatusBadge } from '@/components/mystic/MysticVisitStatusBadge';
@@ -21,6 +22,7 @@ import {
   MysticLiveMapEmbed,
   visitAddressDestination,
 } from '@/components/mystic/MysticLiveMapEmbed';
+import { MysticSalonLoader } from '@/components/mystic/MysticSalonLoader';
 import { MysticPageIntro } from '@/components/mystic/MysticPageIntro';
 import { MysticEmptyState } from '@/components/mystic/MysticEmptyState';
 import { MysticMagneticButton, MysticMagneticLink } from '@/components/mystic/MysticMagneticButton';
@@ -208,6 +210,10 @@ export function VisitsClient() {
     return () => document.removeEventListener('visibilitychange', onVisible);
   }, [hasLiveTracking, load]);
 
+  const tabEmpty = visitsTabEmptyContent(tab);
+  const showGlobalEmpty = !loading && appointments.length === 0 && !error;
+  const showTabEmpty = !loading && appointments.length > 0 && visibleRows.length === 0 && !error;
+
   return (
     <MysticClientPage>
       <MysticPageIntro eyebrow="My visits" title="Your house calls" />
@@ -246,14 +252,8 @@ export function VisitsClient() {
         </button>
       </div>
       {error ? <p className="text-sm text-muted">{error}</p> : null}
-      {loading ? (
-        <ul className="flex flex-col gap-4" aria-busy="true">
-          {[0, 1].map((i) => (
-            <li key={i} className="h-36 animate-pulse rounded-2xl bg-surface" />
-          ))}
-        </ul>
-      ) : null}
-      {!loading && appointments.length === 0 && !error ? (
+      {loading ? <MysticSalonLoader copyKey="visits" className="py-10" /> : null}
+      {showGlobalEmpty ? (
         <MysticEmptyState
           variant="visits"
           action={
@@ -263,12 +263,21 @@ export function VisitsClient() {
           }
         />
       ) : null}
-      {!loading && appointments.length > 0 && visibleRows.length === 0 ? (
-        <p className="text-center text-sm text-muted">
-          {tab === 'upcoming'
-            ? 'No upcoming visits — book your next house call.'
-            : 'No past visits yet.'}
-        </p>
+      {showTabEmpty ? (
+        <MysticEmptyState
+          variant="visits"
+          compact
+          eyebrow={tabEmpty.eyebrow}
+          title={tabEmpty.title}
+          description={tabEmpty.description}
+          action={
+            tab === 'upcoming' ? (
+              <MysticMagneticLink href="/book" fullWidth>
+                Book a house call
+              </MysticMagneticLink>
+            ) : undefined
+          }
+        />
       ) : null}
       {tab === 'upcoming' && upNext ? <MysticVisitUpNext visit={upNext} /> : null}
       {tab === 'upcoming' && listRows.length > 0 ? (
@@ -359,20 +368,13 @@ export function VisitsClient() {
                   onUploaded={() => load({ silent: true })}
                 />
               ) : null}
-              <MysticMagneticLink href="/messages" className="mt-4 inline-block text-sm">
+              <MysticMagneticLink href="/messages" variant="secondary" size="sm" className="mt-4">
                 Message Luke about this visit
               </MysticMagneticLink>
             </li>
           );
         })}
       </ul>
-      {tab === 'upcoming' && upcoming.length === 0 ? (
-        <MysticMagneticLink href="/book" fullWidth>
-          Book a house call
-        </MysticMagneticLink>
-      ) : (
-        <MysticMagneticLink href="/messages">Message Luke</MysticMagneticLink>
-      )}
     </MysticClientPage>
   );
 }

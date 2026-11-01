@@ -1,15 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { monoLabel, theme } from '@template/mobile-ui';
 import { NativeEmptyState } from '../../../../components/mystic/NativeEmptyState';
+import { NativeSalonLoader } from '../../../../components/mystic/NativeSalonLoader';
 import { useStudioAccess } from '../../../../hooks/useStudioAccess';
 import { fetchReferralDashboard } from '../../../../lib/studioApi';
 
@@ -69,7 +62,7 @@ export default function StudioReferralsScreen() {
       </Pressable>
       {error ? <Text style={styles.error}>{error}</Text> : null}
       {loading && referrers.length === 0 ? (
-        <ActivityIndicator color={theme.accent} style={{ marginVertical: 24 }} />
+        <NativeSalonLoader copyKey="referrals" style={{ marginVertical: 16 }} />
       ) : null}
       {!loading && referrers.length === 0 && !error ? (
         <NativeEmptyState variant="referrals" compact />

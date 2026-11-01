@@ -5,6 +5,9 @@ import { useRouter } from 'next/navigation';
 import { getBrowserSupabaseClient } from '@/lib/supabase/browser-session';
 import { firstZodIssueMessage, getErrorMessage, signupSchema } from '@template/validation';
 import { analytics } from '@template/analytics';
+import { buildReferralBookPath } from '@template/mystic';
+import { resolveWebClientLanding } from '@/lib/mystic/resolve-client-landing';
+import { readStoredReferralCode } from '@/lib/mystic/referral-storage';
 
 export function useSignup() {
   const router = useRouter();
@@ -54,7 +57,12 @@ export function useSignup() {
         return;
       }
 
-      router.push('/account');
+      const storedRef = readStoredReferralCode();
+      const destination = storedRef
+        ? buildReferralBookPath(storedRef)
+        : await resolveWebClientLanding('/account');
+      router.push(destination as Parameters<typeof router.push>[0]);
+      router.refresh();
     } catch (err: unknown) {
       setError(getErrorMessage(err, 'Failed to sign up'));
     } finally {

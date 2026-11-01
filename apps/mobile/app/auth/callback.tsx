@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Linking from 'expo-linking';
 import { getErrorMessage } from '@template/validation';
 import { NativeButton, displayTitle, theme } from '@template/mobile-ui';
+import { NativeSalonLoader } from '../../components/mystic/NativeSalonLoader';
 import { createSessionFromUrl } from '../../lib/auth/sessionFromUrl';
 
 /** Deep link target: mystichair://auth/callback (OAuth + magic links). */
@@ -19,9 +20,9 @@ export default function AuthCallbackScreen() {
     void createSessionFromUrl(url)
       .then(async () => {
         if (cancelled) return;
-        const { fetchStudioAccess } = await import('../../lib/studioApi');
-        const access = await fetchStudioAccess().catch(() => ({ allowed: false }));
-        router.replace(access.allowed ? '/(app)/(tabs)/studio' : '/(app)/(tabs)/book');
+        const { resolveMobileAppLanding } = await import('../../lib/clientLanding');
+        const landing = await resolveMobileAppLanding();
+        router.replace(landing);
       })
       .catch((err) => {
         if (!cancelled) setError(getErrorMessage(err, 'Could not complete sign-in'));
@@ -44,8 +45,7 @@ export default function AuthCallbackScreen() {
 
   return (
     <View style={styles.center}>
-      <ActivityIndicator color={theme.accent} />
-      <Text style={styles.message}>Finishing sign-in…</Text>
+      <NativeSalonLoader copyKey="signIn" />
     </View>
   );
 }

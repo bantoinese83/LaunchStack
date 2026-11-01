@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { partitionStudioBoardAppointments } from '@template/mystic';
 import { NativeButton, monoLabel, theme } from '@template/mobile-ui';
+import { NativeSalonLoader } from '../mystic/NativeSalonLoader';
 import { NativeStudioOps, type StudioAppointment, type StudioClientRow } from './NativeStudioOps';
 
 type Props = {
@@ -44,13 +45,7 @@ export function NativeStudioBoard({
   }
 
   if (loading && appointments.length === 0) {
-    return (
-      <View style={styles.loadingCard} accessibilityLabel="Loading house calls">
-        <View style={styles.loadingBar} />
-        <View style={[styles.loadingBar, styles.loadingBarShort]} />
-        <Text style={styles.loading}>Loading this week’s house calls…</Text>
-      </View>
-    );
+    return <NativeSalonLoader copyKey="board" style={{ marginVertical: 8 }} />;
   }
 
   const hasAny = today.length > 0 || upcoming.length > 0;

@@ -241,7 +241,31 @@ export type ClientProfileRow = {
   marketing_sms?: boolean;
   marketing_email?: boolean;
   referral_code?: string | null;
+  onboarding_completed_at?: string | null;
 };
+
+export type ClientOnboardingPayload =
+  | { action: 'skip' }
+  | {
+      action: 'complete';
+      fullName: string;
+      phone: string;
+      marketingSms: boolean;
+    };
+
+export async function submitClientOnboarding(
+  body: ClientOnboardingPayload
+): Promise<{ ok: boolean; error?: string }> {
+  if (!appUrl) return { ok: false, error: 'EXPO_PUBLIC_APP_URL not set' };
+  const res = await fetch(`${appUrl}/api/mystic/client-profile/onboarding`, {
+    method: 'POST',
+    headers: await authHeaders(),
+    body: JSON.stringify(body),
+  });
+  const data = (await res.json()) as { error?: string };
+  if (!res.ok) return { ok: false, error: data.error ?? 'Could not save' };
+  return { ok: true };
+}
 
 export type ReferralProgress = {
   pending: number;

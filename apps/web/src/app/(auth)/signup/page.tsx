@@ -1,14 +1,20 @@
 'use client';
 
-import React from 'react';
+import React, { Suspense } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { Alert, Button, Input } from '@template/ui';
+import {
+  MYSTIC_REFERRAL_QUERY_PARAM,
+  buildReferralBookPath,
+  normalizeReferralCode,
+} from '@template/mystic';
 import { MysticAuthLogo } from '@/components/mystic/MysticAuthLogo';
 import { MysticAuthCard } from '@/components/mystic/MysticAuthCard';
 import { useSignup } from './useSignup';
 import { OAuthButtons } from '../components/OAuthButtons';
 
-export default function SignupPage() {
+function SignupPageInner() {
   const {
     fullName,
     setFullName,
@@ -20,6 +26,9 @@ export default function SignupPage() {
     isLoading,
     handleSignup,
   } = useSignup();
+  const searchParams = useSearchParams();
+  const ref = normalizeReferralCode(searchParams.get(MYSTIC_REFERRAL_QUERY_PARAM));
+  const oauthNext = ref ? buildReferralBookPath(ref) : '/account';
 
   return (
     <MysticAuthCard>
@@ -35,7 +44,7 @@ export default function SignupPage() {
         </Alert>
       )}
 
-      <OAuthButtons next="/account" />
+      <OAuthButtons next={oauthNext} />
 
       <form onSubmit={handleSignup} className="space-y-5">
         <Input
@@ -83,5 +92,13 @@ export default function SignupPage() {
         </Link>
       </p>
     </MysticAuthCard>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={null}>
+      <SignupPageInner />
+    </Suspense>
   );
 }

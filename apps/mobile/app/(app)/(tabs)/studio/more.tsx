@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { formatStudioAnalyticsRate, formatUsd } from '@template/mystic';
 import { monoLabel, theme } from '@template/mobile-ui';
+import { NativeSalonLoader } from '../../../../components/mystic/NativeSalonLoader';
 import { NativeRoadStripe } from '../../../../components/mystic/NativeRoadStripe';
 import { NativePressableScale } from '../../../../components/motion/NativePressableScale';
 import { NativeFadeIn } from '../../../../components/motion/NativeFadeIn';
@@ -95,7 +96,7 @@ export default function StudioMoreScreen() {
             ) : null}
           </View>
         ) : (
-          <Text style={styles.muted}>Loading…</Text>
+          <NativeSalonLoader copyKey="studio" size="sm" />
         )}
 
         <Text style={styles.section}>Winter buffer</Text>

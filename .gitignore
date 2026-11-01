@@ -24,8 +24,8 @@ storybook-static/
 
 # Expo / React Native build
 .expo/
-apps/mobile/ios/build/
-apps/mobile/ios/Pods/
+# Local prebuild (EAS generates native projects in CI); keeps Pods/build out of git
+apps/mobile/ios/
 *.apk
 *.aab
 *.ipa

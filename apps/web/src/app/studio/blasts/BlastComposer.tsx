@@ -1,6 +1,8 @@
 'use client';
 
 import { useCallback, useState } from 'react';
+import { MysticEmptyState } from '@/components/mystic/MysticEmptyState';
+import { MysticSalonLoader } from '@/components/mystic/MysticSalonLoader';
 import { StudioWorkspaceNotice } from '@/components/mystic/studio/StudioWorkspaceNotice';
 import {
   mysticCard,
@@ -169,11 +171,16 @@ export function BlastComposer() {
           </button>
         </div>
         {historyLoading ? (
-          <p className="text-sm text-muted">Loading history…</p>
+          <MysticSalonLoader copyKey="history" size="sm" className="py-4" />
         ) : history.length === 0 ? (
-          <p className={`${mysticCard} p-4 text-sm text-muted`}>
-            No blasts sent yet — your first send will appear here.
-          </p>
+          <MysticEmptyState
+            variant="generic"
+            compact
+            eyebrow="Blasts"
+            title="No sends yet"
+            description="Your first SMS blast will show here with delivery stats."
+            className="mb-0"
+          />
         ) : (
           <ul className={`${mysticCard} divide-y divide-line/80 overflow-hidden p-0`}>
             {history.slice(0, 12).map((row) => (

@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import { MysticEmptyState } from '@/components/mystic/MysticEmptyState';
+import { MysticSalonLoader } from '@/components/mystic/MysticSalonLoader';
 import { StudioLoadingRows } from '@/components/mystic/studio/StudioLoadingRows';
 import { StudioWorkspaceNotice } from '@/components/mystic/studio/StudioWorkspaceNotice';
 import { mysticCard, mysticInput } from '@/components/mystic/mystic-styles';
@@ -128,7 +129,9 @@ export function ReferralsPanel() {
         referred client&apos;s booking is confirmed. Rewards use lifetime pending totals.
       </p>
       {error ? <p className="text-sm text-danger">{error}</p> : null}
-      {loading && referrers.length === 0 ? <StudioLoadingRows count={2} /> : null}
+      {loading && referrers.length === 0 ? (
+        <StudioLoadingRows count={2} copyKey="referrals" />
+      ) : null}
 
       {!loading && referrers.length === 0 && !error ? (
         <MysticEmptyState variant="referrals" compact />
@@ -201,7 +204,9 @@ export function ReferralsPanel() {
         <h3 className="text-sm font-medium text-ink">Recent in {monthLabel}</h3>
         <ul className={`${mysticCard} mt-3 divide-y divide-line/80 overflow-hidden p-0`}>
           {loading && recent.length === 0 ? (
-            <li className="p-4 text-sm text-muted">Loading…</li>
+            <li className="list-none p-4">
+              <MysticSalonLoader copyKey="referrals" size="sm" />
+            </li>
           ) : recent.length === 0 ? (
             <li className="list-none p-2">
               <MysticEmptyState

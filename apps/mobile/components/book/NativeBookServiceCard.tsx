@@ -1,8 +1,16 @@
 import React, { useState } from 'react';
-import { Modal, Pressable, StyleSheet, Text, View, type ViewStyle } from 'react-native';
+import {
+  ImageBackground,
+  Modal,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  type ViewStyle,
+} from 'react-native';
 import { formatUsd, type MysticService } from '@template/mystic';
 import { MYSTIC_HAND_FONT, monoLabel, NativeButton, theme } from '@template/mobile-ui';
-import { NativeServiceIllustration } from '../mystic/NativeServiceIllustration';
+import { NATIVE_SERVICE_CARD_IMAGE } from '../../lib/service-card-images';
 
 type Props = {
   service: MysticService;
@@ -14,36 +22,49 @@ type Props = {
 /** Tap to select; Details sheet for the “back of the card” copy (no 3D flip on native). */
 export function NativeBookServiceCard({ service, selected, onSelect, style }: Props) {
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const photo = NATIVE_SERVICE_CARD_IMAGE[service.id];
 
   return (
     <>
       <View style={[styles.tile, selected && styles.tileSelected, style]}>
-        <Pressable
-          onPress={onSelect}
-          accessibilityRole="button"
-          accessibilityState={{ selected }}
-          accessibilityLabel={`${service.name}, ${service.durationMinutes} minutes, ${formatUsd(service.priceCents)}`}
-          style={styles.tileBody}
+        <ImageBackground
+          source={photo}
+          style={styles.photo}
+          imageStyle={styles.photoImage}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
         >
-          <View style={styles.tileTop}>
-            <NativeServiceIllustration serviceId={service.id} />
-            <Text style={styles.duration}>{service.durationMinutes}m</Text>
-          </View>
-          {selected ? (
-            <View style={styles.selectedBadge}>
-              <Text style={styles.selectedBadgeText}>Selected</Text>
+          <View
+            style={[styles.photoScrim, selected && styles.photoScrimSelected]}
+            pointerEvents="none"
+          />
+          <Pressable
+            onPress={onSelect}
+            accessibilityRole="button"
+            accessibilityState={{ selected }}
+            accessibilityLabel={`${service.name}, ${service.durationMinutes} minutes, ${formatUsd(service.priceCents)}`}
+            style={styles.tileBody}
+          >
+            <View style={styles.tileTop}>
+              <View style={styles.tileTopSpacer} />
+              <Text style={styles.duration}>{service.durationMinutes}m</Text>
             </View>
-          ) : null}
-          <Text style={styles.title}>{service.name}</Text>
-          <Text style={styles.meta} numberOfLines={selected ? undefined : 2}>
-            {selected
-              ? service.description
-              : `${service.durationMinutes} min · ${formatUsd(service.priceCents)}`}
-          </Text>
-          {selected ? (
-            <Text style={styles.priceSelected}>{formatUsd(service.priceCents)}</Text>
-          ) : null}
-        </Pressable>
+            {selected ? (
+              <View style={styles.selectedBadge}>
+                <Text style={styles.selectedBadgeText}>Selected</Text>
+              </View>
+            ) : null}
+            <Text style={styles.title}>{service.name}</Text>
+            <Text style={styles.meta} numberOfLines={selected ? undefined : 2}>
+              {selected
+                ? service.description
+                : `${service.durationMinutes} min · ${formatUsd(service.priceCents)}`}
+            </Text>
+            {selected ? (
+              <Text style={styles.priceSelected}>{formatUsd(service.priceCents)}</Text>
+            ) : null}
+          </Pressable>
+        </ImageBackground>
         <Pressable
           onPress={() => setDetailsOpen(true)}
           accessibilityRole="button"
@@ -103,20 +124,35 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   tileSelected: {
-    backgroundColor: theme.goldSoft,
     borderWidth: 1,
     borderColor: theme.gold,
   },
+  photo: { flex: 1, minHeight: 168 },
+  photoImage: { borderTopLeftRadius: theme.radii.lg, borderTopRightRadius: theme.radii.lg },
+  photoScrim: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: 'rgba(250,248,244,0.72)',
+  },
+  photoScrimSelected: {
+    backgroundColor: 'rgba(248,243,230,0.82)',
+  },
   tileBody: {
+    flex: 1,
     padding: 14,
     paddingBottom: 8,
     gap: 6,
+    justifyContent: 'flex-end',
   },
   tileTop: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
+    position: 'absolute',
+    top: 10,
+    left: 14,
+    right: 14,
   },
+  tileTopSpacer: { flex: 1 },
   duration: {
     ...monoLabel,
     fontSize: 10,
@@ -133,6 +169,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: theme.radii.pill,
+    marginBottom: 4,
   },
   selectedBadgeText: {
     ...monoLabel,
@@ -148,6 +185,7 @@ const styles = StyleSheet.create({
     borderTopColor: theme.line,
     paddingVertical: 8,
     alignItems: 'center',
+    backgroundColor: theme.surface,
   },
   detailsBtnText: {
     ...monoLabel,

@@ -534,8 +534,14 @@ export function StudioCalendar() {
                 </div>
               ) : null}
               {dayRows.length === 0 ? (
-                <div className="absolute inset-0 flex items-center justify-center px-6">
-                  <p className="text-sm text-muted">No house calls this day.</p>
+                <div className="absolute inset-0 flex items-center justify-center px-4 py-8">
+                  <MysticEmptyState
+                    variant="calendar"
+                    compact
+                    title="Open day"
+                    description="No house calls scheduled — pick another day or check blocked dates."
+                    className="mb-0 border-0 bg-transparent shadow-none"
+                  />
                 </div>
               ) : (
                 dayRows.map((row) => {

@@ -25,6 +25,8 @@ type Props = {
   extras: NativeBookingCopilotExtras;
   onSubmit: () => void;
   onPickService: (serviceId: ServiceId) => void;
+  /** Lift FAB when a bottom sticky bar is shown (book step actions). */
+  fabBottomOffset?: number;
 };
 
 function CopilotBody({
@@ -79,7 +81,7 @@ function CopilotBody({
   );
 }
 
-export function NativeBookingCopilot(props: Props) {
+export function NativeBookingCopilot({ fabBottomOffset = 24, ...props }: Props) {
   const [open, setOpen] = useState(false);
   const { width } = useWindowDimensions();
   const panelWidth = Math.min(width * 0.92, 360);
@@ -88,7 +90,7 @@ export function NativeBookingCopilot(props: Props) {
     <>
       <Pressable
         onPress={() => setOpen(true)}
-        style={styles.fab}
+        style={[styles.fab, { bottom: fabBottomOffset }]}
         accessibilityRole="button"
         accessibilityLabel="Open booking copilot"
       >

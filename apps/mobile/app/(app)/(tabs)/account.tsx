@@ -1,24 +1,17 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  Share,
-  StyleSheet,
-  Switch,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Pressable, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { createSupabaseMobileClient } from '@template/api/mobile';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { formatUsPhoneInput, stripUsPhoneDigits } from '@template/mystic';
 import { NativeButton, monoLabel, roadTrip, theme } from '@template/mobile-ui';
 import { NativeProfileAvatar } from '../../../components/mystic/NativeProfileAvatar';
+import { NativeSalonLoader } from '../../../components/mystic/NativeSalonLoader';
 import { NativeScreenHeader } from '../../../components/mystic/NativeScreenHeader';
 import { NativeScreenShell } from '../../../components/mystic/NativeScreenShell';
 import { useStudioAccess } from '../../../hooks/useStudioAccess';
 import { hapticSuccess } from '../../../lib/haptics';
+import { NativeReferralShareCard } from '../../../components/mystic/NativeReferralShareCard';
 import { fetchClientProfile, fetchMyCredits, saveClientProfile } from '../../../lib/mysticApi';
 
 type FormState = {
@@ -47,6 +40,8 @@ export default function AccountTab() {
   const [savedFlash, setSavedFlash] = useState(false);
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const [referralCopy, setReferralCopy] = useState<string | null>(null);
+  const [referralThreshold, setReferralThreshold] = useState(5);
+  const [referralTowardNext, setReferralTowardNext] = useState(0);
   const [creditsSummary, setCreditsSummary] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
@@ -76,6 +71,8 @@ export default function AccountTab() {
       });
       setReferralCode(p?.referral_code ?? null);
       setReferralCopy(data.referralProgress?.copy ?? null);
+      setReferralThreshold(data.referralProgress?.threshold ?? 5);
+      setReferralTowardNext(data.referralProgress?.towardNext ?? 0);
       setAvatarUrl(p?.avatar_url ?? null);
 
       const credits = await fetchMyCredits();
@@ -131,11 +128,6 @@ export default function AccountTab() {
     }
   }
 
-  async function shareReferral() {
-    if (!referralCode) return;
-    await Share.share({ message: referralCode });
-  }
-
   const signOut = async () => {
     const supabase = createSupabaseMobileClient();
     await supabase.auth.signOut();
@@ -143,11 +135,7 @@ export default function AccountTab() {
   };
 
   if (loading) {
-    return (
-      <View style={styles.loadingWrap}>
-        <ActivityIndicator color={theme.accent} />
-      </View>
-    );
+    return <NativeSalonLoader copyKey="profile" fill />;
   }
 
   return (
@@ -155,16 +143,12 @@ export default function AccountTab() {
       <NativeScreenHeader kicker="Account" title="Your profile" />
 
       {referralCode ? (
-        <View style={styles.referralBox}>
-          <Text style={styles.referralHint}>Your referral code</Text>
-          <View style={styles.referralRow}>
-            <Text style={styles.referralCode}>{referralCode}</Text>
-            <Pressable onPress={() => void shareReferral()} style={styles.copyBtn}>
-              <Text style={styles.copyText}>Share</Text>
-            </Pressable>
-          </View>
-          {referralCopy ? <Text style={styles.referralProgress}>{referralCopy}</Text> : null}
-        </View>
+        <NativeReferralShareCard
+          referralCode={referralCode}
+          progressCopy={referralCopy}
+          threshold={referralThreshold}
+          towardNext={referralTowardNext}
+        />
       ) : null}
       {creditsSummary ? <Text style={styles.credits}>{creditsSummary}</Text> : null}
 

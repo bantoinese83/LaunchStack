@@ -10,6 +10,7 @@ import {
   type ServiceId,
 } from '@template/mystic';
 import { monoLabel, theme } from '@template/mobile-ui';
+import { NativeSalonLoader } from '../mystic/NativeSalonLoader';
 import { NativeMysticMap, type NativeMapMarker } from '../maps/NativeMysticMap';
 import { fetchGeocodeBatch } from '../../lib/studioApi';
 import type { StudioAppointment, StudioClientRow } from './NativeStudioOps';
@@ -115,7 +116,7 @@ export function NativeStudioTodayMap({ workspaceId, appointments, clientsById }:
     <View style={styles.wrap}>
       <Text style={styles.kicker}>Today on the map</Text>
       {loading && mapMarkers.length === 0 ? (
-        <Text style={styles.hint}>Loading stops…</Text>
+        <NativeSalonLoader copyKey="route" size="sm" hideLabel />
       ) : mapMarkers.length === 0 ? (
         <Text style={styles.hint}>Add addresses to see house calls on the map.</Text>
       ) : (

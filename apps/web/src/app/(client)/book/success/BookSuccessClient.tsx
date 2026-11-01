@@ -1,6 +1,7 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { clearReferralAttribution } from '@/lib/mystic/referral-storage';
 import { CalendarPlus } from 'lucide-react';
 import { MysticIcon } from '@/components/mystic/icons/MysticIcon';
 import { MysticStripeWordmark } from '@/components/mystic/MysticStripeWordmark';
@@ -36,6 +37,10 @@ const UPSELL_PACKAGE_ID: PackageId = 'pack_4';
 export function BookSuccessClient({ appointment, refShort }: Props) {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
+
+  useEffect(() => {
+    clearReferralAttribution();
+  }, []);
 
   const calendar = useMemo(() => {
     if (!appointment) return null;

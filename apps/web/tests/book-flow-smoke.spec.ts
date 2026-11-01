@@ -2,7 +2,7 @@
  * Smoke tests for the public book flow UI (web). Shared behavior is also locked in
  * packages/mystic/src/book-flow-parity.test.ts.
  */
-import { formatBookingSlotLabel } from '@template/mystic';
+import { BOOKING_FLOW_STEP_HINT, formatBookingSlotLabel } from '@template/mystic';
 import { test, expect } from '@playwright/test';
 
 test.describe('Book flow — UI smoke', () => {
@@ -10,6 +10,7 @@ test.describe('Book flow — UI smoke', () => {
     await page.goto('/book');
     await expect(page.getByRole('heading', { level: 1 })).toContainText(/book/i);
     await expect(page.getByText('Referral code (optional)')).toHaveCount(0);
+    await expect(page.getByTestId('service-card-photo-blowout').first()).toBeVisible();
 
     await page.getByRole('button', { name: 'Continue' }).click();
     await expect(page.locator('label').filter({ hasText: /^Date$/ })).toBeVisible();
@@ -30,5 +31,30 @@ test.describe('Book flow — UI smoke', () => {
     expect(formatBookingSlotLabel('13:00')).toBe('1 PM');
     expect(firstLabel).toMatch(/\b(AM|PM)\b/);
     await expect(page.getByRole('button', { name: /^\d{1,2}:\d{2}$/ })).toHaveCount(0);
+  });
+
+  test('datetime step shows guidance, summary sidebar, and sticky actions', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await page.goto('/book');
+    await expect(page.getByText(BOOKING_FLOW_STEP_HINT.service)).toBeVisible();
+
+    await page.getByRole('button', { name: 'Continue' }).click();
+    await expect(page.getByText(BOOKING_FLOW_STEP_HINT.datetime)).toBeVisible();
+    await expect(page.getByLabel('Booking summary')).toBeVisible();
+    await expect(page.getByText('Your house call')).toBeVisible();
+
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    const continueBtn = page.getByRole('button', { name: 'Continue' });
+    await expect(continueBtn).toBeInViewport();
+    await expect(page.getByRole('button', { name: 'Back' })).toBeInViewport();
+  });
+
+  test('back from datetime returns to service step', async ({ page }) => {
+    await page.goto('/book');
+    await page.getByRole('button', { name: 'Continue' }).click();
+    await expect(page.getByText(BOOKING_FLOW_STEP_HINT.datetime)).toBeVisible();
+
+    await page.getByRole('button', { name: 'Back' }).click();
+    await expect(page.getByText(BOOKING_FLOW_STEP_HINT.service)).toBeVisible();
   });
 });

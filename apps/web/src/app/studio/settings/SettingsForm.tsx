@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from 'react';
 import { formatUsd } from '@template/mystic';
+import { MysticSalonLoader } from '@/components/mystic/MysticSalonLoader';
 import { StudioWorkspaceNotice } from '@/components/mystic/studio/StudioWorkspaceNotice';
 import { mysticCard, mysticInput, mysticStudioBtn } from '@/components/mystic/mystic-styles';
 import { getMysticWorkspaceId } from '@/lib/mystic/config';
@@ -87,7 +88,11 @@ export function SettingsForm() {
   }
 
   if (loading) {
-    return <div className={`${mysticCard} h-64 animate-pulse`} aria-busy="true" />;
+    return (
+      <div aria-busy="true">
+        <MysticSalonLoader copyKey="settings" className="py-8" />
+      </div>
+    );
   }
 
   return (

@@ -75,6 +75,21 @@ export const mysticBookingDraftSchema = z.object({
   distanceMiles: mysticDistanceMilesSchema,
 });
 
+export const mysticClientOnboardingSchema = z.discriminatedUnion('action', [
+  z.object({
+    action: z.literal('skip'),
+  }),
+  z.object({
+    action: z.literal('complete'),
+    fullName: z.string().min(2).max(80),
+    phone: z
+      .string()
+      .min(10, 'Mobile number is required for SMS updates')
+      .max(20, 'Phone number is too long'),
+    marketingSms: z.boolean().default(true),
+  }),
+]);
+
 export const mysticClientProfileSchema = z.object({
   fullName: z.string().min(2).max(80),
   email: z.email(),

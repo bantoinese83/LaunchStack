@@ -5,7 +5,9 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { MysticProfileAvatar } from '@/components/mystic/MysticProfileAvatar';
 import { MysticMagneticButton } from '@/components/mystic/MysticMagneticButton';
+import { MysticSalonLoader } from '@/components/mystic/MysticSalonLoader';
 import { mysticInput } from '@/components/mystic/mystic-styles';
+import { MysticReferralShareCard } from '@/components/mystic/MysticReferralShareCard';
 
 type ProfileForm = {
   fullName: string;
@@ -51,7 +53,6 @@ export function AccountClient({ initialEmail }: { initialEmail: string | null })
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const [referralProgress, setReferralProgress] = useState<ReferralProgress | null>(null);
   const [creditsSummary, setCreditsSummary] = useState<string | null>(null);
-  const [copyHint, setCopyHint] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   const loadProfile = useCallback(() => {
@@ -139,62 +140,19 @@ export function AccountClient({ initialEmail }: { initialEmail: string | null })
     }
   }
 
-  async function copyReferral() {
-    if (!referralCode) return;
-    try {
-      await navigator.clipboard.writeText(referralCode);
-      setCopyHint('Copied');
-      setTimeout(() => setCopyHint(null), 2000);
-    } catch {
-      setCopyHint('Copy manually');
-    }
-  }
-
   if (loading) {
-    return (
-      <div className="space-y-4 py-2" aria-busy="true">
-        {[0, 1, 2, 3].map((i) => (
-          <div key={i} className="h-10 animate-pulse border-b border-line/40 bg-line/20" />
-        ))}
-      </div>
-    );
+    return <MysticSalonLoader copyKey="profile" className="py-8" />;
   }
 
   return (
     <form onSubmit={save} className="space-y-5">
       {referralCode ? (
-        <div className="rounded-xl bg-gold-soft/90 px-4 py-3 text-sm">
-          <p className="text-muted">
-            Share with friends — free blowout after {referralProgress?.threshold ?? 5} confirmed
-            bookings.
-          </p>
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            <span className="font-mono text-base font-medium text-ink">{referralCode}</span>
-            <button
-              type="button"
-              onClick={() => void copyReferral()}
-              className="border-b border-plum/40 px-1 py-0.5 text-xs font-medium text-plum"
-            >
-              {copyHint ?? 'Copy code'}
-            </button>
-          </div>
-          {referralProgress ? (
-            <div className="mt-3">
-              <div className="h-1.5 overflow-hidden rounded-full bg-line/70">
-                <div
-                  className="h-full rounded-full bg-gold transition-[width] duration-500"
-                  style={{
-                    width: `${Math.min(
-                      100,
-                      (referralProgress.towardNext / Math.max(1, referralProgress.threshold)) * 100
-                    )}%`,
-                  }}
-                />
-              </div>
-              <p className="mt-2 text-xs text-muted">{referralProgress.copy}</p>
-            </div>
-          ) : null}
-        </div>
+        <MysticReferralShareCard
+          referralCode={referralCode}
+          progressCopy={referralProgress?.copy}
+          threshold={referralProgress?.threshold}
+          towardNext={referralProgress?.towardNext}
+        />
       ) : null}
       {creditsSummary ? (
         <p className="rounded-xl bg-surface px-4 py-3 text-sm text-chalk">{creditsSummary}</p>

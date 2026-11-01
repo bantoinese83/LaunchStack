@@ -4,10 +4,10 @@
 export const MYSTIC_SHOP_ENABLED = false;
 
 export const MYSTIC_SHOP_COMING_SOON = {
-  title: 'Coming soon',
+  title: 'At-home essentials',
   description:
-    'Luke is finishing the at-home product line — volume mist, heat shield, and silk serum. Book a house call and he can recommend a routine until checkout opens here.',
-  compactDescription: 'Product checkout opens soon.',
+    'Volume mist, heat shield, and silk serum are on the way — checkout opens here soon. Until then, book a house call and Luke will map a routine to your hair.',
+  compactDescription: 'Checkout opens soon — book a visit for product advice.',
 } as const;
 
 export const SHOP_PRODUCT_IDS = ['volume_mist', 'heat_shield', 'silk_serum'] as const;

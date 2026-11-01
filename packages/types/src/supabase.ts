@@ -583,6 +583,7 @@ export type Database = {
           created_at: string;
           marketing_email: boolean;
           marketing_sms: boolean;
+          onboarding_completed_at: string | null;
           phone: string | null;
           referral_code: string | null;
           referral_count: number;
@@ -595,6 +596,7 @@ export type Database = {
           created_at?: string;
           marketing_email?: boolean;
           marketing_sms?: boolean;
+          onboarding_completed_at?: string | null;
           phone?: string | null;
           referral_code?: string | null;
           referral_count?: number;
@@ -607,6 +609,7 @@ export type Database = {
           created_at?: string;
           marketing_email?: boolean;
           marketing_sms?: boolean;
+          onboarding_completed_at?: string | null;
           phone?: string | null;
           referral_code?: string | null;
           referral_count?: number;

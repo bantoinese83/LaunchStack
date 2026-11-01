@@ -39,8 +39,6 @@ export function NativeEmptyState({
     >
       {kicker ? <Text style={styles.eyebrow}>{kicker}</Text> : null}
       <View style={[styles.artFrame, compact && styles.artFrameCompact]}>
-        <View style={styles.artPlumAccent} />
-        <View style={styles.artGoldRule} />
         <Image
           source={source}
           style={styles.art}
@@ -87,25 +85,6 @@ const styles = StyleSheet.create({
   artFrameCompact: {
     maxWidth: 168,
     aspectRatio: 1.2,
-  },
-  artPlumAccent: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: 4,
-    backgroundColor: theme.plum,
-    zIndex: 1,
-  },
-  artGoldRule: {
-    position: 'absolute',
-    left: 4,
-    top: 0,
-    bottom: 0,
-    width: 2,
-    backgroundColor: theme.gold,
-    zIndex: 1,
-    opacity: 0.85,
   },
   art: {
     width: '100%',

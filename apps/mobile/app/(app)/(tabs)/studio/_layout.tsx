@@ -1,25 +1,14 @@
 import React from 'react';
-import { ActivityIndicator, View } from 'react-native';
 import { Redirect, Stack } from 'expo-router';
 import { theme } from '@template/mobile-ui';
 import { useStudioAccess } from '../../../../hooks/useStudioAccess';
+import { NativeSalonLoader } from '../../../../components/mystic/NativeSalonLoader';
 
 export default function StudioStackLayout() {
   const { isManager, loading } = useStudioAccess();
 
   if (loading) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: theme.paper,
-        }}
-      >
-        <ActivityIndicator color={theme.accent} />
-      </View>
-    );
+    return <NativeSalonLoader copyKey="studio" fill />;
   }
 
   if (!isManager) {

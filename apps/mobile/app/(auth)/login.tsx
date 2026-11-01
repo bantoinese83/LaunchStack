@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import {
   NativeAlert,
@@ -8,7 +8,8 @@ import {
   handTitle,
   theme,
 } from '@template/mobile-ui';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { captureReferralFromParam } from '../../lib/referral-storage';
 import { mysticLogoLight } from '../../constants/branding';
 import { AuthScreenFrame } from '../../components/auth/AuthScreenFrame';
 import { OAuthButtons } from '../../components/auth/OAuthButtons';
@@ -16,6 +17,12 @@ import { useLogin } from '../../hooks/useLogin';
 
 export default function MobileLoginScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ ref?: string }>();
+
+  useEffect(() => {
+    if (params.ref) void captureReferralFromParam(params.ref);
+  }, [params.ref]);
+
   const {
     email,
     setEmail,

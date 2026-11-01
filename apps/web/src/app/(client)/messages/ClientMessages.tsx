@@ -10,6 +10,7 @@ import {
   type ThreadParticipants,
 } from '@/components/mystic/MysticMessageThread';
 import { MysticClientPage } from '@/components/mystic/MysticClientPage';
+import { MysticSalonLoader } from '@/components/mystic/MysticSalonLoader';
 import { MysticPageIntro } from '@/components/mystic/MysticPageIntro';
 import { MysticStylistChip } from '@/components/mystic/MysticStylistChip';
 import { authorizedFetch } from '@/lib/api/authorized-fetch';
@@ -153,11 +154,7 @@ export function ClientMessages() {
         </div>
       ) : null}
       {initialLoading ? (
-        <div className="space-y-3" aria-busy="true" aria-label="Loading messages">
-          <div className="h-8 animate-pulse rounded-lg bg-surface" />
-          <div className="h-48 animate-pulse rounded-2xl bg-surface" />
-          <div className="h-24 animate-pulse rounded-xl bg-surface" />
-        </div>
+        <MysticSalonLoader copyKey="messages" className="py-12" />
       ) : (
         <MysticMessageThread
           messages={messages}

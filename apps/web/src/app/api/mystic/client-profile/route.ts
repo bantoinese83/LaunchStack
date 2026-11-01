@@ -53,6 +53,7 @@ export async function GET(req: Request) {
           marketing_sms: true,
           marketing_email: true,
           referral_count: 0,
+          onboarding_completed_at: null,
         }),
         referral_code: referralCode,
         full_name: identity?.full_name ?? null,

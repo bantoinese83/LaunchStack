@@ -13,12 +13,26 @@ export const BOOKING_FLOW_STEP_LABEL: Record<BookingFlowStep, string> = {
 
 /** One-line guidance under the stepper. */
 export const BOOKING_FLOW_STEP_HINT: Record<BookingFlowStep, string> = {
-  service: 'Pick a service',
-  datetime: 'Choose date & time',
-  location: 'House-call address',
-  details: 'Preferences & referral',
-  review: 'Review summary before payment',
+  service: 'What are we doing at your place?',
+  datetime: 'Pick an open slot — times are Chicago local',
+  location: 'Where should Luke pull up?',
+  details: 'Optional tags, inspo, or a friend referral',
+  review: 'Confirm details, then pay the deposit with Stripe',
 };
+
+/** First weekday within the booking horizon (skips Sat/Sun). */
+export function defaultBookingDateIso(from: Date = new Date(), maxLookahead = 14): string {
+  const cursor = new Date(from);
+  cursor.setHours(0, 0, 0, 0);
+  for (let i = 0; i < maxLookahead; i++) {
+    const day = cursor.getDay();
+    if (day !== 0 && day !== 6) {
+      return cursor.toISOString().slice(0, 10);
+    }
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return cursor.toISOString().slice(0, 10);
+}
 
 export function bookingFlowStepIndex(step: BookingFlowStep): number {
   return BOOKING_FLOW_STEPS.indexOf(step);

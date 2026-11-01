@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getErrorMessage, firstZodIssueMessage, loginSchema } from '@template/validation';
 import { authorizedFetch } from '@/lib/api/authorized-fetch';
+import { resolveWebClientLanding } from '@/lib/mystic/resolve-client-landing';
 import { getAuthCallbackUrl, getBrowserSupabaseClient } from '@/lib/supabase/browser-session';
 
 export function useLogin() {
@@ -20,8 +21,8 @@ export function useLogin() {
   const [message, setMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const redirectAfterAuth = () => {
-    const destination = next.startsWith('/') && !next.startsWith('//') ? next : '/account';
+  const redirectAfterAuth = async () => {
+    const destination = await resolveWebClientLanding(next);
     router.push(destination as Parameters<typeof router.push>[0]);
     router.refresh();
   };

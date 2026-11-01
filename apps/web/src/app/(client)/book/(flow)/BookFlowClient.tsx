@@ -25,6 +25,8 @@ import {
   shouldShowBookingPlansNudge,
   BOOKING_PLANS_NUDGE,
   BOOK_FLOW_COPY,
+  MYSTIC_REFERRAL_SHARE,
+  referralCodeForCheckout,
   type MysticCreditRow,
   bookingSubtotalBeforeTip,
   buildTipChoiceFromUi,
@@ -32,6 +34,7 @@ import {
   resolveBookingTipCents,
   type AppointmentTagId,
   toggleAppointmentTag,
+  defaultBookingDateIso,
   type BookingFlowStep,
   type ServiceId,
   type SurchargeRules,
@@ -53,17 +56,25 @@ import {
   type HouseCallAddress,
 } from '@/components/mystic/book/MysticAddressLookup';
 import { MysticBookDateStrip } from '@/components/mystic/book/MysticBookDateStrip';
+import { MysticBookStepActions } from '@/components/mystic/book/MysticBookStepActions';
+import { MysticBookTripSummary } from '@/components/mystic/book/MysticBookTripSummary';
 import { mysticTimeChip } from '@/components/mystic/mystic-styles';
 import { MysticSecureBookingLine } from '@/components/mystic/MysticSecureBookingLine';
 import { MysticSummaryRowGroup } from '@/components/mystic/MysticSummaryRowGroup';
 import { Alert } from '@template/ui';
+import { useReferralAttribution } from '@/hooks/useReferralAttribution';
+import { useValidatedReferralCode } from '@/hooks/useValidatedReferralCode';
+import { clearReferralAttribution } from '@/lib/mystic/referral-storage';
 
 export function BookFlowClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { referralCode } = useReferralAttribution();
+  const { referralApplied } = useValidatedReferralCode(referralCode);
+  const checkoutReferralCode = referralApplied ? referralCode : null;
   const [step, setStep] = useState<BookingFlowStep>('service');
   const [serviceId, setServiceId] = useState<ServiceId>('blowout');
-  const [date, setDate] = useState('');
+  const [date, setDate] = useState(() => defaultBookingDateIso());
   const [time, setTime] = useState('');
   const [slots, setSlots] = useState<string[]>([]);
   const [slotsError, setSlotsError] = useState<string | null>(null);
@@ -79,6 +90,7 @@ export function BookFlowClient() {
   const [customTipDollars, setCustomTipDollars] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const checkoutIdempotencyKey = useRef<string | null>(null);
   const entitlementTouched = useRef(false);
   const [address, setAddress] = useState<HouseCallAddress>({
@@ -161,11 +173,17 @@ export function BookFlowClient() {
       const res = await fetch('/api/mystic/appointments/release-checkout', { method: 'POST' });
       if (!active) return;
       checkoutIdempotencyKey.current = null;
-      setError(
-        res.ok
-          ? 'Checkout canceled — your hold was released. Choose a time and try again when you are ready.'
-          : 'Checkout canceled — we could not release your hold automatically. Refresh or message Luke if the slot still looks taken.'
-      );
+      if (res.ok) {
+        setStep('datetime');
+        setError(null);
+        setNotice(
+          'Checkout canceled — your hold was released. Pick a time and continue when you are ready.'
+        );
+      } else {
+        setError(
+          'Checkout canceled — we could not release your hold automatically. Refresh or message Luke if the slot still looks taken.'
+        );
+      }
       router.replace('/book');
     })();
     return () => {
@@ -387,7 +405,7 @@ export function BookFlowClient() {
         surchargeJson: quote.surcharges,
         tipCents,
         tags,
-        referredByName: referredBy.trim() || undefined,
+        ...referralCodeForCheckout(checkoutReferralCode, referredBy),
         clientNotes:
           [address.notes?.trim(), tipPreset === 'cash' ? BOOK_FLOW_COPY.clientTipCashNote : null]
             .filter(Boolean)
@@ -407,7 +425,11 @@ export function BookFlowClient() {
       const data = await res.json();
       if (!res.ok) {
         if (res.status === 401) {
-          router.push(`/login?next=${encodeURIComponent('/book')}`);
+          const loginNext =
+            typeof window !== 'undefined'
+              ? `${window.location.pathname}${window.location.search}`
+              : '/book';
+          router.push(`/login?next=${encodeURIComponent(loginNext)}`);
           return;
         }
         if (res.status === 409) {
@@ -426,12 +448,14 @@ export function BookFlowClient() {
         try {
           const target = new URL(data.url, window.location.origin);
           if (target.pathname.includes('/book/success')) {
+            clearReferralAttribution();
             router.push(`${target.pathname}${target.search}` as '/book/success');
             return;
           }
         } catch {
           /* fall through to full navigation */
         }
+        clearReferralAttribution();
         window.location.href = data.url;
       }
     } catch {
@@ -457,7 +481,20 @@ export function BookFlowClient() {
         <MysticBookStepProgress step={step} onStepChange={setStep} />
       </div>
 
+      <MysticBookTripSummary
+        step={step}
+        serviceId={serviceId}
+        scheduledAt={scheduledAt}
+        addressLine1={address.line1}
+        estimateCents={quoteWithoutTip ? tipSubtotalCents : null}
+      />
+
       <div className="min-w-0 lg:col-start-1 lg:row-start-2">
+        {notice ? (
+          <Alert variant="success" className="mb-4 text-sm">
+            {notice}
+          </Alert>
+        ) : null}
         {step === 'service' && (
           <section className="w-full space-y-6">
             <div
@@ -482,25 +519,10 @@ export function BookFlowClient() {
               Tap a card to select, or drag to flip for full details — any flip selects that
               service.
             </p>
-            <div className="flex gap-3">
-              <MysticMagneticButton
-                type="button"
-                variant="secondary"
-                className="min-w-0 flex-1"
-                fullWidth
-                onClick={() => router.back()}
-              >
-                Back
-              </MysticMagneticButton>
-              <MysticMagneticButton
-                type="button"
-                className="min-w-0 flex-1"
-                fullWidth
-                onClick={() => setStep('datetime')}
-              >
-                Continue
-              </MysticMagneticButton>
-            </div>
+            <MysticBookStepActions
+              onBack={() => router.back()}
+              onContinue={() => setStep('datetime')}
+            />
           </section>
         )}
 
@@ -561,6 +583,12 @@ export function BookFlowClient() {
                 ))}
               </div>
             ) : null}
+            {scheduledAt ? (
+              <p className="rounded-xl bg-gold-soft/70 px-4 py-3 text-sm text-ink">
+                <span className="font-medium">Selected:</span>{' '}
+                {formatVisitWhen(scheduledAt.toISOString())}
+              </p>
+            ) : null}
             <MysticBookEntitlementPicker
               value={activeEntitlement}
               options={entitlementOptions}
@@ -598,26 +626,12 @@ export function BookFlowClient() {
                 Evening and travel fees may apply when you book outside a membership or package.
               </p>
             )}
-            <div className="flex gap-3">
-              <MysticMagneticButton
-                type="button"
-                variant="secondary"
-                className="min-w-0 flex-1"
-                fullWidth
-                onClick={() => setStep('service')}
-              >
-                Back
-              </MysticMagneticButton>
-              <MysticMagneticButton
-                type="button"
-                disabled={!date || !time}
-                className="min-w-0 flex-1"
-                fullWidth
-                onClick={() => setStep('location')}
-              >
-                Continue
-              </MysticMagneticButton>
-            </div>
+            <MysticBookStepActions
+              onBack={() => setStep('service')}
+              onContinue={() => setStep('location')}
+              continueDisabled={!date || !time}
+              footer={!date || !time ? 'Choose a date and time to continue.' : undefined}
+            />
           </section>
         )}
 
@@ -646,40 +660,41 @@ export function BookFlowClient() {
               onChange={(e) => setAddress({ ...address, notes: e.target.value })}
               className="min-h-24 w-full rounded-xl bg-surface px-4 py-3 text-ink outline-none placeholder:text-muted focus:bg-accent-soft/40"
             />
-            <div className="flex gap-3">
-              <MysticMagneticButton
-                type="button"
-                variant="secondary"
-                className="min-w-0 flex-1"
-                fullWidth
-                onClick={() => setStep('datetime')}
-              >
-                Back
-              </MysticMagneticButton>
-              <MysticMagneticButton
-                type="button"
-                disabled={
-                  !address.line1 ||
-                  address.state.length !== 2 ||
-                  address.postalCode.length < 5 ||
-                  geocodeBusy ||
-                  !distanceVerified ||
-                  distanceOutOfArea ||
-                  Boolean(distanceNote?.includes('not found'))
-                }
-                className="min-w-0 flex-1"
-                fullWidth
-                onClick={() => setStep('details')}
-              >
-                Continue
-              </MysticMagneticButton>
-            </div>
+            <MysticBookStepActions
+              onBack={() => setStep('datetime')}
+              onContinue={() => setStep('details')}
+              continueDisabled={
+                !address.line1 ||
+                address.state.length !== 2 ||
+                address.postalCode.length < 5 ||
+                geocodeBusy ||
+                !distanceVerified ||
+                distanceOutOfArea ||
+                Boolean(distanceNote?.includes('not found'))
+              }
+              footer={
+                geocodeBusy
+                  ? 'Checking your address…'
+                  : distanceOutOfArea
+                    ? 'This address is outside our house-call zone.'
+                    : undefined
+              }
+            />
           </section>
         )}
 
         {step === 'details' && (
           <section className="w-full space-y-4">
             <p className="type-eyebrow text-plum">{BOOK_FLOW_COPY.preferencesSection}</p>
+            {referralApplied && referralCode ? (
+              <div className="rounded-xl border border-plum/25 bg-gold-soft/60 px-4 py-3 text-sm">
+                <p className="font-medium text-ink">{MYSTIC_REFERRAL_SHARE.appliedBadge}</p>
+                <p className="mt-1 text-xs text-muted">
+                  Code <span className="font-mono text-ink">{referralCode}</span> —{' '}
+                  {MYSTIC_REFERRAL_SHARE.appliedHint}
+                </p>
+              </div>
+            ) : null}
             <div className="flex flex-wrap gap-2">
               {APPOINTMENT_TAGS.map((tag) => (
                 <button
@@ -697,13 +712,15 @@ export function BookFlowClient() {
                 </button>
               ))}
             </div>
-            <input
-              maxLength={120}
-              placeholder={BOOK_FLOW_COPY.referredByPlaceholder}
-              value={referredBy}
-              onChange={(e) => setReferredBy(e.target.value)}
-              className="w-full rounded-xl bg-surface px-4 py-3 text-ink outline-none placeholder:text-muted focus:bg-accent-soft/40"
-            />
+            {!referralApplied ? (
+              <input
+                maxLength={120}
+                placeholder={BOOK_FLOW_COPY.referredByPlaceholder}
+                value={referredBy}
+                onChange={(e) => setReferredBy(e.target.value)}
+                className="w-full rounded-xl bg-surface px-4 py-3 text-ink outline-none placeholder:text-muted focus:bg-accent-soft/40"
+              />
+            ) : null}
             <div>
               <p className="text-sm font-medium">
                 {BOOK_FLOW_COPY.addInspoPhotos} (optional, up to 4)
@@ -730,25 +747,10 @@ export function BookFlowClient() {
                 </p>
               ) : null}
             </div>
-            <div className="flex gap-3">
-              <MysticMagneticButton
-                type="button"
-                variant="secondary"
-                className="min-w-0 flex-1"
-                fullWidth
-                onClick={() => setStep('location')}
-              >
-                Back
-              </MysticMagneticButton>
-              <MysticMagneticButton
-                type="button"
-                className="min-w-0 flex-1"
-                fullWidth
-                onClick={() => setStep('review')}
-              >
-                Continue
-              </MysticMagneticButton>
-            </div>
+            <MysticBookStepActions
+              onBack={() => setStep('location')}
+              onContinue={() => setStep('review')}
+            />
           </section>
         )}
 
@@ -784,7 +786,12 @@ export function BookFlowClient() {
                           .map((t) => APPOINTMENT_TAGS.find((a) => a.id === t)?.label ?? t)
                           .join(' · ')
                       : 'No extra preferences',
-                  hint: referredBy.trim() ? `Referred by ${referredBy.trim()}` : undefined,
+                  hint:
+                    referralApplied && referralCode
+                      ? `Referral ${referralCode}`
+                      : referredBy.trim()
+                        ? `Referred by ${referredBy.trim()}`
+                        : undefined,
                   onEdit: () => setStep('details'),
                 },
               ]}

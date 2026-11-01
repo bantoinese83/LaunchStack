@@ -1,6 +1,8 @@
 'use client';
 
 import { useCallback, useState } from 'react';
+import { MysticEmptyState } from '@/components/mystic/MysticEmptyState';
+import { MysticSalonLoader } from '@/components/mystic/MysticSalonLoader';
 import { StudioWorkspaceNotice } from '@/components/mystic/studio/StudioWorkspaceNotice';
 import {
   mysticCard,
@@ -106,9 +108,14 @@ export function BlockedDatesPanel() {
         </button>
       </div>
       {loading ? (
-        <p className="text-sm text-muted">Loading blocked dates…</p>
+        <MysticSalonLoader copyKey="blockedDates" size="sm" className="py-4" />
       ) : rows.length === 0 ? (
-        <p className="text-sm text-muted">No blocked dates — your calendar is open.</p>
+        <MysticEmptyState
+          variant="calendar"
+          compact
+          title="No blocked dates"
+          description="Your calendar is open — add travel or personal days anytime."
+        />
       ) : (
         <ul className="space-y-2 text-sm">
           {rows.map((row) => (

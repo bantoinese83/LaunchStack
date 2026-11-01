@@ -12,6 +12,7 @@ import { NativeCelebrationBurst } from '../../components/mystic/NativeCelebratio
 import { NativeScreenShell } from '../../components/mystic/NativeScreenShell';
 import { fetchMyAppointments } from '../../lib/mysticApi';
 import { lukeCutoutSource } from '../../lib/lukeAssets';
+import { clearReferralAttribution } from '../../lib/referral-storage';
 
 export default function BookSuccessDeepLink() {
   const router = useRouter();
@@ -20,6 +21,10 @@ export default function BookSuccessDeepLink() {
   const copy = getCelebrationContent('booking');
   const [celebrate] = useState(true);
   const [detail, setDetail] = useState<string | null>(null);
+
+  useEffect(() => {
+    void clearReferralAttribution();
+  }, []);
 
   useEffect(() => {
     if (!appointmentId) return;

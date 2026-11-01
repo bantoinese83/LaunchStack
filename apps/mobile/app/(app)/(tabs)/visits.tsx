@@ -12,6 +12,7 @@ import {
   getServiceById,
   isVisitLiveTracking,
   partitionVisitsForTabs,
+  visitsTabEmptyContent,
   pickUpNextVisit,
   visitStatusLabel,
   visitAddressDestination,
@@ -29,7 +30,7 @@ import { NativeStylistChip } from '../../../components/mystic/NativeStylistChip'
 import { NativeDoorTimerBanner } from '../../../components/visits/NativeDoorTimerBanner';
 import { NativeLiveMap } from '../../../components/visits/NativeLiveMap';
 import { NativePermissionPrimer } from '../../../components/motion/NativePermissionPrimer';
-import { NativeShimmerText } from '../../../components/motion/NativeShimmerText';
+import { NativeSalonLoader } from '../../../components/mystic/NativeSalonLoader';
 import { hapticSoft, hapticSuccess } from '../../../lib/haptics';
 import {
   fetchMyAppointments,
@@ -156,6 +157,8 @@ export default function VisitsTab() {
     reload({ silent: true });
   }
 
+  const tabEmpty = visitsTabEmptyContent(tab);
+
   return (
     <ScrollView
       style={nativeScreenStyles.scroll}
@@ -202,11 +205,7 @@ export default function VisitsTab() {
         ) : null}
         {error ? <Text style={styles.error}>{error}</Text> : null}
         {uploadStatus ? <Text style={styles.feedback}>{uploadStatus}</Text> : null}
-        {loading ? (
-          <View style={styles.loadingWrap}>
-            <NativeShimmerText>Gathering your house calls…</NativeShimmerText>
-          </View>
-        ) : null}
+        {loading ? <NativeSalonLoader copyKey="visits" style={{ paddingVertical: 24 }} /> : null}
         <NativePermissionPrimer
           visible={inspoPrimerId != null}
           title="Share inspo with Luke"
@@ -234,12 +233,9 @@ export default function VisitsTab() {
           <NativeEmptyState
             variant="visits"
             compact
-            title={tab === 'upcoming' ? "You're all caught up" : 'No past visits yet'}
-            description={
-              tab === 'upcoming'
-                ? 'Book again anytime — your next visit will show here with live map and inspo.'
-                : 'Completed house calls appear here for history and photos.'
-            }
+            eyebrow={tabEmpty.eyebrow}
+            title={tabEmpty.title}
+            description={tabEmpty.description}
             action={
               tab === 'upcoming' ? (
                 <NativeButton
