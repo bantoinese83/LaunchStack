@@ -25,9 +25,10 @@ test.describe('Mystic — happy path (public shells)', () => {
     await expect(page.locator('body')).toBeVisible();
   });
 
-  test('messages page loads for guests', async ({ page }) => {
+  test('messages redirects guests to sign in', async ({ page }) => {
     await page.goto('/messages');
-    await expect(page.getByRole('heading', { level: 1 })).toContainText(/message/i);
+    await expect(page).toHaveURL(/\/login/);
+    await expect(page.getByRole('heading', { level: 1 })).toContainText(/welcome back/i);
   });
 });
 
@@ -77,8 +78,28 @@ test.describe('Mystic — boundary (query validation)', () => {
     expect(res.status()).toBe(400);
   });
 
-  test('checkout booking rejects empty body', async ({ request }) => {
+  test('availability returns HH:mm slot ids for a valid date', async ({ request }) => {
+    const d = new Date();
+    d.setDate(d.getDate() + 14);
+    const date = d.toISOString().slice(0, 10);
+    const res = await request.get(`/api/mystic/availability?date=${date}&serviceId=blowout`);
+    expect(res.status()).toBe(200);
+    const body = await res.json();
+    expect(Array.isArray(body.slots)).toBe(true);
+    for (const slot of (body.slots as string[]).slice(0, 5)) {
+      expect(slot).toMatch(/^\d{1,2}:\d{2}(:\d{2})?$/);
+    }
+  });
+
+  test('checkout booking rejects unauthenticated requests', async ({ request }) => {
     const res = await request.post('/api/mystic/checkout/booking', { data: {} });
     expect(res.status()).toBe(401);
+  });
+});
+
+test.describe('Mystic — book UX strings (web)', () => {
+  test('book page omits deprecated referral-code field copy', async ({ page }) => {
+    await page.goto('/book');
+    await expect(page.getByText(/referral code \(optional\)/i)).toHaveCount(0);
   });
 });

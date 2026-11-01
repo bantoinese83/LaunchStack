@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { getVerifiedServerUser } from '@/lib/supabase/server';
 import { userCanAccessMysticStudio } from '@/lib/mystic/studio-access';
+import { MysticStudioBreadcrumbs } from '@/components/mystic/MysticStudioBreadcrumbs';
 import { StudioNav } from './components/StudioNav';
 import { StudioGoogleMapsProvider } from './components/StudioGoogleMapsProvider';
 
@@ -39,6 +40,7 @@ export default async function StudioLayout({ children }: { children: ReactNode }
       </header>
       <StudioGoogleMapsProvider>
         <div className="mx-auto w-full max-w-6xl px-4 py-8 pb-16 sm:px-5 md:px-8 md:py-10 md:pb-20">
+          <MysticStudioBreadcrumbs />
           {children}
         </div>
       </StudioGoogleMapsProvider>

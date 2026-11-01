@@ -9,6 +9,7 @@ import {
 } from '@template/validation';
 import type { User } from '@supabase/supabase-js';
 import { requireAuthenticatedUser, routeErrorResponse } from '@/lib/api/route-auth';
+import { readMultipartFile } from '@/lib/multipart-upload';
 import { requireStudioManager } from '@/lib/mystic/studio-auth';
 const MAX_BYTES = 5 * 1024 * 1024;
 const ALLOWED_IMAGE = /^image\//;
@@ -136,9 +137,9 @@ export async function POST(req: Request) {
 
     const form = await req.formData();
     const appointmentId = form.get('appointmentId');
-    const file = form.get('file');
+    const file = await readMultipartFile(form);
     const parsed = mysticInspoUploadSchema.safeParse({ appointmentId });
-    if (!parsed.success || !(file instanceof File)) {
+    if (!parsed.success || !file) {
       return NextResponse.json({ error: 'appointmentId and image file required' }, { status: 400 });
     }
     if (!ALLOWED_IMAGE.test(file.type || '')) {
@@ -174,7 +175,7 @@ export async function POST(req: Request) {
     const path = `${auth.user.id}/${parsed.data.appointmentId}/${Date.now()}-${file.name}`;
     const { error: uploadError } = await supabase.storage
       .from('mystic-inspo')
-      .upload(path, file, { upsert: false });
+      .upload(path, file.data, { upsert: false, contentType: file.type });
     if (uploadError) {
       return NextResponse.json(
         { error: uploadError.message, hint: 'Create Supabase bucket mystic-inspo (public read)' },

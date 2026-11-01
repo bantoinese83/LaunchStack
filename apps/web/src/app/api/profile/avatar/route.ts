@@ -4,6 +4,7 @@ import { DICEBEAR_STYLES, buildDiceBearAvatarUrl, type DiceBearStyleId } from '@
 import { firstZodIssueMessage } from '@template/validation';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { requireAuthenticatedUser, routeErrorResponse } from '@/lib/api/route-auth';
+import { readMultipartFile } from '@/lib/multipart-upload';
 
 const diceBearStyleSchema = z.enum(
   DICEBEAR_STYLES.map((s) => s.id) as [DiceBearStyleId, ...DiceBearStyleId[]]
@@ -40,13 +41,15 @@ export async function POST(req: Request) {
     const auth = await requireAuthenticatedUser(req);
     if (auth.response) return auth.response;
     const form = await req.formData();
-    const file = form.get('file');
-    if (!(file instanceof File)) {
+    const file = await readMultipartFile(form);
+    if (!file) {
       return NextResponse.json({ error: 'file is required' }, { status: 400 });
     }
     const supabase = await createSupabaseServerClient();
     const path = `${auth.user.id}/${Date.now()}-${file.name}`;
-    const { error } = await supabase.storage.from('avatars').upload(path, file, { upsert: true });
+    const { error } = await supabase.storage
+      .from('avatars')
+      .upload(path, file.data, { upsert: true, contentType: file.type });
     if (error) throw new Error(error.message);
     const { data } = supabase.storage.from('avatars').getPublicUrl(path);
     await supabase.from('profiles').update({ avatar_url: data.publicUrl }).eq('id', auth.user.id);

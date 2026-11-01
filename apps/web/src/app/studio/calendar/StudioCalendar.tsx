@@ -564,7 +564,7 @@ export function StudioCalendar() {
                         <MysticUserAvatar
                           url={client?.avatar_url}
                           name={name}
-                          size={22}
+                          size={30}
                           className="mt-0.5 shrink-0"
                         />
                         <div className="min-w-0 flex-1">

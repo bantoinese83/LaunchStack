@@ -1,18 +1,14 @@
 import Link from 'next/link';
-import { BrandMark, Card } from '@template/ui';
+import { Card } from '@template/ui';
+import { MysticBreadcrumbs } from '@/components/mystic/MysticBreadcrumbs';
+import { MysticStripeWordmark } from '@/components/mystic/MysticStripeWordmark';
 
 export default function PrivacyPage() {
   return (
     <div className="min-h-screen bg-paper atlas-grain text-ink">
       <div className="mx-auto max-w-3xl px-6 py-14 animate-[rise_400ms_ease-out]">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-2 text-sm text-muted transition-colors hover:text-ink"
-        >
-          <BrandMark size="sm" />
-          <span>Back to Mystic Hair Co.</span>
-        </Link>
-        <h1 className="mt-8 font-display text-3xl font-semibold tracking-tight text-ink">
+        <MysticBreadcrumbs className="mb-0" />
+        <h1 className="mt-6 font-display text-3xl font-semibold tracking-tight text-ink">
           Privacy Policy
         </h1>
         <p className="mt-2 text-sm text-muted">Last updated October 4, 2026</p>
@@ -27,7 +23,8 @@ export default function PrivacyPage() {
             </h2>
             <p className="mt-2">
               Account email and name, workspace membership, feedback you submit, invite records,
-              optional analytics events after consent, billing identifiers from Stripe, and
+              optional analytics events after consent, billing identifiers from{' '}
+              <MysticStripeWordmark height={12} className="inline-block align-[-0.12em]" />, and
               authentication factors you enroll (TOTP, passkeys, recovery-code hashes).
             </p>
           </div>
@@ -49,8 +46,10 @@ export default function PrivacyPage() {
               3. Processors
             </h2>
             <p className="mt-2">
-              Supabase (auth and database), Stripe (payments), Brevo (transactional email), PostHog
-              (analytics only after consent), Sentry (error telemetry), and Expo (push delivery).
+              Supabase (auth and database),{' '}
+              <MysticStripeWordmark height={12} className="inline-block align-[-0.12em]" />{' '}
+              (payments), Brevo (transactional email), PostHog (analytics only after consent),
+              Sentry (error telemetry), and Expo (push delivery).
             </p>
           </div>
           <div>
@@ -59,8 +58,8 @@ export default function PrivacyPage() {
             </h2>
             <p className="mt-2">
               Signed-in users can export or delete their account from Settings → Privacy. Deletion
-              cancels Stripe subscriptions, removes owned workspaces, and anonymizes remaining
-              profile data.
+              cancels <MysticStripeWordmark height={12} className="inline-block align-[-0.12em]" />{' '}
+              subscriptions, removes owned workspaces, and anonymizes remaining profile data.
             </p>
           </div>
           <div>

@@ -34,6 +34,7 @@ const ICONS: Record<MysticIconRole, LucideIcon> = {
   serviceArea: MapPinned,
   packageOffer: Package,
   secure: Lock,
+  serviceMatch: Scissors,
   studioToday: Sun,
   studioCalendar: CalendarHeart,
   studioClients: Users,

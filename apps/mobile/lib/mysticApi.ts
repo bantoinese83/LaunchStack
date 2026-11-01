@@ -134,14 +134,19 @@ export async function releaseBookingCheckout(): Promise<{ ok: boolean; error?: s
   return { ok: true };
 }
 
-export async function uploadInspoPhoto(appointmentId: string, uri: string, fileName: string) {
+export async function uploadInspoPhoto(
+  appointmentId: string,
+  uri: string,
+  fileName: string,
+  mimeType = 'image/jpeg'
+) {
   if (!appUrl) throw new Error('EXPO_PUBLIC_APP_URL not set');
   const form = new FormData();
   form.append('appointmentId', appointmentId);
   form.append('file', {
     uri,
     name: fileName,
-    type: 'image/jpeg',
+    type: mimeType,
   } as unknown as Blob);
 
   const { ok, status, data } = await fetchMysticJson<{ photo?: unknown; error?: string }>(
@@ -279,23 +284,28 @@ export async function saveDiceBearAvatar(
 
 export async function uploadProfileAvatar(
   uri: string,
-  fileName: string
+  fileName: string,
+  mimeType = 'image/jpeg'
 ): Promise<{ url?: string; error?: string }> {
   if (!appUrl) return { error: 'EXPO_PUBLIC_APP_URL not set' };
   const form = new FormData();
   form.append('file', {
     uri,
     name: fileName,
-    type: 'image/jpeg',
+    type: mimeType,
   } as unknown as Blob);
-  const res = await fetch(`${appUrl}/api/profile/avatar`, {
-    method: 'POST',
-    headers: await authHeaders(false),
-    body: form,
-  });
-  const data = await res.json();
-  if (!res.ok) return { error: data.error ?? 'Upload failed' };
-  return { url: data.url as string };
+  try {
+    const res = await fetch(`${appUrl}/api/profile/avatar`, {
+      method: 'POST',
+      headers: await authHeaders(false),
+      body: form,
+    });
+    const data = (await res.json()) as { url?: string; error?: string };
+    if (!res.ok) return { error: data.error ?? 'Upload failed' };
+    return { url: data.url };
+  } catch {
+    return { error: 'Network error — could not upload photo' };
+  }
 }
 
 export async function fetchAppointmentInspo(appointmentId: string): Promise<{

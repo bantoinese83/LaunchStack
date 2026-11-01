@@ -238,7 +238,9 @@ export async function POST(req: Request) {
           quantity: 1,
         },
       ],
-      success_url: `${appUrl}/book/success?session_id={CHECKOUT_SESSION_ID}&appointment_id=${appointment.id}`,
+      success_url: useMobileCancelDeepLink
+        ? `mystichair://book/success?appointment_id=${appointment.id}`
+        : `${appUrl}/book/success?session_id={CHECKOUT_SESSION_ID}&appointment_id=${appointment.id}`,
       cancel_url: useMobileCancelDeepLink
         ? 'mystichair://book?canceled=1'
         : `${appUrl}/book?canceled=1`,

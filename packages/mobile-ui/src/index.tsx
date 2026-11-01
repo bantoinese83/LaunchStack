@@ -1,4 +1,5 @@
 export * from './theme';
+export * from './handwriting';
 export * from './roadTrip';
 export * from './components/NativeButton';
 export * from './components/NativeCard';

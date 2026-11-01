@@ -194,7 +194,7 @@ Maestro flows: `apps/mobile/.maestro/README.md`.
 ## 17. Recommended backlog (priority)
 
 1. **P1:** Broaden mobile a11y labels (visits list, studio ops, tabs).
-2. **P1:** Resolve or document expo-doctor failures for reproducible CI green.
+2. ~~**P1:** Resolve or document expo-doctor failures for reproducible CI green.~~ Done: `apps/mobile/docs/NATIVE_CONFIG.md` + `expo.doctor.appConfigFieldsNotSyncedCheck` in mobile `package.json`.
 3. **P2:** Web book flow service row `aria-pressed` (mirror mobile).
 4. **P2:** E2E cover book service step + mobile Maestro book smoke.
 5. **P3:** i18n for ES if market expands; PostHog funnels for book drop-off.

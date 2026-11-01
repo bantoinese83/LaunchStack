@@ -1,12 +1,17 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { MysticMagneticLink } from '@/components/mystic/MysticMagneticButton';
+import { MysticSignInOrAccountNav } from '@/components/mystic/MysticSignInOrAccountNav';
 
 const navLink =
   'mystic-link-focus hidden type-eyebrow text-muted transition hover:text-ink sm:inline-block sm:px-3 sm:py-2';
 
+type Props = {
+  initialSignedIn?: boolean;
+};
+
 /** Landing header — large wordmark, minimal mid-century nav */
-export function MysticMarketingHeader() {
+export function MysticMarketingHeader({ initialSignedIn = false }: Props) {
   return (
     <header className="sticky top-0 z-40 border-b border-line/40 bg-paper/88 backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-6 px-5 py-4 md:px-8 md:py-5">
@@ -28,9 +33,11 @@ export function MysticMarketingHeader() {
           <Link href="#memberships" className={navLink}>
             Memberships
           </Link>
-          <Link href="/login" className={`${navLink} md:inline-block`}>
-            Sign in
-          </Link>
+          <MysticSignInOrAccountNav
+            initialSignedIn={initialSignedIn}
+            signInClassName={`${navLink} md:inline-block`}
+            accountClassName={`${navLink} inline-flex items-center gap-1.5 md:inline-flex`}
+          />
           <MysticMagneticLink href="/book" size="sm">
             Book
           </MysticMagneticLink>

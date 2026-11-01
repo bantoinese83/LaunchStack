@@ -11,6 +11,7 @@ import {
 } from '@/components/mystic/MysticMessageThread';
 import { MysticClientPage } from '@/components/mystic/MysticClientPage';
 import { MysticPageIntro } from '@/components/mystic/MysticPageIntro';
+import { MysticStylistChip } from '@/components/mystic/MysticStylistChip';
 import { authorizedFetch } from '@/lib/api/authorized-fetch';
 import { getMysticWorkspaceId } from '@/lib/mystic/config';
 import { requireBrowserSession } from '@/lib/supabase/browser-session';
@@ -119,7 +120,14 @@ export function ClientMessages() {
 
   return (
     <MysticClientPage>
-      <MysticPageIntro eyebrow="Messages" title="Message Luke" />
+      <MysticPageIntro
+        eyebrow="Messages"
+        title="Message Luke"
+        description="Text timing, inspo, or parking — Luke replies between house calls."
+      />
+      <div className="mb-6 mt-4">
+        <MysticStylistChip size={48} />
+      </div>
       {loadError ? (
         <div className="mb-4 space-y-2 rounded-xl border border-line bg-paper px-3 py-3">
           <p className="text-sm text-plum">

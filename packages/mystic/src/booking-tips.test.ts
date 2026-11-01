@@ -23,6 +23,15 @@ describe('parseCustomTipDollarsToCents', () => {
 });
 
 describe('buildTipChoiceFromUi', () => {
+  it('treats cash preset as zero charged tip', () => {
+    const choice = buildTipChoiceFromUi({
+      preset: 'cash',
+      customPercent: '',
+      customDollars: '',
+    });
+    expect(resolveBookingTipCents(4500, choice)).toBe(0);
+  });
+
   it('prefers custom dollars over percent when both set', () => {
     const choice = buildTipChoiceFromUi({
       preset: 'custom',

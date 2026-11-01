@@ -331,7 +331,7 @@ export function StudioOpsPanel({
                     <MysticUserAvatar
                       url={clientById[row.client_user_id]?.avatar_url}
                       name={clientLabel(row.client_user_id)}
-                      size={28}
+                      size={36}
                     />
                     <p className="text-sm font-medium text-ink">
                       {clientLabel(row.client_user_id)}

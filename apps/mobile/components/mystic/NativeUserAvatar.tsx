@@ -1,15 +1,26 @@
 import React from 'react';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View, type ImageSourcePropType } from 'react-native';
 import { theme } from '@template/mobile-ui';
 
 type Props = {
   url?: string | null;
+  source?: ImageSourcePropType;
   name?: string;
   size?: number;
 };
 
-export function NativeUserAvatar({ url, name, size = 32 }: Props) {
+export function NativeUserAvatar({ url, source, name, size = 32 }: Props) {
   const initial = (name?.trim()?.[0] ?? '?').toUpperCase();
+
+  if (source) {
+    return (
+      <Image
+        source={source}
+        style={[styles.img, { width: size, height: size, borderRadius: size / 2 }]}
+        accessibilityIgnoresInvertColors
+      />
+    );
+  }
 
   if (url) {
     return (

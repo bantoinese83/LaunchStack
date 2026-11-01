@@ -11,11 +11,14 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { createSupabaseMobileClient } from '@template/api/mobile';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { formatUsPhoneInput, stripUsPhoneDigits } from '@template/mystic';
 import { NativeButton, monoLabel, roadTrip, theme } from '@template/mobile-ui';
 import { NativeProfileAvatar } from '../../../components/mystic/NativeProfileAvatar';
 import { NativeScreenHeader } from '../../../components/mystic/NativeScreenHeader';
 import { NativeScreenShell } from '../../../components/mystic/NativeScreenShell';
 import { useStudioAccess } from '../../../hooks/useStudioAccess';
+import { hapticSuccess } from '../../../lib/haptics';
 import { fetchClientProfile, fetchMyCredits, saveClientProfile } from '../../../lib/mysticApi';
 
 type FormState = {
@@ -41,6 +44,7 @@ export default function AccountTab() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
+  const [savedFlash, setSavedFlash] = useState(false);
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const [referralCopy, setReferralCopy] = useState<string | null>(null);
   const [creditsSummary, setCreditsSummary] = useState<string | null>(null);
@@ -65,7 +69,7 @@ export default function AccountTab() {
       setForm({
         fullName: p?.full_name?.trim() || '',
         email: p?.email?.trim() || user.email || '',
-        phone: p?.phone ?? '',
+        phone: p?.phone ? formatUsPhoneInput(p.phone) : '',
         birthday: p?.birthday ?? '',
         marketingSms: p?.marketing_sms ?? true,
         marketingEmail: p?.marketing_email ?? true,
@@ -103,7 +107,7 @@ export default function AccountTab() {
       const result = await saveClientProfile({
         fullName: form.fullName.trim() || 'Client',
         email: form.email.trim(),
-        phone: form.phone.trim(),
+        phone: stripUsPhoneDigits(form.phone),
         birthday: form.birthday || undefined,
         marketingSms: form.marketingSms,
         marketingEmail: form.marketingEmail,
@@ -112,8 +116,14 @@ export default function AccountTab() {
         setStatus({ kind: 'error', text: result.error ?? 'Could not save' });
         return;
       }
-      setStatus({ kind: 'ok', text: 'Profile saved' });
+      setStatus({ kind: 'ok', text: 'Profile updated' });
+      hapticSuccess();
+      setSavedFlash(true);
+      setTimeout(() => setSavedFlash(false), 4000);
       if (result.profile?.referral_code) setReferralCode(result.profile.referral_code);
+      if (result.profile?.phone) {
+        setForm((prev) => ({ ...prev, phone: formatUsPhoneInput(result.profile!.phone!) }));
+      }
     } catch {
       setStatus({ kind: 'error', text: 'Could not save — check connection' });
     } finally {
@@ -192,9 +202,9 @@ export default function AccountTab() {
         <Text style={styles.label}>Mobile</Text>
         <TextInput
           value={form.phone}
-          onChangeText={(phone) => setForm({ ...form, phone })}
+          onChangeText={(phone) => setForm({ ...form, phone: formatUsPhoneInput(phone) })}
           keyboardType="phone-pad"
-          placeholder="3125550100"
+          placeholder="312-555-0100"
           style={styles.input}
           placeholderTextColor={theme.muted}
           autoComplete="tel"
@@ -232,7 +242,12 @@ export default function AccountTab() {
       </View>
 
       <NativeButton title="Save profile" onPress={() => void saveProfile()} isLoading={saving} />
-      {status ? (
+      {savedFlash && status?.kind === 'ok' ? (
+        <View style={styles.savedBanner} accessibilityRole="alert">
+          <MaterialCommunityIcons name="check-circle" size={22} color={theme.accent} />
+          <Text style={styles.savedBannerText}>{status.text}</Text>
+        </View>
+      ) : status ? (
         <Text
           style={[styles.status, status.kind === 'error' && styles.statusError]}
           accessibilityRole="alert"
@@ -312,6 +327,19 @@ const styles = StyleSheet.create({
   switchLabel: { flex: 1, fontSize: 13, color: theme.ink, lineHeight: 18 },
   status: { marginTop: 12, color: theme.chalk, fontSize: 13 },
   statusError: { color: theme.danger },
+  savedBanner: {
+    marginTop: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: theme.radii.lg,
+    backgroundColor: theme.accentSoft,
+    borderWidth: 1,
+    borderColor: theme.accent,
+  },
+  savedBannerText: { flex: 1, fontSize: 15, fontWeight: '600', color: theme.ink },
   links: {
     flexDirection: 'column',
     gap: 0,

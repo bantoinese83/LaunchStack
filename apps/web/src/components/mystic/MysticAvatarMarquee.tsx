@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { useMemo, useState } from 'react';
 import { buildDiceBearGallery, parseDiceBearAvatarUrl } from '@template/mystic';
+import { mysticAvatarFrameClass } from '@/components/mystic/mystic-avatar-frame';
 
 type Props = {
   defaultSeed: string;
@@ -59,7 +60,7 @@ export function MysticAvatarMarquee({ defaultSeed, selectedUrl, busy = false, on
                 aria-selected={isOn}
                 disabled={busy}
                 onClick={() => onPick(item.style, item.seed)}
-                className={`relative h-14 w-14 shrink-0 overflow-hidden rounded-full border bg-surface transition-[transform,border-color] duration-200 disabled:opacity-50 ${
+                className={`relative h-16 w-16 shrink-0 overflow-hidden border bg-surface transition-[transform,border-color] duration-200 disabled:opacity-50 ${mysticAvatarFrameClass()} ${
                   isOn
                     ? 'border-[2.5px] border-gold shadow-[0_0_0_3px_color-mix(in_oklab,var(--gold)_22%,transparent)]'
                     : 'border-line hover:scale-[1.04] hover:border-gold/55'

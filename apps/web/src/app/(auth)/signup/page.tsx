@@ -25,7 +25,7 @@ export default function SignupPage() {
     <MysticAuthCard>
       <div className="mb-8 text-center">
         <MysticAuthLogo />
-        <h1 className="type-display-md text-ink">Create an account</h1>
+        <h1 className="type-hand-lg text-ink">Create an account</h1>
         <p className="mt-1.5 text-sm text-muted">Book house-call blowouts and manage your plan</p>
       </div>
 

@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { useRef, useState } from 'react';
 import { MysticAvatarMarquee } from '@/components/mystic/MysticAvatarMarquee';
+import { mysticAvatarFrameClass } from '@/components/mystic/mystic-avatar-frame';
 
 type Props = {
   avatarUrl: string | null;
@@ -17,7 +18,7 @@ export function MysticProfileAvatar({
   name,
   diceBearDefaultSeed,
   onUploaded,
-  size = 96,
+  size = 112,
 }: Props) {
   const uploadRef = useRef<HTMLInputElement>(null);
   const cameraRef = useRef<HTMLInputElement>(null);
@@ -82,7 +83,7 @@ export function MysticProfileAvatar({
   return (
     <div className="flex w-full flex-col items-center gap-4">
       <div
-        className="relative overflow-hidden rounded-full border-2 border-line bg-accent-soft"
+        className={`relative overflow-hidden border-2 ${mysticAvatarFrameClass('border-line bg-accent-soft')}`}
         style={{ width: size, height: size }}
       >
         {url ? (

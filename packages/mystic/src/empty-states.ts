@@ -31,7 +31,7 @@ export const MYSTIC_EMPTY_CONTENT: Record<MysticEmptyVariant, MysticEmptyContent
     illustration: 'visits.jpg',
     eyebrow: 'House calls',
     title: 'No house calls yet',
-    description: 'Book a blowout, cut, or updo — Luke rolls up with a full pro kit.',
+    description: 'Book a blowout, cut, or updo — house-call styling in Chicago.',
     compactDescription: 'Your first visit shows here with timing, map, and inspo.',
   },
   messages: {

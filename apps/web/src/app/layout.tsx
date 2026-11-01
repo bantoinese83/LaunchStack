@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
-import { Fraunces, IBM_Plex_Mono, Instrument_Sans, Newsreader } from 'next/font/google';
+import { Caveat, Fraunces, IBM_Plex_Mono, Instrument_Sans, Newsreader } from 'next/font/google';
 import { CookieConsent } from '@/components/CookieConsent';
 import { SkipToMain } from '@/components/mystic/SkipToMain';
 import { I18nProvider } from '@/lib/i18n/I18nProvider';
@@ -30,6 +30,14 @@ const mono = IBM_Plex_Mono({
   subsets: ['latin'],
   variable: '--font-mono',
   weight: '400',
+  display: 'swap',
+});
+
+/** Salon-note accent — Luke sign-offs, copilot, hero flourish (not body copy). */
+const hand = Caveat({
+  subsets: ['latin'],
+  variable: '--font-hand',
+  weight: ['500', '600', '700'],
   display: 'swap',
 });
 
@@ -63,7 +71,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html
       lang={locale}
-      className={`${display.variable} ${sans.variable} ${serif.variable} ${mono.variable} scroll-smooth`}
+      className={`${display.variable} ${sans.variable} ${serif.variable} ${mono.variable} ${hand.variable} scroll-smooth`}
     >
       <body className="min-h-screen bg-paper font-sans text-ink antialiased">
         <SkipToMain />

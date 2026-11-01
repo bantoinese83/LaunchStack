@@ -16,6 +16,8 @@ export interface NativeButtonProps extends Omit<
   'children' | 'style'
 > {
   title: string;
+  /** Visual label; `title` remains the default accessibility label. */
+  content?: React.ReactNode;
   variant?: 'primary' | 'secondary' | 'outline' | 'danger';
   isLoading?: boolean;
   style?: ViewStyle;
@@ -23,6 +25,7 @@ export interface NativeButtonProps extends Omit<
 
 export const NativeButton: React.FC<NativeButtonProps> = ({
   title,
+  content,
   variant = 'primary',
   isLoading,
   disabled,
@@ -74,6 +77,8 @@ export const NativeButton: React.FC<NativeButtonProps> = ({
               <View style={face}>
                 {isLoading ? (
                   <ActivityIndicator color={spinnerColor} />
+                ) : content ? (
+                  <View style={styles.content}>{content}</View>
                 ) : (
                   <Text style={label}>{title}</Text>
                 )}
@@ -89,5 +94,9 @@ export const NativeButton: React.FC<NativeButtonProps> = ({
 const styles = StyleSheet.create({
   disabled: {
     opacity: 0.45,
+  },
+  content: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

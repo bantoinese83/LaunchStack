@@ -48,7 +48,7 @@ export function MysticHeaderAccountNavItem({ placement = 'bar', onNavigate }: Pr
       onClick={onNavigate}
     >
       {avatarUrl || name ? (
-        <MysticUserAvatar url={avatarUrl} name={name} size={22} className="ring-1 ring-line/60" />
+        <MysticUserAvatar url={avatarUrl} name={name} size={30} className="ring-1 ring-gold/25" />
       ) : (
         <MysticIcon name="profile" className="h-4 w-4 opacity-80" strokeWidth={2} />
       )}

@@ -5,7 +5,7 @@ import {
   NativeAuthLogo,
   NativeButton,
   NativeInput,
-  displayTitle,
+  handTitle,
   theme,
 } from '@template/mobile-ui';
 import { useRouter } from 'expo-router';
@@ -135,8 +135,9 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   title: {
-    ...displayTitle,
-    color: theme.ink,
+    ...handTitle,
+    fontSize: 32,
+    lineHeight: 36,
     textAlign: 'center',
   },
   subtitle: {

@@ -10,12 +10,20 @@ export const MYSTIC_BRAND = {
 /** House-call stylist — portrait lives on the web app origin under public/marketing. */
 export const MYSTIC_STYLIST = {
   name: 'Luke',
+  /** Full studio headshot (green backdrop). */
   portraitPath: '/marketing/stylist.jpg',
+  /** Background removed — hero overlays, transparent UI. */
+  portraitCutoutPath: '/marketing/stylist-cutout.png',
 } as const;
 
 export function mysticStylistPortraitUrl(appOrigin?: string | null): string {
   if (!appOrigin?.trim()) return MYSTIC_STYLIST.portraitPath;
   return `${appOrigin.replace(/\/$/, '')}${MYSTIC_STYLIST.portraitPath}`;
+}
+
+export function mysticStylistCutoutUrl(appOrigin?: string | null): string {
+  if (!appOrigin?.trim()) return MYSTIC_STYLIST.portraitCutoutPath;
+  return `${appOrigin.replace(/\/$/, '')}${MYSTIC_STYLIST.portraitCutoutPath}`;
 }
 
 export const SERVICE_IDS = ['blowout', 'haircut', 'updo', 'dry_style'] as const;

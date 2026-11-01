@@ -1,18 +1,13 @@
 import Link from 'next/link';
-import { BrandMark, Card } from '@template/ui';
+import { Card } from '@template/ui';
+import { MysticBreadcrumbs } from '@/components/mystic/MysticBreadcrumbs';
 
 export default function CookiePolicyPage() {
   return (
     <div className="min-h-screen bg-paper atlas-grain text-ink">
       <div className="mx-auto max-w-3xl px-6 py-14 animate-[rise_400ms_ease-out]">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-2 text-sm text-muted transition-colors hover:text-ink"
-        >
-          <BrandMark size="sm" />
-          <span>Back to Mystic Hair Co.</span>
-        </Link>
-        <h1 className="mt-8 font-display text-3xl font-semibold tracking-tight text-ink">
+        <MysticBreadcrumbs className="mb-0" />
+        <h1 className="mt-6 font-display text-3xl font-semibold tracking-tight text-ink">
           Cookie policy
         </h1>
         <p className="mt-2 text-sm text-muted">Last updated October 4, 2026</p>

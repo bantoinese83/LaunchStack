@@ -19,9 +19,12 @@ import {
   formatBookingSlotLabel,
   scheduledAtFromBookingSlot,
   inferClientEntitlementFromCredits,
+  availableBookingEntitlements,
   clientEntitlementSummary,
+  BOOKING_ENTITLEMENT_LABEL,
   shouldShowBookingPlansNudge,
   BOOKING_PLANS_NUDGE,
+  BOOK_FLOW_COPY,
   type MysticCreditRow,
   bookingSubtotalBeforeTip,
   buildTipChoiceFromUi,
@@ -33,20 +36,24 @@ import {
   type ServiceId,
   type SurchargeRules,
 } from '@template/mystic';
-import { MysticAiOrb } from '@/components/mystic/MysticAiOrb';
+import { MysticPayWithStripeLabel } from '@/components/mystic/MysticStripeWordmark';
+import { MysticBookingCopilot } from '@/components/mystic/book/MysticBookingCopilot';
 import { MysticEmptyState } from '@/components/mystic/MysticEmptyState';
 import { MysticPageIntro } from '@/components/mystic/MysticPageIntro';
+import { MysticStylistChip } from '@/components/mystic/MysticStylistChip';
+import { MysticBookServiceFlipCard } from '@/components/mystic/book/MysticBookServiceFlipCard';
+import { MysticBookStepBreadcrumb } from '@/components/mystic/book/MysticBookStepBreadcrumb';
 import { MysticBookStepProgress } from '@/components/mystic/book/MysticBookStepProgress';
+import { MysticBookEntitlementPicker } from '@/components/mystic/book/MysticBookEntitlementPicker';
 import { fetchGeocodedDistance } from '@/lib/mystic/client-geocode';
 import { uploadInspoPhotosForAppointment } from '@/lib/mystic/inspo-upload';
 import { MysticMagneticButton, MysticMagneticLink } from '@/components/mystic/MysticMagneticButton';
-import { MysticServiceIllustration } from '@/components/mystic/illustrations/MysticServiceIllustration';
 import {
   MysticAddressLookup,
   type HouseCallAddress,
 } from '@/components/mystic/book/MysticAddressLookup';
 import { MysticBookDateStrip } from '@/components/mystic/book/MysticBookDateStrip';
-import { mysticLiveHighlight, mysticTimeChip } from '@/components/mystic/mystic-styles';
+import { mysticTimeChip } from '@/components/mystic/mystic-styles';
 import { MysticSecureBookingLine } from '@/components/mystic/MysticSecureBookingLine';
 import { MysticSummaryRowGroup } from '@/components/mystic/MysticSummaryRowGroup';
 import { Alert } from '@template/ui';
@@ -66,14 +73,14 @@ export function BookFlowClient() {
   const [entitlement, setEntitlement] = useState<'none' | 'membership' | 'package'>('none');
   const [tags, setTags] = useState<AppointmentTagId[]>([]);
   const [referredBy, setReferredBy] = useState('');
-  const [referralCode, setReferralCode] = useState('');
   const [policiesAccepted, setPoliciesAccepted] = useState(false);
-  const [tipPreset, setTipPreset] = useState<'none' | 15 | 18 | 20 | 'custom'>('none');
+  const [tipPreset, setTipPreset] = useState<'none' | 'cash' | 18 | 20 | 25 | 'custom'>('none');
   const [customTipPercent, setCustomTipPercent] = useState('');
   const [customTipDollars, setCustomTipDollars] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const checkoutIdempotencyKey = useRef<string | null>(null);
+  const entitlementTouched = useRef(false);
   const [address, setAddress] = useState<HouseCallAddress>({
     line1: '',
     city: 'Chicago',
@@ -118,8 +125,19 @@ export function BookFlowClient() {
     [myCredits, serviceId]
   );
 
+  const entitlementOptions = useMemo(
+    () => availableBookingEntitlements(myCredits, serviceId),
+    [myCredits, serviceId]
+  );
+
+  const activeEntitlement = useMemo(
+    () =>
+      entitlementOptions.includes(entitlement) ? entitlement : (entitlementOptions[0] ?? 'none'),
+    [entitlement, entitlementOptions]
+  );
+
   useEffect(() => {
-    setEntitlement(inferredEntitlement);
+    if (!entitlementTouched.current) setEntitlement(inferredEntitlement);
   }, [inferredEntitlement]);
 
   useEffect(() => {
@@ -258,11 +276,11 @@ export function BookFlowClient() {
       serviceId,
       scheduledAt,
       distanceMiles,
-      entitlement,
+      entitlement: activeEntitlement,
       tipCents: 0,
       rules: surchargeRules ?? undefined,
     });
-  }, [scheduledAt, serviceId, distanceMiles, entitlement, surchargeRules]);
+  }, [scheduledAt, serviceId, distanceMiles, activeEntitlement, surchargeRules]);
 
   const tipSubtotalCents = quoteWithoutTip ? bookingSubtotalBeforeTip(quoteWithoutTip) : 0;
 
@@ -363,15 +381,17 @@ export function BookFlowClient() {
             : {}),
         },
         distanceMiles,
-        entitlement,
+        entitlement: activeEntitlement,
         quoteCents:
-          entitlement !== 'none' && serviceId === 'blowout' ? 0 : quote.totalCents - tipCents,
+          activeEntitlement !== 'none' && serviceId === 'blowout' ? 0 : quote.totalCents - tipCents,
         surchargeJson: quote.surcharges,
         tipCents,
         tags,
-        referredByName: referredBy || undefined,
-        referralCode: referralCode.trim() || undefined,
-        clientNotes: address.notes || undefined,
+        referredByName: referredBy.trim() || undefined,
+        clientNotes:
+          [address.notes?.trim(), tipPreset === 'cash' ? BOOK_FLOW_COPY.clientTipCashNote : null]
+            .filter(Boolean)
+            .join('\n') || undefined,
         policiesAccepted: true,
         idempotencyKey: checkoutIdempotencyKey.current,
       };
@@ -402,7 +422,18 @@ export function BookFlowClient() {
       if (appointmentId && inspoFiles.length > 0) {
         await uploadInspoPhotosForAppointment(appointmentId, inspoFiles);
       }
-      if (data.url) window.location.href = data.url;
+      if (data.url) {
+        try {
+          const target = new URL(data.url, window.location.origin);
+          if (target.pathname.includes('/book/success')) {
+            router.push(`${target.pathname}${target.search}` as '/book/success');
+            return;
+          }
+        } catch {
+          /* fall through to full navigation */
+        }
+        window.location.href = data.url;
+      }
     } catch {
       setError('Network error — try again');
     } finally {
@@ -411,567 +442,565 @@ export function BookFlowClient() {
   }
 
   return (
-    <div className="mx-auto w-full">
-      <MysticPageIntro
-        eyebrow="Reserve"
-        title="Book a house call"
-        description="Choose your service, time, and address — Luke comes to you in Chicago."
-        className="max-w-none"
-      />
-      <MysticBookStepProgress step={step} onStepChange={setStep} />
+    <div className="mx-auto grid w-full lg:grid-cols-[minmax(0,1fr)_min(17.5rem,26vw)] lg:items-start lg:gap-x-10 lg:gap-y-8 xl:grid-cols-[minmax(0,1fr)_20rem] xl:gap-x-12">
+      <div className="lg:col-span-2">
+        <MysticPageIntro
+          eyebrow="Reserve"
+          title="Book a house call"
+          description="Choose your service, time, and address — Luke comes to you in Chicago."
+          className="max-w-none"
+        />
+        <div className="mb-6 mt-2">
+          <MysticStylistChip size={42} />
+        </div>
+        <MysticBookStepBreadcrumb step={step} onStepChange={setStep} className="mb-4 md:mb-5" />
+        <MysticBookStepProgress step={step} onStepChange={setStep} />
+      </div>
 
-      {step === 'service' && (
-        <section className="w-full space-y-6">
-          <div className="space-y-3 rounded-2xl bg-accent-soft/40 p-4 sm:p-5">
-            <div className="flex items-center gap-3">
-              <MysticAiOrb active={conciergeBusy} size="sm" label="Booking concierge" />
-              <div>
-                <p className="type-eyebrow text-plum">Not sure? Ask the concierge</p>
-                <p className="mt-0.5 text-xs text-muted">
-                  Describe the look — I’ll match a service.
-                </p>
-              </div>
-            </div>
-            <textarea
-              value={conciergePrompt}
-              onChange={(e) => setConciergePrompt(e.target.value)}
-              rows={2}
-              maxLength={400}
-              placeholder="Wedding guest, soft waves, 45 minutes before photos…"
-              className="min-h-[4.5rem] w-full resize-y rounded-xl bg-paper/80 px-3 py-3 text-sm text-ink outline-none ring-0 placeholder:text-muted focus:bg-paper"
-            />
-            <button
-              type="button"
-              disabled={conciergeBusy}
-              onClick={() => void askConcierge()}
-              className="text-sm font-medium text-accent underline disabled:opacity-50"
+      <div className="min-w-0 lg:col-start-1 lg:row-start-2">
+        {step === 'service' && (
+          <section className="w-full space-y-6">
+            <div
+              className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6"
+              role="listbox"
+              aria-label="Choose a service"
             >
-              {conciergeBusy ? 'Matching…' : 'Recommend a service'}
-            </button>
-            {conciergeHint ? <p className="text-sm text-muted">{conciergeHint}</p> : null}
-            {conciergeExtras?.clarifyingQuestion ? (
-              <p className="text-sm text-plum">
-                Still unsure? {conciergeExtras.clarifyingQuestion}
-              </p>
-            ) : null}
-            {conciergeExtras?.alternatives && conciergeExtras.alternatives.length > 0 ? (
-              <div className="flex flex-col gap-1.5">
-                {conciergeExtras.alternatives.map((alt) => (
-                  <button
-                    key={alt.serviceId}
-                    type="button"
-                    onClick={() => setServiceId(alt.serviceId as ServiceId)}
-                    className="rounded-xl bg-paper/70 px-3 py-2 text-left text-xs text-ink transition hover:bg-paper"
-                  >
-                    <span className="font-medium text-accent">
-                      Or {alt.serviceName ?? alt.serviceId}
-                    </span>
-                    <span className="text-muted"> — {alt.why}</span>
-                  </button>
-                ))}
-              </div>
-            ) : null}
-          </div>
-          <div className="grid grid-cols-2 gap-3 sm:gap-4">
-            {MYSTIC_SERVICES.map((service) => {
-              const selected = serviceId === service.id;
-              return (
-                <button
-                  key={service.id}
-                  type="button"
-                  aria-pressed={selected}
-                  onClick={() => setServiceId(service.id)}
-                  className={`group flex flex-col items-start gap-3 rounded-2xl p-4 text-left transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/45 ${
-                    selected
-                      ? `${mysticLiveHighlight} shadow-[0_10px_28px_-18px_rgba(196,169,98,0.9)]`
-                      : 'bg-surface hover:-translate-y-0.5 hover:bg-accent-soft/50'
-                  }`}
-                >
-                  <div className="flex w-full items-start justify-between gap-2">
-                    <MysticServiceIllustration serviceId={service.id} size="sm" />
-                    <span className="rounded-full bg-paper/80 px-2 py-0.5 text-[10px] font-medium tabular-nums text-muted">
-                      {service.durationMinutes}m
-                    </span>
+              {MYSTIC_SERVICES.map((service) => {
+                const selected = serviceId === service.id;
+                return (
+                  <div key={service.id} role="option" aria-selected={selected} className="min-w-0">
+                    <MysticBookServiceFlipCard
+                      service={service}
+                      selected={selected}
+                      onSelect={() => setServiceId(service.id)}
+                    />
                   </div>
-                  <div className="min-w-0 w-full">
-                    <p className="font-medium text-ink">{service.name}</p>
-                    <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted">
-                      {service.description}
-                    </p>
-                    <p className="mt-3 text-sm font-semibold text-ink">
-                      {formatUsd(service.priceCents)}
-                    </p>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-          <MysticMagneticButton type="button" onClick={() => setStep('datetime')} fullWidth>
-            Continue
-          </MysticMagneticButton>
-        </section>
-      )}
-
-      {step === 'datetime' && (
-        <section className="w-full space-y-4">
-          <label className="block text-sm font-medium">Date</label>
-          <MysticBookDateStrip
-            value={date}
-            onChange={(iso) => {
-              setDate(iso);
-              setTime('');
-            }}
-          />
-          <label className="block text-sm font-medium">Time</label>
-          {!date ? <p className="text-sm text-muted">Pick a date to see open times.</p> : null}
-          {slotsError ? (
-            <div className="flex flex-wrap items-center gap-3">
-              <p className="text-sm text-danger">{slotsError}</p>
-              <button
-                type="button"
-                className="text-sm font-medium text-accent underline"
-                onClick={() => setSlotsReloadToken((n) => n + 1)}
-              >
-                Retry
-              </button>
-            </div>
-          ) : null}
-          {date && !slotsError && slots.length === 0 ? (
-            <div className="space-y-3">
-              <MysticEmptyState variant="book-slots" compact className="mb-0" />
-              <button
-                type="button"
-                className="text-sm font-medium text-accent underline"
-                onClick={() => {
-                  if (!date) return;
-                  const next = new Date(`${date}T12:00:00`);
-                  next.setDate(next.getDate() + 1);
-                  setDate(next.toISOString().slice(0, 10));
-                  setTime('');
-                }}
-              >
-                Try tomorrow
-              </button>
-            </div>
-          ) : null}
-          {date && slots.length > 0 ? (
-            <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-              {slots.map((slot) => (
-                <button
-                  key={slot}
-                  type="button"
-                  aria-pressed={time === slot}
-                  onClick={() => setTime(slot)}
-                  className={mysticTimeChip(time === slot)}
-                >
-                  {formatBookingSlotLabel(slot)}
-                </button>
-              ))}
-            </div>
-          ) : null}
-          {clientEntitlementSummary(entitlement) ? (
-            <p className="rounded-xl bg-gold-soft/60 px-4 py-3 text-sm text-ink">
-              {clientEntitlementSummary(entitlement)}
-            </p>
-          ) : shouldShowBookingPlansNudge(serviceId, entitlement) ? (
-            <div className="space-y-3 rounded-xl border border-accent/25 bg-accent-soft/50 px-4 py-3">
-              <div>
-                <p className="font-medium text-ink">{BOOKING_PLANS_NUDGE.title}</p>
-                <p className="mt-1 text-sm leading-relaxed text-muted">
-                  {BOOKING_PLANS_NUDGE.body}
-                </p>
-              </div>
-              <MysticMagneticLink href="/memberships" variant="secondary" size="sm">
-                {BOOKING_PLANS_NUDGE.cta}
-              </MysticMagneticLink>
-              <p className="text-xs text-muted">
-                You can keep booking now — fees below apply to this visit.
-              </p>
-            </div>
-          ) : serviceId !== 'blowout' ? (
-            <p className="text-sm text-muted">
-              Membership and package credits apply to blowouts only — this service is menu price
-              plus any travel or evening fees.
-            </p>
-          ) : (
-            <p className="text-sm text-muted">
-              Evening and travel fees may apply when you book outside a membership or package.
-            </p>
-          )}
-          <div className="flex gap-3">
-            <MysticMagneticButton
-              type="button"
-              variant="secondary"
-              className="min-w-0 flex-1"
-              fullWidth
-              onClick={() => setStep('service')}
-            >
-              Back
-            </MysticMagneticButton>
-            <MysticMagneticButton
-              type="button"
-              disabled={!date || !time}
-              className="min-w-0 flex-1"
-              fullWidth
-              onClick={() => setStep('location')}
-            >
-              Continue
-            </MysticMagneticButton>
-          </div>
-        </section>
-      )}
-
-      {step === 'location' && (
-        <section className="w-full space-y-4">
-          <MysticAddressLookup
-            address={address}
-            onChange={setAddress}
-            onSuggestionSelected={onAddressSuggestion}
-          />
-          <p className="text-sm font-medium">Travel distance</p>
-          <p
-            className={`text-sm ${distanceOutOfArea ? 'text-danger' : 'text-muted'}`}
-            role={distanceOutOfArea ? 'alert' : undefined}
-          >
-            {geocodeBusy
-              ? 'Calculating from your address…'
-              : distanceOutOfArea
-                ? houseCallDistanceOutOfAreaMessage(distanceMiles)
-                : (distanceNote ??
-                  `We estimate miles from ${MYSTIC_RIVER_NORTH.label} when you enter street + ZIP.`)}
-          </p>
-          <textarea
-            placeholder="Gate code, parking, pets…"
-            value={address.notes}
-            onChange={(e) => setAddress({ ...address, notes: e.target.value })}
-            className="min-h-24 w-full rounded-xl bg-surface px-4 py-3 text-ink outline-none placeholder:text-muted focus:bg-accent-soft/40"
-          />
-          <div className="flex gap-3">
-            <MysticMagneticButton
-              type="button"
-              variant="secondary"
-              className="min-w-0 flex-1"
-              fullWidth
-              onClick={() => setStep('datetime')}
-            >
-              Back
-            </MysticMagneticButton>
-            <MysticMagneticButton
-              type="button"
-              disabled={
-                !address.line1 ||
-                address.state.length !== 2 ||
-                address.postalCode.length < 5 ||
-                geocodeBusy ||
-                !distanceVerified ||
-                distanceOutOfArea ||
-                Boolean(distanceNote?.includes('not found'))
-              }
-              className="min-w-0 flex-1"
-              fullWidth
-              onClick={() => setStep('details')}
-            >
-              Continue
-            </MysticMagneticButton>
-          </div>
-        </section>
-      )}
-
-      {step === 'details' && (
-        <section className="w-full space-y-4">
-          <div className="flex flex-wrap gap-2">
-            {APPOINTMENT_TAGS.map((tag) => (
-              <button
-                key={tag.id}
-                type="button"
-                aria-pressed={tags.includes(tag.id)}
-                onClick={() => toggleTag(tag.id)}
-                className={`rounded-full px-3 py-1.5 text-xs transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/45 focus-visible:ring-offset-2 ${
-                  tags.includes(tag.id)
-                    ? 'bg-accent text-paper'
-                    : 'bg-surface text-muted hover:bg-accent-soft hover:text-ink'
-                }`}
-              >
-                {tag.label}
-              </button>
-            ))}
-          </div>
-          <input
-            maxLength={16}
-            placeholder="Referral code (optional)"
-            value={referralCode}
-            onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
-            className="w-full rounded-xl bg-surface px-4 py-3 text-ink outline-none placeholder:text-muted focus:bg-accent-soft/40"
-          />
-          <input
-            maxLength={120}
-            placeholder="Or referred by (first & last name)"
-            value={referredBy}
-            onChange={(e) => setReferredBy(e.target.value)}
-            className="w-full rounded-xl bg-surface px-4 py-3 text-ink outline-none placeholder:text-muted focus:bg-accent-soft/40"
-          />
-          <div>
-            <p className="text-sm font-medium">Inspo photos (optional, up to 4)</p>
-            <p className="text-xs text-muted">
-              Luke preps products before arrival — you can add more on My visits later.
-            </p>
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              className="mt-2 w-full text-sm"
-              onChange={(e) => {
-                const list = Array.from(e.target.files ?? []).slice(
-                  0,
-                  DEFAULT_SURCHARGE_RULES.maxInspoPhotos
                 );
-                setInspoFiles(list);
-              }}
-            />
-            {inspoFiles.length > 0 ? (
-              <p className="mt-1 text-xs text-muted">
-                {inspoFiles.length} photo(s) ready to upload
-              </p>
-            ) : null}
-          </div>
-          <div className="flex gap-3">
-            <MysticMagneticButton
-              type="button"
-              variant="secondary"
-              className="min-w-0 flex-1"
-              fullWidth
-              onClick={() => setStep('location')}
-            >
-              Back
-            </MysticMagneticButton>
-            <MysticMagneticButton
-              type="button"
-              className="min-w-0 flex-1"
-              fullWidth
-              onClick={() => setStep('review')}
-            >
-              Continue
-            </MysticMagneticButton>
-          </div>
-        </section>
-      )}
-
-      {step === 'review' && quote && scheduledAt && (
-        <section className="w-full space-y-4 pb-28">
-          <MysticSummaryRowGroup
-            rows={[
-              {
-                id: 'service',
-                label: 'Service',
-                value: MYSTIC_SERVICES.find((s) => s.id === serviceId)?.name ?? serviceId,
-                onEdit: () => setStep('service'),
-              },
-              {
-                id: 'when',
-                label: 'When',
-                value: formatVisitWhen(scheduledAt.toISOString()),
-                onEdit: () => setStep('datetime'),
-              },
-              {
-                id: 'where',
-                label: 'Where',
-                value: `${address.line1}, ${address.city}, ${address.state}`,
-                hint: address.notes || undefined,
-                onEdit: () => setStep('location'),
-              },
-              {
-                id: 'details',
-                label: 'Details',
-                value:
-                  tags.length > 0
-                    ? tags
-                        .map((t) => APPOINTMENT_TAGS.find((a) => a.id === t)?.label ?? t)
-                        .join(' · ')
-                    : 'No extra preferences',
-                hint:
-                  referredBy || referralCode ? 'Referral will be checked at checkout' : undefined,
-                onEdit: () => setStep('details'),
-              },
-            ]}
-          />
-          {shouldShowBookingPlansNudge(serviceId, entitlement) && quote.surcharges.length > 0 ? (
-            <div className="rounded-xl border border-accent/25 bg-accent-soft/40 px-4 py-3 text-sm">
-              <p className="font-medium text-ink">{BOOKING_PLANS_NUDGE.title}</p>
-              <p className="mt-1 text-muted">
-                This visit includes travel or evening fees — members and package holders skip those
-                on blowouts.
-              </p>
-              <MysticMagneticLink
-                href="/memberships"
-                variant="secondary"
-                size="sm"
-                className="mt-3"
-              >
-                {BOOKING_PLANS_NUDGE.cta}
-              </MysticMagneticLink>
+              })}
             </div>
-          ) : null}
-          <div className="rounded-2xl bg-surface p-5">
-            <p className="type-eyebrow text-plum">Payment</p>
-            <ul className="mt-3 space-y-2 text-sm">
-              <li className="flex justify-between gap-3">
-                <span>Service + surcharges</span>
-                <span className="tabular-nums">{formatUsd(quote.totalCents - tipCents)}</span>
-              </li>
-              {quote.surcharges.map((line) => (
-                <li key={line.code} className="flex justify-between gap-3 text-muted">
-                  <span>{line.label}</span>
-                  <span className="tabular-nums">{formatUsd(line.amountCents)}</span>
-                </li>
-              ))}
-            </ul>
-            <p className="mt-4 text-sm font-medium">Tip</p>
-            <p className="text-xs text-muted">Based on service + surcharges before tip.</p>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {([15, 18, 20] as const).map((percent) => (
-                <button
-                  key={percent}
-                  type="button"
-                  aria-pressed={tipPreset === percent}
-                  onClick={() => {
-                    setTipPreset(percent);
-                    setCustomTipPercent('');
-                    setCustomTipDollars('');
-                  }}
-                  className={mysticTimeChip(tipPreset === percent)}
-                >
-                  {formatTipPresetLabel(percent, tipSubtotalCents)}
-                </button>
-              ))}
-              <button
-                type="button"
-                aria-pressed={tipPreset === 'custom'}
-                onClick={() => setTipPreset('custom')}
-                className={mysticTimeChip(tipPreset === 'custom')}
-              >
-                Custom
-              </button>
-              <button
-                type="button"
-                aria-pressed={tipPreset === 'none'}
-                onClick={() => {
-                  setTipPreset('none');
-                  setCustomTipPercent('');
-                  setCustomTipDollars('');
-                }}
-                className={mysticTimeChip(tipPreset === 'none')}
-              >
-                No tip
-              </button>
-            </div>
-            {tipPreset === 'custom' ? (
-              <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                <label className="block text-sm">
-                  <span className="text-muted">Custom %</span>
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    value={customTipPercent}
-                    onChange={(e) => {
-                      setCustomTipDollars('');
-                      setCustomTipPercent(e.target.value);
-                    }}
-                    placeholder="e.g. 22"
-                    className="mt-1 w-full rounded-xl bg-paper px-4 py-2.5 text-ink outline-none"
-                  />
-                </label>
-                <label className="block text-sm">
-                  <span className="text-muted">Or custom amount</span>
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    value={customTipDollars}
-                    onChange={(e) => {
-                      setCustomTipPercent('');
-                      setCustomTipDollars(e.target.value);
-                    }}
-                    placeholder="e.g. 15.00"
-                    className="mt-1 w-full rounded-xl bg-paper px-4 py-2.5 text-ink outline-none"
-                  />
-                </label>
-              </div>
-            ) : null}
-            {tipCents > 0 ? (
-              <p className="mt-2 text-sm text-muted">
-                Tip total: <span className="tabular-nums text-ink">{formatUsd(tipCents)}</span>
-              </p>
-            ) : null}
-            <p className="mt-3 flex justify-between gap-3 text-sm text-muted">
-              <span>Refundable booking deposit</span>
-              <span className="tabular-nums">{formatUsd(depositCents)}</span>
+            <p className="text-center text-xs text-muted">
+              Tap a card to select, or drag to flip for full details — any flip selects that
+              service.
             </p>
-            <p className="mt-4 flex justify-between gap-3 rounded-xl bg-gold-soft/80 px-3 py-3 font-medium">
-              <span>Total due now</span>
-              <span className="tabular-nums">{formatUsd(quote.totalCents)}</span>
-            </p>
-          </div>
-
-          <div className="space-y-4 rounded-2xl bg-paper/80 p-5 text-sm">
-            {HOUSE_CALL_POLICIES.map((policy) => (
-              <div key={policy.id}>
-                <p className="font-medium text-ink">{policy.title}</p>
-                <p className="mt-0.5 leading-relaxed text-muted">{policy.body}</p>
-              </div>
-            ))}
-          </div>
-
-          {profilePhone === null ? (
-            <Alert variant="info" className="text-sm">
-              Add a mobile number in{' '}
-              <Link href="/account" className="font-medium underline underline-offset-2">
-                Account
-              </Link>{' '}
-              so you get on-the-way and arrival texts. You can still pay now.
-            </Alert>
-          ) : null}
-
-          <label className="flex items-start gap-3 text-sm">
-            <input
-              type="checkbox"
-              checked={policiesAccepted}
-              onChange={(e) => setPoliciesAccepted(e.target.checked)}
-              className="mt-1"
-            />
-            <span>I agree to house-call policies and SMS updates (opt out in profile).</span>
-          </label>
-
-          {error ? (
-            <Alert variant="error" className="text-sm">
-              {error}
-            </Alert>
-          ) : null}
-
-          <div className="sticky bottom-3 z-10 space-y-2 rounded-2xl bg-surface/95 p-3 shadow-[0_16px_48px_-20px_rgba(26,31,24,0.4)] backdrop-blur-md">
-            <MysticSecureBookingLine className="px-1" />
             <div className="flex gap-3">
               <MysticMagneticButton
                 type="button"
                 variant="secondary"
                 className="min-w-0 flex-1"
                 fullWidth
-                onClick={() => setStep('details')}
+                onClick={() => router.back()}
               >
                 Back
               </MysticMagneticButton>
               <MysticMagneticButton
                 type="button"
-                disabled={!policiesAccepted || submitting || distanceOutOfArea}
-                aria-busy={submitting}
                 className="min-w-0 flex-1"
                 fullWidth
-                onClick={payAndBook}
+                onClick={() => setStep('datetime')}
               >
-                {submitting ? 'Redirecting…' : 'Pay with Stripe'}
+                Continue
               </MysticMagneticButton>
             </div>
-          </div>
-        </section>
-      )}
+          </section>
+        )}
+
+        {step === 'datetime' && (
+          <section className="w-full space-y-4">
+            <label className="block text-sm font-medium">Date</label>
+            <MysticBookDateStrip
+              value={date}
+              onChange={(iso) => {
+                setDate(iso);
+                setTime('');
+              }}
+            />
+            <label className="block text-sm font-medium">Time</label>
+            {!date ? <p className="text-sm text-muted">Pick a date to see open times.</p> : null}
+            {slotsError ? (
+              <div className="flex flex-wrap items-center gap-3">
+                <p className="text-sm text-danger">{slotsError}</p>
+                <button
+                  type="button"
+                  className="text-sm font-medium text-accent underline"
+                  onClick={() => setSlotsReloadToken((n) => n + 1)}
+                >
+                  Retry
+                </button>
+              </div>
+            ) : null}
+            {date && !slotsError && slots.length === 0 ? (
+              <div className="space-y-3">
+                <MysticEmptyState variant="book-slots" compact className="mb-0" />
+                <button
+                  type="button"
+                  className="text-sm font-medium text-accent underline"
+                  onClick={() => {
+                    if (!date) return;
+                    const next = new Date(`${date}T12:00:00`);
+                    next.setDate(next.getDate() + 1);
+                    setDate(next.toISOString().slice(0, 10));
+                    setTime('');
+                  }}
+                >
+                  Try tomorrow
+                </button>
+              </div>
+            ) : null}
+            {date && slots.length > 0 ? (
+              <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                {slots.map((slot) => (
+                  <button
+                    key={slot}
+                    type="button"
+                    aria-pressed={time === slot}
+                    onClick={() => setTime(slot)}
+                    className={mysticTimeChip(time === slot)}
+                  >
+                    {formatBookingSlotLabel(slot)}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+            <MysticBookEntitlementPicker
+              value={activeEntitlement}
+              options={entitlementOptions}
+              onChange={(next) => {
+                entitlementTouched.current = true;
+                setEntitlement(next);
+              }}
+            />
+            {clientEntitlementSummary(activeEntitlement) ? (
+              <p className="rounded-xl bg-gold-soft/60 px-4 py-3 text-sm text-ink">
+                {clientEntitlementSummary(activeEntitlement)}
+              </p>
+            ) : shouldShowBookingPlansNudge(serviceId, activeEntitlement) ? (
+              <div className="space-y-3 rounded-xl border border-accent/25 bg-accent-soft/50 px-4 py-3">
+                <div>
+                  <p className="font-medium text-ink">{BOOKING_PLANS_NUDGE.title}</p>
+                  <p className="mt-1 text-sm leading-relaxed text-muted">
+                    {BOOKING_PLANS_NUDGE.body}
+                  </p>
+                </div>
+                <MysticMagneticLink href="/memberships" variant="secondary" size="sm">
+                  {BOOKING_PLANS_NUDGE.cta}
+                </MysticMagneticLink>
+                <p className="text-xs text-muted">
+                  You can keep booking now — fees below apply to this visit.
+                </p>
+              </div>
+            ) : serviceId !== 'blowout' ? (
+              <p className="text-sm text-muted">
+                Membership and package credits apply to blowouts only — this service is menu price
+                plus any travel or evening fees.
+              </p>
+            ) : (
+              <p className="text-sm text-muted">
+                Evening and travel fees may apply when you book outside a membership or package.
+              </p>
+            )}
+            <div className="flex gap-3">
+              <MysticMagneticButton
+                type="button"
+                variant="secondary"
+                className="min-w-0 flex-1"
+                fullWidth
+                onClick={() => setStep('service')}
+              >
+                Back
+              </MysticMagneticButton>
+              <MysticMagneticButton
+                type="button"
+                disabled={!date || !time}
+                className="min-w-0 flex-1"
+                fullWidth
+                onClick={() => setStep('location')}
+              >
+                Continue
+              </MysticMagneticButton>
+            </div>
+          </section>
+        )}
+
+        {step === 'location' && (
+          <section className="w-full space-y-4">
+            <MysticAddressLookup
+              address={address}
+              onChange={setAddress}
+              onSuggestionSelected={onAddressSuggestion}
+            />
+            <p className="text-sm font-medium">Travel distance</p>
+            <p
+              className={`text-sm ${distanceOutOfArea ? 'text-danger' : 'text-muted'}`}
+              role={distanceOutOfArea ? 'alert' : undefined}
+            >
+              {geocodeBusy
+                ? 'Calculating from your address…'
+                : distanceOutOfArea
+                  ? houseCallDistanceOutOfAreaMessage(distanceMiles)
+                  : (distanceNote ??
+                    `We estimate miles from ${MYSTIC_RIVER_NORTH.label} when you enter street + ZIP.`)}
+            </p>
+            <textarea
+              placeholder="Gate code, parking, pets…"
+              value={address.notes}
+              onChange={(e) => setAddress({ ...address, notes: e.target.value })}
+              className="min-h-24 w-full rounded-xl bg-surface px-4 py-3 text-ink outline-none placeholder:text-muted focus:bg-accent-soft/40"
+            />
+            <div className="flex gap-3">
+              <MysticMagneticButton
+                type="button"
+                variant="secondary"
+                className="min-w-0 flex-1"
+                fullWidth
+                onClick={() => setStep('datetime')}
+              >
+                Back
+              </MysticMagneticButton>
+              <MysticMagneticButton
+                type="button"
+                disabled={
+                  !address.line1 ||
+                  address.state.length !== 2 ||
+                  address.postalCode.length < 5 ||
+                  geocodeBusy ||
+                  !distanceVerified ||
+                  distanceOutOfArea ||
+                  Boolean(distanceNote?.includes('not found'))
+                }
+                className="min-w-0 flex-1"
+                fullWidth
+                onClick={() => setStep('details')}
+              >
+                Continue
+              </MysticMagneticButton>
+            </div>
+          </section>
+        )}
+
+        {step === 'details' && (
+          <section className="w-full space-y-4">
+            <p className="type-eyebrow text-plum">{BOOK_FLOW_COPY.preferencesSection}</p>
+            <div className="flex flex-wrap gap-2">
+              {APPOINTMENT_TAGS.map((tag) => (
+                <button
+                  key={tag.id}
+                  type="button"
+                  aria-pressed={tags.includes(tag.id)}
+                  onClick={() => toggleTag(tag.id)}
+                  className={`rounded-full border px-4 py-2.5 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/45 focus-visible:ring-offset-2 ${
+                    tags.includes(tag.id)
+                      ? 'border-accent bg-accent text-paper shadow-sm'
+                      : 'border-accent/20 bg-surface text-ink hover:border-accent/40 hover:bg-accent-soft/50'
+                  }`}
+                >
+                  {tag.label}
+                </button>
+              ))}
+            </div>
+            <input
+              maxLength={120}
+              placeholder={BOOK_FLOW_COPY.referredByPlaceholder}
+              value={referredBy}
+              onChange={(e) => setReferredBy(e.target.value)}
+              className="w-full rounded-xl bg-surface px-4 py-3 text-ink outline-none placeholder:text-muted focus:bg-accent-soft/40"
+            />
+            <div>
+              <p className="text-sm font-medium">
+                {BOOK_FLOW_COPY.addInspoPhotos} (optional, up to 4)
+              </p>
+              <p className="text-xs text-muted">
+                Luke preps products before arrival — you can add more on My visits later.
+              </p>
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                className="mt-2 w-full text-sm"
+                onChange={(e) => {
+                  const list = Array.from(e.target.files ?? []).slice(
+                    0,
+                    DEFAULT_SURCHARGE_RULES.maxInspoPhotos
+                  );
+                  setInspoFiles(list);
+                }}
+              />
+              {inspoFiles.length > 0 ? (
+                <p className="mt-1 text-xs text-muted">
+                  {inspoFiles.length} photo(s) ready to upload
+                </p>
+              ) : null}
+            </div>
+            <div className="flex gap-3">
+              <MysticMagneticButton
+                type="button"
+                variant="secondary"
+                className="min-w-0 flex-1"
+                fullWidth
+                onClick={() => setStep('location')}
+              >
+                Back
+              </MysticMagneticButton>
+              <MysticMagneticButton
+                type="button"
+                className="min-w-0 flex-1"
+                fullWidth
+                onClick={() => setStep('review')}
+              >
+                Continue
+              </MysticMagneticButton>
+            </div>
+          </section>
+        )}
+
+        {step === 'review' && quote && scheduledAt && (
+          <section className="w-full space-y-4 pb-28">
+            <MysticSummaryRowGroup
+              rows={[
+                {
+                  id: 'service',
+                  label: 'Service',
+                  value: MYSTIC_SERVICES.find((s) => s.id === serviceId)?.name ?? serviceId,
+                  onEdit: () => setStep('service'),
+                },
+                {
+                  id: 'when',
+                  label: 'When',
+                  value: formatVisitWhen(scheduledAt.toISOString()),
+                  onEdit: () => setStep('datetime'),
+                },
+                {
+                  id: 'where',
+                  label: 'Where',
+                  value: `${address.line1}, ${address.city}, ${address.state}`,
+                  hint: address.notes || undefined,
+                  onEdit: () => setStep('location'),
+                },
+                {
+                  id: 'details',
+                  label: 'Details',
+                  value:
+                    tags.length > 0
+                      ? tags
+                          .map((t) => APPOINTMENT_TAGS.find((a) => a.id === t)?.label ?? t)
+                          .join(' · ')
+                      : 'No extra preferences',
+                  hint: referredBy.trim() ? `Referred by ${referredBy.trim()}` : undefined,
+                  onEdit: () => setStep('details'),
+                },
+              ]}
+            />
+            {shouldShowBookingPlansNudge(serviceId, activeEntitlement) &&
+            quote.surcharges.length > 0 ? (
+              <div className="rounded-xl border border-accent/25 bg-accent-soft/40 px-4 py-3 text-sm">
+                <p className="font-medium text-ink">{BOOKING_PLANS_NUDGE.title}</p>
+                <p className="mt-1 text-muted">
+                  This visit includes travel or evening fees — members and package holders skip
+                  those on blowouts.
+                </p>
+                <MysticMagneticLink
+                  href="/memberships"
+                  variant="secondary"
+                  size="sm"
+                  className="mt-3"
+                >
+                  {BOOKING_PLANS_NUDGE.cta}
+                </MysticMagneticLink>
+              </div>
+            ) : null}
+            <div className="rounded-2xl bg-surface p-5">
+              <p className="type-eyebrow text-plum">Payment</p>
+              <ul className="mt-3 space-y-2 text-sm">
+                <li className="flex justify-between gap-3">
+                  <span>Service + surcharges</span>
+                  <span className="tabular-nums">{formatUsd(quote.totalCents - tipCents)}</span>
+                </li>
+                {quote.surcharges.map((line) => (
+                  <li key={line.code} className="flex justify-between gap-3 text-muted">
+                    <span>{line.label}</span>
+                    <span className="tabular-nums">{formatUsd(line.amountCents)}</span>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-4 text-sm font-medium">Tip</p>
+              <p className="text-xs text-muted">Based on service + surcharges before tip.</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {([18, 20, 25] as const).map((percent) => (
+                  <button
+                    key={percent}
+                    type="button"
+                    aria-pressed={tipPreset === percent}
+                    onClick={() => {
+                      setTipPreset(percent);
+                      setCustomTipPercent('');
+                      setCustomTipDollars('');
+                    }}
+                    className={mysticTimeChip(tipPreset === percent)}
+                  >
+                    {formatTipPresetLabel(percent, tipSubtotalCents)}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  aria-pressed={tipPreset === 'custom'}
+                  onClick={() => setTipPreset('custom')}
+                  className={mysticTimeChip(tipPreset === 'custom')}
+                >
+                  Custom
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={tipPreset === 'cash'}
+                  onClick={() => {
+                    setTipPreset('cash');
+                    setCustomTipPercent('');
+                    setCustomTipDollars('');
+                  }}
+                  className={mysticTimeChip(tipPreset === 'cash')}
+                >
+                  {BOOK_FLOW_COPY.tipInCash}
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={tipPreset === 'none'}
+                  onClick={() => {
+                    setTipPreset('none');
+                    setCustomTipPercent('');
+                    setCustomTipDollars('');
+                  }}
+                  className={mysticTimeChip(tipPreset === 'none')}
+                >
+                  No tip
+                </button>
+              </div>
+              {tipPreset === 'cash' ? (
+                <p className="mt-2 text-xs text-muted">{BOOK_FLOW_COPY.tipCashNote}</p>
+              ) : null}
+              {tipPreset === 'custom' ? (
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <label className="block text-sm">
+                    <span className="text-muted">Custom %</span>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      value={customTipPercent}
+                      onChange={(e) => {
+                        setCustomTipDollars('');
+                        setCustomTipPercent(e.target.value);
+                      }}
+                      placeholder="e.g. 22"
+                      className="mt-1 w-full rounded-xl bg-paper px-4 py-2.5 text-ink outline-none"
+                    />
+                  </label>
+                  <label className="block text-sm">
+                    <span className="text-muted">Or custom amount</span>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      value={customTipDollars}
+                      onChange={(e) => {
+                        setCustomTipPercent('');
+                        setCustomTipDollars(e.target.value);
+                      }}
+                      placeholder="e.g. 15.00"
+                      className="mt-1 w-full rounded-xl bg-paper px-4 py-2.5 text-ink outline-none"
+                    />
+                  </label>
+                </div>
+              ) : null}
+              {tipCents > 0 ? (
+                <p className="mt-2 text-sm text-muted">
+                  Tip total: <span className="tabular-nums text-ink">{formatUsd(tipCents)}</span>
+                </p>
+              ) : null}
+              <p className="mt-3 flex justify-between gap-3 text-sm text-muted">
+                <span>Refundable booking deposit</span>
+                <span className="tabular-nums">{formatUsd(depositCents)}</span>
+              </p>
+              <p className="mt-4 flex justify-between gap-3 rounded-xl bg-gold-soft/80 px-3 py-3 font-medium">
+                <span>Total due now</span>
+                <span className="tabular-nums">{formatUsd(quote.totalCents)}</span>
+              </p>
+            </div>
+
+            <div className="space-y-4 rounded-2xl bg-paper/80 p-5 text-sm">
+              {HOUSE_CALL_POLICIES.map((policy) => (
+                <div key={policy.id}>
+                  <p className="font-medium text-ink">{policy.title}</p>
+                  <p className="mt-0.5 leading-relaxed text-muted">{policy.body}</p>
+                </div>
+              ))}
+            </div>
+
+            {profilePhone === null ? (
+              <Alert variant="info" className="text-sm">
+                Add a mobile number in{' '}
+                <Link href="/account" className="font-medium underline underline-offset-2">
+                  Account
+                </Link>{' '}
+                so you get on-the-way and arrival texts. You can still pay now.
+              </Alert>
+            ) : null}
+
+            <label className="flex items-start gap-3 text-sm">
+              <input
+                type="checkbox"
+                checked={policiesAccepted}
+                onChange={(e) => setPoliciesAccepted(e.target.checked)}
+                className="mt-1"
+              />
+              <span>I agree to house-call policies and SMS updates (opt out in profile).</span>
+            </label>
+
+            {error ? (
+              <Alert variant="error" className="text-sm">
+                {error}
+              </Alert>
+            ) : null}
+
+            <div className="sticky bottom-3 z-10 space-y-2 rounded-2xl bg-surface/95 p-3 shadow-[0_16px_48px_-20px_rgba(26,31,24,0.4)] backdrop-blur-md">
+              <MysticSecureBookingLine className="px-1" />
+              <div className="flex gap-3">
+                <MysticMagneticButton
+                  type="button"
+                  variant="secondary"
+                  className="min-w-0 flex-1"
+                  fullWidth
+                  onClick={() => setStep('details')}
+                >
+                  Back
+                </MysticMagneticButton>
+                <MysticMagneticButton
+                  type="button"
+                  disabled={!policiesAccepted || submitting || distanceOutOfArea}
+                  aria-busy={submitting}
+                  className="min-w-0 flex-1"
+                  fullWidth
+                  onClick={payAndBook}
+                >
+                  {submitting ? (
+                    'Working…'
+                  ) : quote.totalCents === 0 ? (
+                    'Confirm booking'
+                  ) : (
+                    <MysticPayWithStripeLabel logoHeight={15} />
+                  )}
+                </MysticMagneticButton>
+              </div>
+            </div>
+          </section>
+        )}
+      </div>
+
+      <MysticBookingCopilot
+        prompt={conciergePrompt}
+        onPromptChange={setConciergePrompt}
+        busy={conciergeBusy}
+        hint={conciergeHint}
+        extras={conciergeExtras}
+        onSubmit={() => void askConcierge()}
+        onPickService={setServiceId}
+        layout="rail"
+      />
     </div>
   );
 }

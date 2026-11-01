@@ -30,15 +30,24 @@ export function NativeProfileAvatar({ avatarUrl, name, diceBearDefaultSeed, onUp
   async function uploadFromAsset(asset: ImagePicker.ImagePickerAsset) {
     setBusy(true);
     setError(null);
-    const res = await uploadProfileAvatar(asset.uri, asset.fileName ?? 'avatar.jpg');
-    setBusy(false);
-    if (res.error || !res.url) {
-      setError(res.error ?? 'Upload failed');
-      return;
+    try {
+      const res = await uploadProfileAvatar(
+        asset.uri,
+        asset.fileName ?? 'avatar.jpg',
+        asset.mimeType ?? 'image/jpeg'
+      );
+      if (res.error || !res.url) {
+        setError(res.error ?? 'Upload failed');
+        return;
+      }
+      hapticSuccess();
+      setUrl(`${res.url}${res.url.includes('?') ? '&' : '?'}t=${Date.now()}`);
+      onUploaded?.(res.url);
+    } catch {
+      setError('Upload failed — check connection');
+    } finally {
+      setBusy(false);
     }
-    hapticSuccess();
-    setUrl(res.url);
-    onUploaded?.(res.url);
   }
 
   async function runLibrary() {

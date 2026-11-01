@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { CalendarPlus } from 'lucide-react';
 import { MysticIcon } from '@/components/mystic/icons/MysticIcon';
+import { MysticStripeWordmark } from '@/components/mystic/MysticStripeWordmark';
 import {
   MYSTIC_PACKAGES,
   MYSTIC_SERVICES,
@@ -20,6 +21,9 @@ import {
 } from '@/components/mystic/MysticMagneticButton';
 import { MysticClientPage } from '@/components/mystic/MysticClientPage';
 import { mysticCard } from '@/components/mystic/mystic-styles';
+import Image from 'next/image';
+import { MysticConfettiBurst } from '@/components/mystic/MysticConfettiBurst';
+import { MYSTIC_MARKETING_IMAGES } from '@/lib/mystic/marketing-images';
 import { MysticSummaryRowGroup } from '@/components/mystic/MysticSummaryRowGroup';
 
 type Props = {
@@ -84,10 +88,19 @@ export function BookSuccessClient({ appointment, refShort }: Props) {
 
   return (
     <MysticClientPage className="py-4 md:py-6">
+      <MysticConfettiBurst active={confirmed} />
       <div className="text-center">
         {confirmed ? (
           <>
-            <p className="type-eyebrow text-success">Confirmed</p>
+            <Image
+              src={MYSTIC_MARKETING_IMAGES.stylistCutout}
+              alt="Luke — Mystic Hair Co. stylist"
+              width={220}
+              height={286}
+              className="mx-auto -mb-2 h-auto w-[min(220px,55vw)] drop-shadow-[0_16px_32px_rgba(26,31,24,0.25)]"
+              priority
+            />
+            <p className="type-hand-lg text-success">You&apos;re confirmed!</p>
             <h1 className="font-display mt-3 text-3xl font-medium tracking-tight text-ink md:text-4xl">
               You&apos;re on the books
             </h1>
@@ -107,10 +120,13 @@ export function BookSuccessClient({ appointment, refShort }: Props) {
             <h1 className="font-display mt-3 text-3xl font-medium tracking-tight text-ink md:text-4xl">
               We&apos;re confirming your visit
             </h1>
-            <p className="mt-4 text-muted">
-              Stripe checkout went through, but visit details aren&apos;t ready yet — that can take
-              a moment after payment. Check Visits, refresh this page, or message Luke if nothing
-              shows in a few minutes.
+            <p className="mt-4 flex flex-wrap items-center gap-x-1 gap-y-1 text-muted">
+              <MysticStripeWordmark height={12} className="shrink-0" />
+              <span>
+                checkout went through, but visit details aren&apos;t ready yet — that can take a
+                moment after payment. Check Visits, refresh this page, or message Luke if nothing
+                shows in a few minutes.
+              </span>
               {refShort ? (
                 <>
                   <br />

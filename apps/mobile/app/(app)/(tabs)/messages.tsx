@@ -15,13 +15,12 @@ import {
   MYSTIC_STYLIST,
   formatMessageTimestamp,
   messageSenderLabel,
-  mysticStylistPortraitUrl,
 } from '@template/mystic';
+import { lukePortraitSource } from '../../../lib/lukeAssets';
 import { useRouter } from 'expo-router';
 import { createSupabaseMobileClient } from '@template/api/mobile';
-import { NativeButton, theme } from '@template/mobile-ui';
+import { NativeButton, handAccent, handTitle, theme } from '@template/mobile-ui';
 import { NativeEmptyState } from '../../../components/mystic/NativeEmptyState';
-import { NativeScreenHeader } from '../../../components/mystic/NativeScreenHeader';
 import { nativeScreenStyles } from '../../../components/mystic/nativeScreenStyles';
 import { NativeFadeIn } from '../../../components/motion/NativeFadeIn';
 import { NativePressableScale } from '../../../components/motion/NativePressableScale';
@@ -37,7 +36,6 @@ type Message = {
 };
 
 const POLL_MS = 18_000;
-const lukePortraitUrl = mysticStylistPortraitUrl(process.env.EXPO_PUBLIC_APP_URL);
 const KEYBOARD_OFFSET = Platform.OS === 'ios' ? 92 : 0;
 
 export default function MessagesTab() {
@@ -143,7 +141,16 @@ export default function MessagesTab() {
         keyboardDismissMode="interactive"
       >
         <View style={nativeScreenStyles.stack}>
-          <NativeScreenHeader kicker="Messages" title="Chat with Luke" />
+          <View style={styles.lukeHeader}>
+            <NativeUserAvatar source={lukePortraitSource} name={MYSTIC_STYLIST.name} size={56} />
+            <View style={styles.lukeHeaderCopy}>
+              <Text style={styles.lukeKicker}>Messages</Text>
+              <Text style={styles.lukeTitle}>Chat with Luke</Text>
+              <Text style={styles.lukeLede}>
+                Your house-call stylist — text timing, inspo, or parking.
+              </Text>
+            </View>
+          </View>
           {needsSignIn ? (
             <View style={styles.signInBlock}>
               <Text style={styles.loadError}>Sign in to chat with Luke.</Text>
@@ -175,7 +182,8 @@ export default function MessagesTab() {
           ) : null}
           {messages.map((msg, index) => {
             const isSelf = msg.sender_role !== 'stylist';
-            const avatarUrl = isSelf ? clientAvatarUrl : lukePortraitUrl;
+            const avatarUrl = isSelf ? clientAvatarUrl : null;
+            const avatarSource = isSelf ? undefined : lukePortraitSource;
             const avatarName = isSelf ? clientDisplayName : MYSTIC_STYLIST.name;
             return (
               <NativeFadeIn
@@ -183,7 +191,12 @@ export default function MessagesTab() {
                 delayMs={Math.min(index, 6) * 24}
                 style={[styles.msgRow, isSelf ? styles.msgRowSelf : styles.msgRowLuke]}
               >
-                <NativeUserAvatar url={avatarUrl} name={avatarName} size={28} />
+                <NativeUserAvatar
+                  url={avatarUrl}
+                  source={avatarSource}
+                  name={avatarName}
+                  size={28}
+                />
                 <View style={[styles.row, isSelf ? styles.rowSelf : styles.rowLuke]}>
                   <View style={[styles.bubble, isSelf ? styles.bubbleClient : styles.bubbleLuke]}>
                     <Text style={[styles.role, isSelf && styles.roleOnAccent]}>
@@ -235,6 +248,11 @@ export default function MessagesTab() {
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: theme.paper },
   scrollContent: { paddingBottom: 12 },
+  lukeHeader: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 16 },
+  lukeHeaderCopy: { flex: 1 },
+  lukeKicker: { ...handAccent, fontSize: 20 },
+  lukeTitle: { ...handTitle, marginTop: 2 },
+  lukeLede: { fontSize: 13, lineHeight: 18, color: theme.muted, marginTop: 4 },
   composer: {
     borderTopWidth: 2,
     borderTopColor: theme.gold,

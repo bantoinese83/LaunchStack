@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import { mysticAvatarFrameClass } from '@/components/mystic/mystic-avatar-frame';
 
 type Props = {
   url?: string | null;
@@ -7,8 +8,9 @@ type Props = {
   className?: string;
 };
 
-export function MysticUserAvatar({ url, name, size = 32, className = '' }: Props) {
+export function MysticUserAvatar({ url, name, size = 40, className = '' }: Props) {
   const initial = (name?.trim()?.[0] ?? '?').toUpperCase();
+  const frame = mysticAvatarFrameClass(className);
 
   if (url) {
     return (
@@ -17,7 +19,7 @@ export function MysticUserAvatar({ url, name, size = 32, className = '' }: Props
         alt=""
         width={size}
         height={size}
-        className={`shrink-0 rounded-full border border-line/80 bg-accent-soft object-cover ${className}`}
+        className={frame}
         style={{ width: size, height: size }}
       />
     );
@@ -25,8 +27,8 @@ export function MysticUserAvatar({ url, name, size = 32, className = '' }: Props
 
   return (
     <span
-      className={`inline-flex shrink-0 items-center justify-center rounded-full border border-line/80 bg-accent-soft font-semibold text-accent ${className}`}
-      style={{ width: size, height: size, fontSize: Math.max(11, size * 0.38) }}
+      className={`inline-flex items-center justify-center font-semibold text-accent ${frame}`}
+      style={{ width: size, height: size, fontSize: Math.max(12, size * 0.36) }}
       aria-hidden
     >
       {initial}

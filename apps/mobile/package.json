@@ -7,14 +7,16 @@
     "dev": "expo start",
     "start": "expo start",
     "start:clean": "expo start --clear",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "ios:sim": "expo run:ios --device \"iPhone 18 Pro Max\"",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "build": "FORCE_COLOR= NO_COLOR= expo export --platform ios --platform android --output-dir dist --clear"
   },
   "dependencies": {
+    "@expo-google-fonts/caveat": "^0.4.2",
     "@expo/metro-runtime": "~57.0.17",
     "@expo/vector-icons": "^15.1.1",
     "@supabase/supabase-js": "^2.116.0",
@@ -60,5 +62,12 @@
     "eslint": "^9.0.0",
     "typescript": "~6.0.3",
     "typescript-eslint": "^8.70.0"
+  },
+  "expo": {
+    "doctor": {
+      "appConfigFieldsNotSyncedCheck": {
+        "enabled": false
+      }
+    }
   }
 }

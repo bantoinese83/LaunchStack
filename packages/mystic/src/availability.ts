@@ -93,7 +93,7 @@ function formatHhMm(minutesFromMidnight: number): string {
 
 /** Parse a studio wall-clock slot (`HH:mm`) from availability API. */
 export function parseBookingSlotHhMm(slotHhMm: string): { hour: number; minute: number } | null {
-  const match = /^(\d{1,2}):(\d{2})$/.exec(slotHhMm.trim());
+  const match = /^(\d{1,2}):(\d{2})(?::\d{2})?$/.exec(slotHhMm.trim());
   if (!match) return null;
   const hour = Number.parseInt(match[1], 10);
   const minute = Number.parseInt(match[2], 10);

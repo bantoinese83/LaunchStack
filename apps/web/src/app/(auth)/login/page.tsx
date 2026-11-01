@@ -36,7 +36,7 @@ function LoginForm() {
     <MysticAuthCard>
       <div className="mb-8 text-center">
         <MysticAuthLogo />
-        <h1 className="type-display-md text-ink">{t.welcomeBack}</h1>
+        <h1 className="type-hand-lg text-ink">{t.welcomeBack}</h1>
         <p className="type-caption mt-2">Sign in to book and manage your visits</p>
       </div>
 

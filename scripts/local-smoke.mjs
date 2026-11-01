@@ -26,7 +26,7 @@ loadEnv();
 
 const BASE = process.env.SMOKE_BASE_URL ?? 'http://localhost:3000';
 const EMAIL = process.env.SMOKE_ADMIN_EMAIL ?? 'mystic.studio.admin@mystichairco.dev';
-const PASS = process.env.SMOKE_ADMIN_PASSWORD ?? 'MysticStudio!Admin2026';
+const PASS = process.env.SMOKE_ADMIN_PASSWORD ?? 'MysticDemo!2026';
 
 function log(ok, step, detail = '') {
   console.log(`[${ok ? 'OK' : 'FAIL'}] ${step}${detail ? ` — ${detail}` : ''}`);

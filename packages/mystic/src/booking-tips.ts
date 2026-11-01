@@ -1,7 +1,7 @@
 import type { BookingQuote } from './pricing';
 
 /** Quick-pick tip percentages (0 = no tip). */
-export const BOOKING_TIP_PERCENT_PRESETS = [0, 15, 18, 20] as const;
+export const BOOKING_TIP_PERCENT_PRESETS = [0, 18, 20, 25] as const;
 
 export type BookingTipPresetPercent = (typeof BOOKING_TIP_PERCENT_PRESETS)[number];
 
@@ -67,12 +67,12 @@ function formatUsdShort(cents: number): string {
 }
 
 export function buildTipChoiceFromUi(input: {
-  preset: 'none' | 15 | 18 | 20 | 'custom';
+  preset: 'none' | 'cash' | 18 | 20 | 25 | 'custom';
   customPercent: string;
   customDollars: string;
 }): BookingTipChoice {
-  if (input.preset === 'none') return { kind: 'preset', percent: 0 };
-  if (input.preset === 15 || input.preset === 18 || input.preset === 20) {
+  if (input.preset === 'none' || input.preset === 'cash') return { kind: 'preset', percent: 0 };
+  if (input.preset === 18 || input.preset === 20 || input.preset === 25) {
     return { kind: 'preset', percent: input.preset };
   }
   const dollars = parseCustomTipDollarsToCents(input.customDollars);

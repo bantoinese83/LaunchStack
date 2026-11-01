@@ -298,7 +298,7 @@ export function VisitsClient() {
                 <MysticVisitStatusBadge status={row.status} />
               </div>
               <p className="mt-2 text-sm text-muted">{formatVisitWhen(row.starts_at)}</p>
-              {tab === 'upcoming' ? <MysticStylistChip className="mt-2" size={24} /> : null}
+              {tab === 'upcoming' ? <MysticStylistChip className="mt-2" size={32} /> : null}
               {addressLine ? <p className="mt-1 text-xs text-muted">{addressLine}</p> : null}
               <p className="mt-2 text-sm text-chalk">
                 {visitStatusLabel(row.status)}

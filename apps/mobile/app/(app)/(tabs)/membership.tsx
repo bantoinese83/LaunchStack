@@ -1,51 +1,73 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { Linking, Platform, StyleSheet, Text, View } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
-import { MYSTIC_MEMBERSHIPS, MYSTIC_PACKAGES, formatUsd } from '@template/mystic';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Platform, StyleSheet, Text, View } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import {
+  MYSTIC_MEMBERSHIPS,
+  MYSTIC_PACKAGES,
+  formatUsd,
+  getCelebrationContent,
+  type MysticCelebrationKind,
+} from '@template/mystic';
 import { NativeButton, monoLabel, theme } from '@template/mobile-ui';
+import { NativeCelebrationBurst } from '../../../components/mystic/NativeCelebrationBurst';
 import { NativeScreenHeader } from '../../../components/mystic/NativeScreenHeader';
 import { NativeScreenShell } from '../../../components/mystic/NativeScreenShell';
+import { openStripeCheckoutSession } from '../../../lib/openStripeCheckout';
 import { startMembershipCheckout, startPackageCheckout } from '../../../lib/mysticApi';
 
-function messageFromMembershipUrl(url: string | null): string | null {
-  if (!url || !url.includes('membership')) return null;
-  if (url.includes('success=1')) {
-    return 'Payment complete — your credits apply the next time you book a blowout.';
-  }
-  if (url.includes('canceled=1')) {
-    return 'Checkout canceled — no charge. Tap Subscribe or Buy when you are ready.';
-  }
-  return null;
-}
-
 export default function MembershipTab() {
+  const router = useRouter();
+  const params = useLocalSearchParams<{
+    success?: string;
+    canceled?: string;
+    kind?: string;
+    id?: string;
+  }>();
   const [status, setStatus] = useState<string | null>(null);
-  const params = useLocalSearchParams<{ success?: string; canceled?: string }>();
+  const [celebrate, setCelebrate] = useState(false);
+  const [burstKey, setBurstKey] = useState(0);
 
-  const handleDeepLink = useCallback((url: string | null) => {
-    const msg = messageFromMembershipUrl(url);
-    if (msg) setStatus(msg);
-  }, []);
+  const successKind = useMemo((): MysticCelebrationKind | null => {
+    if (params.success !== '1') return null;
+    if (params.kind === 'package') return 'package';
+    if (params.kind === 'membership') return 'membership';
+    return 'membership';
+  }, [params.success, params.kind]);
+
+  const celebration = successKind ? getCelebrationContent(successKind, params.id) : null;
 
   useEffect(() => {
     if (params.success === '1') {
-      setStatus('Payment complete — your credits apply the next time you book a blowout.');
+      setCelebrate(true);
+      setBurstKey((k) => k + 1);
+      setStatus(null);
     } else if (params.canceled === '1') {
+      setCelebrate(false);
       setStatus('Checkout canceled — no charge. Tap Subscribe or Buy when you are ready.');
     }
   }, [params.success, params.canceled]);
 
-  useEffect(() => {
-    void Linking.getInitialURL().then(handleDeepLink);
-    const sub = Linking.addEventListener('url', ({ url }) => handleDeepLink(url));
-    return () => sub.remove();
-  }, [handleDeepLink]);
+  const clearCelebrationParams = useCallback(() => {
+    setCelebrate(false);
+    router.replace('/(app)/(tabs)/membership');
+  }, [router]);
 
   async function subscribe(id: string) {
     try {
       const data = await startMembershipCheckout(id);
-      if (data.url) await Linking.openURL(data.url);
-      else setStatus(data.error ?? 'Checkout unavailable');
+      if (!data.url) {
+        setStatus(data.error ?? 'Checkout unavailable');
+        return;
+      }
+      const session = await openStripeCheckoutSession(data.url, 'mystichair://membership');
+      if (session.ok && session.url.includes('success=1')) {
+        router.replace({
+          pathname: '/(app)/(tabs)/membership',
+          params: { success: '1', kind: 'membership', id },
+        });
+      } else if (!session.ok && session.reason === 'cancel') {
+        setStatus('Checkout canceled — no charge.');
+      }
     } catch {
       setStatus('Sign in on web or configure EXPO_PUBLIC_APP_URL');
     }
@@ -54,8 +76,19 @@ export default function MembershipTab() {
   async function buyPackage(id: string) {
     try {
       const data = await startPackageCheckout(id);
-      if (data.url) await Linking.openURL(data.url);
-      else setStatus(data.error ?? 'Checkout unavailable');
+      if (!data.url) {
+        setStatus(data.error ?? 'Checkout unavailable');
+        return;
+      }
+      const session = await openStripeCheckoutSession(data.url, 'mystichair://membership');
+      if (session.ok && session.url.includes('success=1')) {
+        router.replace({
+          pathname: '/(app)/(tabs)/membership',
+          params: { success: '1', kind: 'package', id },
+        });
+      } else if (!session.ok && session.reason === 'cancel') {
+        setStatus('Checkout canceled — no charge.');
+      }
     } catch {
       setStatus('Sign in and set EXPO_PUBLIC_APP_URL');
     }
@@ -63,11 +96,26 @@ export default function MembershipTab() {
 
   return (
     <NativeScreenShell>
+      <NativeCelebrationBurst fire={celebrate} burstKey={burstKey} />
       <NativeScreenHeader
         kicker="Plans"
         title="Memberships & packages"
         lede="Monthly Glow & Luxe and prepaid blowout packs — credits apply at checkout."
       />
+      {celebration ? (
+        <View style={styles.successCard}>
+          <Text style={styles.successEyebrow}>{celebration.eyebrow}</Text>
+          <Text style={styles.successTitle}>{celebration.title}</Text>
+          <Text style={styles.successBody}>{celebration.body}</Text>
+          <NativeButton title="Book a blowout" onPress={() => router.push('/(app)/(tabs)/book')} />
+          <NativeButton
+            title="Dismiss"
+            variant="outline"
+            onPress={clearCelebrationParams}
+            style={styles.dismiss}
+          />
+        </View>
+      ) : null}
       {MYSTIC_MEMBERSHIPS.map((plan) => (
         <View key={plan.id} style={[styles.card, Platform.OS === 'android' && styles.cardAndroid]}>
           <Text style={styles.planName}>{plan.name}</Text>
@@ -105,6 +153,23 @@ export default function MembershipTab() {
 }
 
 const styles = StyleSheet.create({
+  successCard: {
+    marginBottom: 16,
+    padding: 16,
+    borderRadius: theme.radii.lg,
+    backgroundColor: theme.goldSoft,
+    borderWidth: 1,
+    borderColor: theme.gold,
+  },
+  successEyebrow: {
+    fontSize: 11,
+    letterSpacing: 1.6,
+    textTransform: 'uppercase',
+    color: theme.success,
+  },
+  successTitle: { fontSize: 22, fontWeight: '600', color: theme.ink, marginTop: 6 },
+  successBody: { fontSize: 14, lineHeight: 20, color: theme.muted, marginTop: 8, marginBottom: 12 },
+  dismiss: { marginTop: 8 },
   card: {
     backgroundColor: theme.accentSoft,
     borderRadius: theme.radii.lg,

@@ -1,9 +1,8 @@
 'use client';
 
 import { motion, useReducedMotion } from 'framer-motion';
-import { ArtCollage } from '@/components/mystic/editorial/ArtCollage';
+import { StylistHeroFigure } from '@/components/mystic/editorial/StylistHeroFigure';
 import { MysticHeroBackground } from '@/components/mystic/editorial/MysticHeroBackground';
-import { MYSTIC_MARKETING_IMAGES } from '@/lib/mystic/marketing-images';
 import { cn } from '@/lib/utils';
 import { MysticMagneticButton, MysticMagneticLink } from '@/components/mystic/MysticMagneticButton';
 
@@ -40,7 +39,7 @@ export function MysticEditorialHero({ onAboutLuke }: Props) {
           <hr className="mystic-editorial-rule max-w-[12rem]" />
           <h1 className="type-display-hero text-ink">
             House-call hair
-            <span className="type-display-hero-accent mt-1 block text-chalk">in Chicago.</span>
+            <span className="type-hand-hero mt-1 block text-chalk">in Chicago.</span>
           </h1>
           <p className="type-lede max-w-md">
             Blowouts, cuts, updos, and dry styling at your door in Chicago and River North. Book
@@ -70,12 +69,7 @@ export function MysticEditorialHero({ onAboutLuke }: Props) {
         </motion.div>
 
         <motion.div variants={fade} className={cn('w-full lg:justify-self-end')}>
-          <ArtCollage
-            primaryImage={MYSTIC_MARKETING_IMAGES.hero}
-            secondaryImage={MYSTIC_MARKETING_IMAGES.stylist}
-            primaryAlt="House-call blowout styling"
-            secondaryAlt="Mystic Hair Co. stylist"
-          />
+          <StylistHeroFigure />
         </motion.div>
       </motion.div>
     </section>

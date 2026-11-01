@@ -1,10 +1,16 @@
 import 'react-native-gesture-handler';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Stack, type ErrorBoundaryProps } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useFonts, Caveat_500Medium, Caveat_600SemiBold } from '@expo-google-fonts/caveat';
+import * as SplashScreen from 'expo-splash-screen';
 import { NativeButton, displayTitle, theme } from '@template/mobile-ui';
 import { StyleSheet, Text, View } from 'react-native';
 import { MysticPressProvider } from '../components/motion/MysticPressProvider';
+
+SplashScreen.preventAutoHideAsync().catch(() => {
+  /* dev reload */
+});
 
 export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
   return (
@@ -17,6 +23,21 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
 }
 
 export default function RootLayout() {
+  const [fontsLoaded] = useFonts({
+    Caveat_500Medium,
+    Caveat_600SemiBold,
+  });
+
+  useEffect(() => {
+    if (fontsLoaded) {
+      void SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
+
+  if (!fontsLoaded) {
+    return null;
+  }
+
   return (
     <MysticPressProvider>
       <StatusBar style="dark" />

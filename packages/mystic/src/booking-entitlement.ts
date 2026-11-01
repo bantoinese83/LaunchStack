@@ -29,6 +29,29 @@ export function inferClientEntitlementFromCredits(
   return 'none';
 }
 
+/** Entitlement options the client can choose at checkout (blowouts only). */
+export function availableBookingEntitlements(
+  credits: readonly MysticCreditRow[],
+  serviceId: ServiceId,
+  nowMs = Date.now()
+): ClientEntitlement[] {
+  if (serviceId !== 'blowout') return ['none'];
+  const options: ClientEntitlement[] = ['none'];
+  if (credits.some((c) => c.source_kind === 'membership' && creditIsUsable(c, nowMs))) {
+    options.push('membership');
+  }
+  if (credits.some((c) => c.source_kind === 'package' && creditIsUsable(c, nowMs))) {
+    options.push('package');
+  }
+  return options;
+}
+
+export const BOOKING_ENTITLEMENT_LABEL: Record<ClientEntitlement, string> = {
+  none: 'Pay as you go',
+  membership: 'Use membership',
+  package: 'Use package credit',
+};
+
 export function clientEntitlementSummary(entitlement: ClientEntitlement): string | null {
   if (entitlement === 'membership') {
     return 'Your membership blowout applies — travel and evening fees are waived.';

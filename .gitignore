@@ -24,6 +24,8 @@ storybook-static/
 
 # Expo / React Native build
 .expo/
+apps/mobile/ios/build/
+apps/mobile/ios/Pods/
 *.apk
 *.aab
 *.ipa
@@ -47,6 +49,10 @@ docs/client/.whisper-cache/
 docs/client/*.wav
 docs/client/*.m4a
 docs/client/*.pt
+
+# Playwright
+apps/web/test-results/
+apps/web/playwright-report/
 
 # IDE & OS
 .DS_Store

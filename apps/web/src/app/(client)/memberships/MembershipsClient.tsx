@@ -15,6 +15,7 @@ import { MysticPageIntro } from '@/components/mystic/MysticPageIntro';
 import { MysticMagneticLink } from '@/components/mystic/MysticMagneticButton';
 import { MysticPricingTiers } from '@/components/mystic/MysticPricingTiers';
 import { mysticEyebrow, mysticSectionTitle } from '@/components/mystic/mystic-styles';
+import { MysticStripeEncryptedFootnote } from '@/components/mystic/MysticStripeWordmark';
 
 const TRUST = [
   'Credits at checkout',
@@ -120,9 +121,7 @@ export function MembershipsClient() {
         </div>
       </section>
 
-      <p className="type-eyebrow mt-10 text-center text-muted">
-        Secure checkout · Stripe-encrypted · Manage plans in your account
-      </p>
+      <MysticStripeEncryptedFootnote className="mt-10" tail="Manage plans in your account" />
 
       <p className="mt-6 text-center">
         <Link href="/account" className="type-eyebrow text-muted transition hover:text-ink">

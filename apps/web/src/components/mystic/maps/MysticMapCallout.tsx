@@ -26,7 +26,7 @@ export function MysticMapCallout({
   const avatar = resolveAvatar(marker);
   return (
     <div className={`flex items-center gap-2 ${compact ? 'max-w-[140px]' : 'max-w-[168px]'}`}>
-      <MysticUserAvatar url={avatar.url} name={avatar.name} size={compact ? 28 : 32} />
+      <MysticUserAvatar url={avatar.url} name={avatar.name} size={compact ? 36 : 44} />
       <div className="min-w-0 text-left">
         <p className="truncate text-[10px] font-semibold uppercase tracking-wide text-ink">
           {marker.title}

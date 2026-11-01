@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Image,
   KeyboardAvoidingView,
   Linking,
   Platform,
@@ -12,7 +13,7 @@ import {
   View,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   APPOINTMENT_TAGS,
   BOOKING_FLOW_STEPS,
@@ -30,9 +31,11 @@ import {
   formatBookingSlotLabel,
   scheduledAtFromBookingSlot,
   inferClientEntitlementFromCredits,
+  availableBookingEntitlements,
   clientEntitlementSummary,
   shouldShowBookingPlansNudge,
   BOOKING_PLANS_NUDGE,
+  BOOK_FLOW_COPY,
   type MysticCreditRow,
   bookingSubtotalBeforeTip,
   buildTipChoiceFromUi,
@@ -46,14 +49,17 @@ import {
   type SurchargeRules,
 } from '@template/mystic';
 import { NativeButton, roadTrip, theme } from '@template/mobile-ui';
-import { NativeAiOrb } from '../mystic/NativeAiOrb';
-import { NativeServiceIllustration } from '../mystic/NativeServiceIllustration';
 import { NativeScreenHeader } from '../mystic/NativeScreenHeader';
+import { NativeStylistChip } from '../mystic/NativeStylistChip';
 import { NativeAddressMapPreview } from '../maps/NativeAddressMapPreview';
 import { NativeAddressLookup, type HouseCallAddress } from './NativeAddressLookup';
 import { NativeBookDateStrip } from './NativeBookDateStrip';
 import { NativeEmptyState } from '../mystic/NativeEmptyState';
+import { NativeBookEntitlementPicker } from './NativeBookEntitlementPicker';
+import { NativeBookServiceCard } from './NativeBookServiceCard';
+import { NativeBookStepBreadcrumb } from './NativeBookStepBreadcrumb';
 import { NativeBookStepProgress } from './NativeBookStepProgress';
+import { NativeBookingCopilot, type NativeBookingCopilotExtras } from './NativeBookingCopilot';
 import {
   askBookingConcierge,
   fetchAvailability,
@@ -65,6 +71,8 @@ import {
   startBookingCheckout,
   uploadInspoPhoto,
 } from '../../lib/mysticApi';
+import { openStripeCheckoutSession } from '../../lib/openStripeCheckout';
+import { NativePayWithStripeLabel } from '../mystic/NativeStripeWordmark';
 
 function tomorrowIsoDate() {
   const d = new Date();
@@ -74,6 +82,7 @@ function tomorrowIsoDate() {
 
 export function NativeBookFlow() {
   const router = useRouter();
+  const searchParams = useLocalSearchParams<{ canceled?: string }>();
   const [step, setStep] = useState<BookingFlowStep>('service');
   const [geocodeBusy, setGeocodeBusy] = useState(false);
   const [serviceId, setServiceId] = useState<ServiceId>('blowout');
@@ -83,22 +92,25 @@ export function NativeBookFlow() {
   const [entitlement, setEntitlement] = useState<'none' | 'membership' | 'package'>('none');
   const [distanceMiles, setDistanceMiles] = useState('3');
   const [distanceNote, setDistanceNote] = useState<string | null>(null);
-  const [tipPreset, setTipPreset] = useState<'none' | 15 | 18 | 20 | 'custom'>('none');
+  const [tipPreset, setTipPreset] = useState<'none' | 'cash' | 18 | 20 | 25 | 'custom'>('none');
   const [customTipPercent, setCustomTipPercent] = useState('');
   const [customTipDollars, setCustomTipDollars] = useState('');
   const [tags, setTags] = useState<AppointmentTagId[]>([]);
-  const [referralCode, setReferralCode] = useState('');
   const [referredBy, setReferredBy] = useState('');
   const [policiesAccepted, setPoliciesAccepted] = useState(false);
   const [surchargeRules, setSurchargeRules] = useState<SurchargeRules | null>(null);
   const [depositCents, setDepositCents] = useState(2500);
-  const [inspoUris, setInspoUris] = useState<{ uri: string; name: string }[]>([]);
+  const [inspoUris, setInspoUris] = useState<{ uri: string; name: string; mimeType?: string }[]>(
+    []
+  );
   const [status, setStatus] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [conciergePrompt, setConciergePrompt] = useState('');
   const [conciergeBusy, setConciergeBusy] = useState(false);
   const [conciergeHint, setConciergeHint] = useState<string | null>(null);
+  const [conciergeExtras, setConciergeExtras] = useState<NativeBookingCopilotExtras>(null);
   const checkoutIdempotencyKey = useRef<string | null>(null);
+  const entitlementTouched = useRef(false);
   const [myCredits, setMyCredits] = useState<MysticCreditRow[]>([]);
   const [address, setAddress] = useState<HouseCallAddress>({
     line1: '',
@@ -129,6 +141,13 @@ export function NativeBookFlow() {
   }, [handleCheckoutCanceledDeepLink]);
 
   useEffect(() => {
+    if (searchParams.canceled === '1') {
+      void handleCheckoutCanceledDeepLink('mystichair://book?canceled=1');
+      router.replace('/(app)/(tabs)/book');
+    }
+  }, [searchParams.canceled, handleCheckoutCanceledDeepLink, router]);
+
+  useEffect(() => {
     void fetchMyCredits()
       .then((data) =>
         setMyCredits(Array.isArray(data.credits) ? (data.credits as MysticCreditRow[]) : [])
@@ -141,8 +160,21 @@ export function NativeBookFlow() {
     [myCredits, serviceId]
   );
 
+  const entitlementOptions = useMemo(
+    () => availableBookingEntitlements(myCredits, serviceId),
+    [myCredits, serviceId]
+  );
+
+  const activeEntitlement = useMemo(
+    () =>
+      entitlementOptions.includes(entitlement) ? entitlement : (entitlementOptions[0] ?? 'none'),
+    [entitlement, entitlementOptions]
+  );
+
   useEffect(() => {
-    setEntitlement(inferredEntitlement);
+    if (!entitlementTouched.current) {
+      setEntitlement(inferredEntitlement);
+    }
   }, [inferredEntitlement]);
 
   useEffect(() => {
@@ -242,11 +274,11 @@ export function NativeBookFlow() {
       serviceId,
       scheduledAt,
       distanceMiles: miles,
-      entitlement,
+      entitlement: activeEntitlement,
       tipCents: 0,
       rules: surchargeRules ?? undefined,
     });
-  }, [scheduledAt, serviceId, miles, entitlement, surchargeRules]);
+  }, [scheduledAt, serviceId, miles, activeEntitlement, surchargeRules]);
 
   const tipSubtotalCents = quoteWithoutTip ? bookingSubtotalBeforeTip(quoteWithoutTip) : 0;
 
@@ -293,8 +325,10 @@ export function NativeBookFlow() {
       .map((a: ImagePicker.ImagePickerAsset, i: number) => ({
         uri: a.uri,
         name: a.fileName ?? `inspo-${i + 1}.jpg`,
+        mimeType: a.mimeType ?? 'image/jpeg',
       }));
     setInspoUris(next);
+    setStatus(null);
   }
 
   async function checkout() {
@@ -330,15 +364,17 @@ export function NativeBookFlow() {
             : {}),
         },
         distanceMiles: miles,
-        entitlement,
+        entitlement: activeEntitlement,
         quoteCents:
-          entitlement !== 'none' && serviceId === 'blowout' ? 0 : quote.totalCents - tipCents,
+          activeEntitlement !== 'none' && serviceId === 'blowout' ? 0 : quote.totalCents - tipCents,
         surchargeJson: quote.surcharges,
         tipCents,
         tags,
         referredByName: referredBy.trim() || undefined,
-        referralCode: referralCode.trim() || undefined,
-        clientNotes: address.notes || undefined,
+        clientNotes:
+          [address.notes?.trim(), tipPreset === 'cash' ? BOOK_FLOW_COPY.clientTipCashNote : null]
+            .filter(Boolean)
+            .join('\n') || undefined,
         policiesAccepted: true,
         idempotencyKey: checkoutIdempotencyKey.current,
         useMobileCancelDeepLink: true,
@@ -360,14 +396,33 @@ export function NativeBookFlow() {
       if (appointmentId && inspoUris.length > 0) {
         const failures: string[] = [];
         for (const photo of inspoUris) {
-          const up = await uploadInspoPhoto(appointmentId, photo.uri, photo.name);
+          const up = await uploadInspoPhoto(appointmentId, photo.uri, photo.name, photo.mimeType);
           if (!up.ok) failures.push(up.error ?? 'Inspo upload failed');
         }
         if (failures.length) {
           setStatus(failures[0] ?? 'Some inspo photos did not upload');
         }
       }
-      if (result.url) await Linking.openURL(result.url);
+      if (result.url) {
+        const directSuccess =
+          result.url.includes('/book/success') || result.url.includes('book/success');
+        if (directSuccess) {
+          router.replace({
+            pathname: '/book/success',
+            params: { appointment_id: appointmentId ?? '' },
+          });
+          return;
+        }
+        const session = await openStripeCheckoutSession(result.url, 'mystichair://book/success');
+        if (session.ok) {
+          router.replace({
+            pathname: '/book/success',
+            params: { appointment_id: appointmentId ?? '' },
+          });
+        } else if (session.reason === 'cancel') {
+          void handleCheckoutCanceledDeepLink('mystichair://book?canceled=1');
+        }
+      }
     } catch {
       setStatus(
         isMysticApiConfigured()
@@ -382,6 +437,7 @@ export function NativeBookFlow() {
   function goBack() {
     const idx = BOOKING_FLOW_STEPS.indexOf(step);
     if (idx > 0) setStep(BOOKING_FLOW_STEPS[idx - 1]!);
+    else router.back();
   }
 
   function goNext() {
@@ -400,8 +456,45 @@ export function NativeBookFlow() {
     !distanceOutOfArea
   );
 
-  const entitlementNote = clientEntitlementSummary(entitlement);
-  const showPlansNudge = shouldShowBookingPlansNudge(serviceId, entitlement);
+  const entitlementNote = clientEntitlementSummary(activeEntitlement);
+  const showPlansNudge = shouldShowBookingPlansNudge(serviceId, activeEntitlement);
+
+  async function submitConcierge() {
+    const prompt = conciergePrompt.trim();
+    if (prompt.length < 4) {
+      setConciergeHint('Tell us the occasion or look in a sentence.');
+      return;
+    }
+    setConciergeBusy(true);
+    setConciergeHint(null);
+    setConciergeExtras(null);
+    try {
+      const data = await askBookingConcierge(prompt);
+      if (data.error) {
+        setConciergeHint(data.error);
+        return;
+      }
+      if (data.serviceId) setServiceId(data.serviceId);
+      if (data.suggestedTags?.length) {
+        setTags((current) => {
+          let next = current;
+          for (const id of data.suggestedTags as AppointmentTagId[]) {
+            if (!next.includes(id)) next = toggleAppointmentTag(next, id);
+          }
+          return next;
+        });
+      }
+      setConciergeHint(`${data.serviceName}: ${data.reason}${data.tip ? ` — ${data.tip}` : ''}`);
+      setConciergeExtras({
+        clarifyingQuestion: data.clarifyingQuestion,
+        alternatives: data.alternatives,
+      });
+    } catch {
+      setConciergeHint('Could not recommend — pick a service below');
+    } finally {
+      setConciergeBusy(false);
+    }
+  }
 
   function renderPlansNudge(compact?: boolean) {
     if (!showPlansNudge) return null;
@@ -440,109 +533,41 @@ export function NativeBookFlow() {
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
       >
-        <NativeScreenHeader
-          kicker="Book"
-          title="House call"
-          lede="Chicago mobile styling — Luke rolls up with the full kit."
-        />
+        <NativeScreenHeader kicker="Book" title="House call" />
+        <NativeStylistChip size={36} style={{ marginBottom: 12 }} />
         {!isMysticApiConfigured() ? (
           <Text style={styles.configBanner} accessibilityRole="alert">
             Set EXPO_PUBLIC_APP_URL to your Mystic web app (simulator: http://localhost:3000;
             device: your Mac's LAN IP). Run pnpm dev:web before booking.
           </Text>
         ) : null}
+        <NativeBookStepBreadcrumb step={step} onStepChange={setStep} />
         <NativeBookStepProgress step={step} onStepChange={setStep} />
 
         {step === 'service' && (
           <>
-            <View style={styles.conciergeHeader}>
-              <NativeAiOrb active={conciergeBusy} size="sm" label="Booking concierge" />
-              <View style={styles.conciergeCopy}>
-                <Text style={styles.conciergeTitle}>Not sure? Ask the concierge</Text>
-                <Text style={styles.conciergeHint}>Describe the look — I’ll match a service.</Text>
-              </View>
+            <View
+              style={styles.serviceGrid}
+              accessibilityRole="list"
+              accessibilityLabel="Choose a service"
+            >
+              {MYSTIC_SERVICES.map((service) => (
+                <NativeBookServiceCard
+                  key={service.id}
+                  service={service}
+                  selected={serviceId === service.id}
+                  onSelect={() => setServiceId(service.id)}
+                />
+              ))}
             </View>
-            <TextInput
-              value={conciergePrompt}
-              onChangeText={setConciergePrompt}
-              placeholder="Wedding guest, soft waves…"
-              multiline
-              style={styles.conciergeInput}
-              placeholderTextColor={theme.muted}
-              returnKeyType="done"
-              blurOnSubmit
-            />
-            <NativeButton
-              title={conciergeBusy ? 'Matching…' : 'Recommend a service'}
-              variant="outline"
-              isLoading={conciergeBusy}
-              onPress={() => {
-                void (async () => {
-                  const prompt = conciergePrompt.trim();
-                  if (prompt.length < 4) {
-                    setConciergeHint('Tell us the occasion or look in a sentence.');
-                    return;
-                  }
-                  setConciergeBusy(true);
-                  setConciergeHint(null);
-                  try {
-                    const data = await askBookingConcierge(prompt);
-                    if (data.error) {
-                      setConciergeHint(data.error);
-                      return;
-                    }
-                    if (data.serviceId) setServiceId(data.serviceId);
-                    if (data.suggestedTags?.length) {
-                      setTags((current) => {
-                        let next = current;
-                        for (const id of data.suggestedTags as AppointmentTagId[]) {
-                          if (!next.includes(id)) next = toggleAppointmentTag(next, id);
-                        }
-                        return next;
-                      });
-                    }
-                    const alt =
-                      data.alternatives?.[0] != null
-                        ? ` Or try ${data.alternatives[0].serviceName ?? data.alternatives[0].serviceId}: ${data.alternatives[0].why}`
-                        : '';
-                    const ask = data.clarifyingQuestion
-                      ? ` Still unsure? ${data.clarifyingQuestion}`
-                      : '';
-                    setConciergeHint(
-                      `${data.serviceName}: ${data.reason}${data.tip ? ` — ${data.tip}` : ''}${alt}${ask}`
-                    );
-                  } catch {
-                    setConciergeHint('Could not recommend — pick below');
-                  } finally {
-                    setConciergeBusy(false);
-                  }
-                })();
-              }}
-              style={styles.cta}
-            />
-            {conciergeHint ? <Text style={styles.cardMeta}>{conciergeHint}</Text> : null}
-            <View style={styles.serviceGrid}>
-              {MYSTIC_SERVICES.map((service) => {
-                const selected = serviceId === service.id;
-                return (
-                  <Pressable
-                    key={service.id}
-                    onPress={() => setServiceId(service.id)}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected }}
-                    accessibilityLabel={`${service.name}, ${service.durationMinutes} minutes, ${formatUsd(service.priceCents)}`}
-                    style={[styles.serviceTile, selected && styles.serviceTileSelected]}
-                  >
-                    <NativeServiceIllustration serviceId={service.id} />
-                    <Text style={styles.cardTitle}>{service.name}</Text>
-                    <Text style={styles.cardMeta}>
-                      {service.durationMinutes} min · {formatUsd(service.priceCents)}
-                    </Text>
-                  </Pressable>
-                );
-              })}
+            <Text style={styles.serviceHint}>
+              Tap a service to select. Open Details for the full menu write-up — same info as
+              flipping a card on web.
+            </Text>
+            <View style={styles.rowButtons}>
+              <NativeButton title="Back" variant="secondary" onPress={goBack} style={styles.half} />
+              <NativeButton title="Continue" onPress={goNext} style={styles.half} />
             </View>
-            <NativeButton title="Continue" onPress={goNext} style={styles.cta} />
           </>
         )}
 
@@ -582,6 +607,14 @@ export function NativeBookFlow() {
                 ))
               )}
             </View>
+            <NativeBookEntitlementPicker
+              value={activeEntitlement}
+              options={entitlementOptions}
+              onChange={(value) => {
+                entitlementTouched.current = true;
+                setEntitlement(value);
+              }}
+            />
             {entitlementNote ? (
               <Text style={styles.entitlementNote}>{entitlementNote}</Text>
             ) : showPlansNudge ? (
@@ -649,11 +682,14 @@ export function NativeBookFlow() {
 
         {step === 'details' && (
           <>
+            <Text style={styles.sectionLabel}>{BOOK_FLOW_COPY.preferencesSection}</Text>
             <View style={styles.slotRow}>
               {APPOINTMENT_TAGS.map((tag) => (
                 <Pressable
                   key={tag.id}
                   onPress={() => toggleTag(tag.id)}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: tags.includes(tag.id) }}
                   style={[styles.slot, tags.includes(tag.id) && styles.slotActive]}
                 >
                   <Text style={[styles.slotText, tags.includes(tag.id) && styles.slotTextActive]}>
@@ -663,23 +699,35 @@ export function NativeBookFlow() {
               ))}
             </View>
             <TextInput
-              placeholder="Referral code (optional)"
-              value={referralCode}
-              onChangeText={(v) => setReferralCode(v.toUpperCase())}
-              style={styles.input}
-              autoCapitalize="characters"
-              returnKeyType="done"
-            />
-            <TextInput
-              placeholder="Referred by (name)"
+              placeholder={BOOK_FLOW_COPY.referredByPlaceholder}
               value={referredBy}
               onChangeText={setReferredBy}
               style={styles.input}
               returnKeyType="done"
             />
-            <NativeButton title="Add inspo photos" variant="secondary" onPress={pickInspo} />
+            <NativeButton
+              title={BOOK_FLOW_COPY.addInspoPhotos}
+              variant="secondary"
+              onPress={pickInspo}
+            />
             {inspoUris.length > 0 ? (
-              <Text style={styles.muted}>{inspoUris.length} photo(s) selected</Text>
+              <>
+                <Text style={styles.muted}>{inspoUris.length} photo(s) selected</Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={styles.inspoRow}
+                >
+                  {inspoUris.map((photo) => (
+                    <Image
+                      key={photo.uri}
+                      source={{ uri: photo.uri }}
+                      style={styles.inspoThumb}
+                      accessibilityLabel="Inspo photo preview"
+                    />
+                  ))}
+                </ScrollView>
+              </>
             ) : null}
             <View style={styles.rowButtons}>
               <NativeButton title="Back" variant="secondary" onPress={goBack} style={styles.half} />
@@ -698,6 +746,11 @@ export function NativeBookFlow() {
               <Text style={styles.muted}>
                 {address.line1}, {address.city}
               </Text>
+              {activeEntitlement !== 'none' && serviceId === 'blowout' ? (
+                <Text style={styles.entitlementNote}>
+                  {clientEntitlementSummary(activeEntitlement)}
+                </Text>
+              ) : null}
               {quote.surcharges.map((line) => (
                 <Text key={line.code} style={styles.muted}>
                   {line.label}: {formatUsd(line.amountCents)}
@@ -706,13 +759,24 @@ export function NativeBookFlow() {
               <Text style={styles.muted}>
                 Refundable booking deposit: {formatUsd(depositCents)}
               </Text>
-              <Text style={styles.summaryTotal}>{formatUsd(quote.totalCents)}</Text>
+              <Text style={styles.summaryTotal}>
+                {formatUsd(
+                  activeEntitlement !== 'none' && serviceId === 'blowout'
+                    ? tipCents
+                    : quote.totalCents
+                )}
+              </Text>
+              {activeEntitlement !== 'none' && serviceId === 'blowout' && tipCents === 0 ? (
+                <Text style={styles.muted}>Service covered by your plan — tip optional below.</Text>
+              ) : null}
             </View>
             {quote.surcharges.length > 0 ? renderPlansNudge(true) : null}
             <Text style={styles.sectionLabel}>Tip</Text>
-            <Text style={styles.muted}>Percent of service + surcharges, or enter your own.</Text>
+            <Text style={styles.muted}>
+              Percent of service + surcharges, custom amount, or cash.
+            </Text>
             <View style={styles.slotRow}>
-              {([15, 18, 20] as const).map((percent) => (
+              {([18, 20, 25] as const).map((percent) => (
                 <Pressable
                   key={percent}
                   onPress={() => {
@@ -733,6 +797,18 @@ export function NativeBookFlow() {
               >
                 <Text style={[styles.slotText, tipPreset === 'custom' && styles.slotTextActive]}>
                   Custom
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() => {
+                  setTipPreset('cash');
+                  setCustomTipPercent('');
+                  setCustomTipDollars('');
+                }}
+                style={[styles.slot, tipPreset === 'cash' && styles.slotActive]}
+              >
+                <Text style={[styles.slotText, tipPreset === 'cash' && styles.slotTextActive]}>
+                  {BOOK_FLOW_COPY.tipInCash}
                 </Text>
               </Pressable>
               <Pressable
@@ -772,7 +848,9 @@ export function NativeBookFlow() {
                 />
               </>
             ) : null}
-            {tipCents > 0 ? (
+            {tipPreset === 'cash' ? (
+              <Text style={styles.muted}>{BOOK_FLOW_COPY.tipCashNote}</Text>
+            ) : tipCents > 0 ? (
               <Text style={styles.muted}>Tip total: {formatUsd(tipCents)}</Text>
             ) : null}
             {HOUSE_CALL_POLICIES.map((policy) => (
@@ -789,13 +867,37 @@ export function NativeBookFlow() {
             </View>
             <View style={styles.rowButtons}>
               <NativeButton title="Back" variant="secondary" onPress={goBack} style={styles.half} />
-              <NativeButton
-                title="Pay with Stripe"
-                onPress={checkout}
-                isLoading={submitting}
-                disabled={!policiesAccepted}
-                style={styles.half}
-              />
+              {activeEntitlement !== 'none' &&
+              serviceId === 'blowout' &&
+              tipCents === 0 &&
+              tipPreset !== 'custom' ? (
+                <NativeButton
+                  title="Confirm booking"
+                  onPress={checkout}
+                  isLoading={submitting}
+                  disabled={!policiesAccepted}
+                  style={styles.half}
+                />
+              ) : (
+                <NativeButton
+                  title="Pay with Stripe"
+                  content={
+                    <NativePayWithStripeLabel
+                      logoHeight={14}
+                      textStyle={{
+                        fontSize: 15,
+                        fontWeight: '600',
+                        letterSpacing: -0.2,
+                        color: theme.paper,
+                      }}
+                    />
+                  }
+                  onPress={checkout}
+                  isLoading={submitting}
+                  disabled={!policiesAccepted}
+                  style={styles.half}
+                />
+              )}
             </View>
           </>
         )}
@@ -806,6 +908,15 @@ export function NativeBookFlow() {
           </Text>
         ) : null}
       </ScrollView>
+      <NativeBookingCopilot
+        prompt={conciergePrompt}
+        onPromptChange={setConciergePrompt}
+        busy={conciergeBusy}
+        hint={conciergeHint}
+        extras={conciergeExtras}
+        onSubmit={() => void submitConcierge()}
+        onPickService={setServiceId}
+      />
     </KeyboardAvoidingView>
   );
 }
@@ -853,38 +964,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 10,
-    marginTop: 20,
+    marginTop: 8,
     marginBottom: 8,
   },
-  serviceTile: {
-    width: '47.5%',
-    flexGrow: 1,
-    minWidth: '45%',
-    padding: 14,
-    borderRadius: theme.radii.lg,
-    backgroundColor: theme.surface,
-    gap: 8,
+  inspoRow: { marginTop: 8, marginBottom: 4 },
+  inspoThumb: {
+    width: 72,
+    height: 72,
+    borderRadius: theme.radii.md,
+    marginRight: 8,
+    backgroundColor: theme.line,
   },
-  serviceTileSelected: {
-    backgroundColor: theme.goldSoft,
-  },
-  cardTitle: { fontSize: 16, fontWeight: '600', color: theme.ink },
-  cardMeta: { marginTop: 2, color: theme.muted, fontSize: 12 },
-  conciergeHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginTop: 16,
-    marginBottom: 10,
-  },
-  conciergeCopy: { flex: 1, minWidth: 0 },
-  conciergeTitle: { ...roadTrip.kicker, color: theme.muted },
-  conciergeHint: { marginTop: 2, fontSize: 12, color: theme.muted },
-  conciergeInput: {
-    ...roadTrip.flatInput,
-    minHeight: 72,
-    textAlignVertical: 'top',
-    marginBottom: 8,
+  serviceHint: {
+    fontSize: 12,
+    lineHeight: 17,
+    color: theme.muted,
+    textAlign: 'center',
+    marginTop: 4,
+    marginBottom: 4,
   },
   sectionLabel: { ...roadTrip.kicker, color: theme.muted, marginTop: 16, marginBottom: 10 },
   input: {

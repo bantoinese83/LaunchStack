@@ -12,6 +12,8 @@ export const MYSTIC_ICON_ROLES = [
   'serviceArea',
   'packageOffer',
   'secure',
+  /** Copilot “match a service” — shears, never generic sparkles */
+  'serviceMatch',
   'studioToday',
   'studioCalendar',
   'studioClients',

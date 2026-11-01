@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, type ViewStyle } from 'react-native';
-import { roadTrip } from '@template/mobile-ui';
+import { handAccent, roadTrip } from '@template/mobile-ui';
 import { NativeRoadStripe } from './NativeRoadStripe';
 import { NativeFadeIn } from '../motion/NativeFadeIn';
 
@@ -17,7 +17,7 @@ export function NativeScreenHeader({ kicker, title, lede, style, hideStripe = fa
   return (
     <NativeFadeIn style={[styles.wrap, style]}>
       {!hideStripe ? <NativeRoadStripe compact /> : null}
-      <Text style={roadTrip.kicker}>{kicker}</Text>
+      <Text style={handAccent}>{kicker}</Text>
       <Text style={roadTrip.title}>{title}</Text>
       {lede ? <Text style={roadTrip.lede}>{lede}</Text> : null}
     </NativeFadeIn>

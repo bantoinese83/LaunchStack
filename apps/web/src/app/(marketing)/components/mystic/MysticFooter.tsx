@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { MapPin } from 'lucide-react';
 import { MysticMagneticLink } from '@/components/mystic/MysticMagneticButton';
+import { MysticSignInOrAccountNav } from '@/components/mystic/MysticSignInOrAccountNav';
 import { cn } from '@/lib/utils';
 
 const linkCols = [
@@ -36,8 +37,12 @@ const linkCols = [
 const footerLink =
   'text-sm text-paper/75 transition hover:text-gold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/40 focus-visible:ring-offset-2 focus-visible:ring-offset-shell';
 
+type FooterProps = {
+  initialSignedIn?: boolean;
+};
+
 /** Editorial footer — 21st-inspired outline wordmark + CTA band (scrollxui / balick patterns). */
-export function MysticFooter() {
+export function MysticFooter({ initialSignedIn = false }: FooterProps) {
   const year = new Date().getFullYear();
 
   return (
@@ -55,7 +60,7 @@ export function MysticFooter() {
         <div className="flex flex-col gap-8 border-b border-white/10 py-14 md:flex-row md:items-end md:justify-between md:py-16">
           <div className="max-w-md">
             <p className="type-eyebrow text-gold">House calls · Chicago</p>
-            <h2 className="type-display-lg mt-3 text-paper">Your next blowout starts here.</h2>
+            <h2 className="type-hand-lg mt-3 text-paper">Your next blowout starts here.</h2>
             <p className="mt-3 flex items-center gap-2 text-sm text-paper/60">
               <MapPin className="h-3.5 w-3.5 shrink-0 text-gold/80" aria-hidden />
               River North & mapped house-call area
@@ -118,9 +123,11 @@ export function MysticFooter() {
             <Link href="/terms" className={footerLink}>
               Terms
             </Link>
-            <Link href="/login" className={footerLink}>
-              Sign in
-            </Link>
+            <MysticSignInOrAccountNav
+              initialSignedIn={initialSignedIn}
+              signInClassName={footerLink}
+              accountClassName={`${footerLink} inline-flex items-center gap-1.5`}
+            />
           </div>
         </div>
       </div>

@@ -1,6 +1,9 @@
+'use client';
+
 import type { Route } from 'next';
 import type { ReactNode } from 'react';
 import { MysticClientPage } from '@/components/mystic/MysticClientPage';
+import { MysticConfettiBurst } from '@/components/mystic/MysticConfettiBurst';
 import { MysticMagneticLink } from './MysticMagneticButton';
 
 type Action = { href: Route; label: string; primary?: boolean };
@@ -11,11 +14,20 @@ type Props = {
   description: ReactNode;
   actions: Action[];
   children?: ReactNode;
+  celebrate?: boolean;
 };
 
-export function MysticSuccessPage({ eyebrow, title, description, actions, children }: Props) {
+export function MysticSuccessPage({
+  eyebrow,
+  title,
+  description,
+  actions,
+  children,
+  celebrate = true,
+}: Props) {
   return (
     <MysticClientPage className="py-4 md:py-8" loose noEnter>
+      <MysticConfettiBurst active={celebrate} />
       <div className="text-center">
         {eyebrow ? <p className="type-eyebrow text-success">{eyebrow}</p> : null}
         <h1 className="font-display mt-1.5 text-3xl font-medium tracking-tight text-ink md:text-4xl">

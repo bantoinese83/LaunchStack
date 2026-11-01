@@ -11,8 +11,12 @@ import { MysticMagneticLink } from '@/components/mystic/MysticMagneticButton';
 import { MysticShopProductIllustration } from '@/components/mystic/illustrations/MysticShopProductIllustration';
 import { mysticEyebrow, mysticSectionTitle } from '@/components/mystic/mystic-styles';
 import { ShopCheckoutButton } from '@/app/(client)/shop/ShopCheckoutButton';
+import {
+  MysticStripeEncryptedFootnote,
+  MysticStripeWordmark,
+} from '@/components/mystic/MysticStripeWordmark';
 
-const TRUST = ['Pro styling products', 'Stripe secure checkout', 'Pre-order for launch'];
+const TRUST = ['Pro styling products', 'stripe-secure', 'Pre-order for launch'] as const;
 
 /** Full catalog — shown when `MYSTIC_SHOP_ENABLED` is true. */
 export function MysticShopCatalogLive() {
@@ -28,7 +32,14 @@ export function MysticShopCatalogLive() {
       <ul className="flex flex-wrap gap-x-8 gap-y-2 border-y border-line/60 py-4">
         {TRUST.map((item) => (
           <li key={item} className={`${mysticEyebrow} text-muted`}>
-            {item}
+            {item === 'stripe-secure' ? (
+              <span className="inline-flex items-center gap-1">
+                <MysticStripeWordmark height={11} />
+                <span>secure checkout</span>
+              </span>
+            ) : (
+              item
+            )}
           </li>
         ))}
       </ul>
@@ -90,9 +101,7 @@ export function MysticShopCatalogLive() {
         </div>
       </section>
 
-      <p className="type-eyebrow mt-10 text-center text-muted">
-        Secure checkout · Stripe-encrypted · Charged when you pre-order
-      </p>
+      <MysticStripeEncryptedFootnote className="mt-10" tail="Charged when you pre-order" />
 
       <p className="mt-6 text-center">
         <Link href="/account" className="type-eyebrow text-muted transition hover:text-ink">

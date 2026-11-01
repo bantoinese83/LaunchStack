@@ -4,7 +4,7 @@ import { mysticPageEnter, mysticPageStack } from '@/components/mystic/mystic-sty
 export default function BookLayout({ children }: { children: ReactNode }) {
   return (
     <div
-      className={`mx-auto w-full max-w-xl mystic-book-shell ${mysticPageStack} ${mysticPageEnter} px-0 py-2 sm:py-4 md:py-6`}
+      className={`mx-auto w-full max-w-xl lg:max-w-none mystic-book-shell ${mysticPageStack} ${mysticPageEnter} px-0 py-2 sm:py-4 md:py-6`}
     >
       {children}
     </div>

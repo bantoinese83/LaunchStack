@@ -156,8 +156,8 @@ export function MysticMessageThread({
                   <MysticUserAvatar
                     url={peer.avatarUrl}
                     name={peer.name}
-                    size={28}
-                    className="mb-5"
+                    size={38}
+                    className="mb-5 ring-1 ring-line/50"
                   />
                   <div
                     className={`flex max-w-[78%] flex-col ${isSelf ? 'items-end' : 'items-start'}`}

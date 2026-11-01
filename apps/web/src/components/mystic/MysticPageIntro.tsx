@@ -21,7 +21,7 @@ export function MysticPageIntro({
 
   return (
     <header className={`w-full max-w-2xl ${className}`}>
-      {eyebrow ? <p className="type-eyebrow text-plum">{eyebrow}</p> : null}
+      {eyebrow ? <p className="type-hand-sm text-plum">{eyebrow}</p> : null}
       <h1 className={titleClass}>{title}</h1>
       {description ? (
         <p className="mt-2 max-w-prose text-sm leading-relaxed text-muted md:text-base">
