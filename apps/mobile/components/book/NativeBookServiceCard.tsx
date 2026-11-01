@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {
+  Image,
   ImageBackground,
   Modal,
   Pressable,
@@ -10,6 +11,7 @@ import {
 } from 'react-native';
 import { formatUsd, type MysticService } from '@template/mystic';
 import { MYSTIC_HAND_FONT, monoLabel, NativeButton, theme } from '@template/mobile-ui';
+import { NATIVE_BOOK_CARD_LUKE_IMAGE } from '../../lib/book-card-images';
 import { NATIVE_SERVICE_CARD_IMAGE } from '../../lib/service-card-images';
 
 type Props = {
@@ -23,6 +25,7 @@ type Props = {
 export function NativeBookServiceCard({ service, selected, onSelect, style }: Props) {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const photo = NATIVE_SERVICE_CARD_IMAGE[service.id];
+  const lukePhoto = NATIVE_BOOK_CARD_LUKE_IMAGE[service.id];
 
   return (
     <>
@@ -83,6 +86,12 @@ export function NativeBookServiceCard({ service, selected, onSelect, style }: Pr
         onRequestClose={() => setDetailsOpen(false)}
       >
         <View style={styles.sheet}>
+          <Image
+            source={lukePhoto}
+            style={styles.sheetLukePhoto}
+            accessibilityIgnoresInvertColors
+          />
+          <Text style={styles.sheetLukeLabel}>Your stylist · Luke</Text>
           <Text style={styles.sheetHand}>{service.name}</Text>
           <Text style={styles.sheetBody}>{service.description}</Text>
           <View style={styles.sheetGrid}>
@@ -197,7 +206,19 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.paper,
     padding: 24,
-    paddingTop: 28,
+    paddingTop: 16,
+  },
+  sheetLukePhoto: {
+    width: '100%',
+    aspectRatio: 4 / 3,
+    borderRadius: theme.radii.lg,
+    marginBottom: 10,
+  },
+  sheetLukeLabel: {
+    ...monoLabel,
+    fontSize: 10,
+    color: theme.plum,
+    marginBottom: 4,
   },
   sheetHand: {
     fontFamily: MYSTIC_HAND_FONT,

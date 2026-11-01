@@ -1,8 +1,10 @@
 'use client';
 
 import Image from 'next/image';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { useEffect, useState } from 'react';
+import { AnimatePresence, motion, useInView, useReducedMotion } from 'framer-motion';
+import { useEffect, useRef, useState } from 'react';
+import { useDeferredEffect } from '@/lib/react/useDeferredEffect';
+import { MysticHeroPhotoGrid } from '@/components/mystic/editorial/MysticHeroPhotoGrid';
 import { MYSTIC_MARKETING_IMAGES } from '@/lib/mystic/marketing-images';
 import { cn } from '@/lib/utils';
 
@@ -23,6 +25,13 @@ const ROTATE_MS = 6500;
 export function StylistHeroFigure({ className }: Props) {
   const reduce = useReducedMotion();
   const [index, setIndex] = useState(0);
+  const [mounted, setMounted] = useState(false);
+  const frameRef = useRef<HTMLDivElement>(null);
+  const inView = useInView(frameRef, { once: true, margin: '-20px' });
+
+  useDeferredEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (reduce || SCENES.length < 2) return;
@@ -41,7 +50,10 @@ export function StylistHeroFigure({ className }: Props) {
         aria-hidden
         className="absolute inset-[8%] -z-10 rounded-[2rem] bg-gradient-to-br from-accent-soft/60 via-gold-soft/50 to-transparent blur-2xl"
       />
-      <div className="absolute inset-0 overflow-hidden rounded-[1.75rem] ring-1 ring-line/35 shadow-[0_28px_60px_-28px_rgba(26,31,24,0.4)]">
+      <div
+        ref={frameRef}
+        className="absolute inset-0 overflow-hidden rounded-[1.75rem] ring-1 ring-line/35 shadow-[0_28px_60px_-28px_rgba(26,31,24,0.4)]"
+      >
         <AnimatePresence mode="sync">
           <motion.div
             key={src}
@@ -61,9 +73,10 @@ export function StylistHeroFigure({ className }: Props) {
             />
           </motion.div>
         </AnimatePresence>
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-paper/55 via-transparent to-paper/5" />
+        {mounted ? <MysticHeroPhotoGrid active={inView} /> : null}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-paper/45 via-transparent to-paper/5" />
       </div>
-      {!reduce && SCENES.length > 1 ? (
+      {mounted && !reduce && SCENES.length > 1 ? (
         <div
           className="absolute -bottom-1 left-1/2 z-20 flex -translate-x-1/2 gap-1.5"
           role="tablist"

@@ -262,7 +262,7 @@ export function ThreadComposer() {
           placeholder={clientUserId ? 'Reply as Luke…' : 'Select a client to reply…'}
           quickReplies={aiReplies ?? STUDIO_MESSAGE_QUICK_REPLIES}
           participants={{
-            stylist: { name: MYSTIC_STYLIST.name, avatarUrl: MYSTIC_STYLIST.portraitPath },
+            stylist: { name: MYSTIC_STYLIST.name, avatarUrl: MYSTIC_STYLIST.avatarPath },
             client: selectedClient
               ? {
                   name: selectedClient.full_name ?? selectedClient.email ?? undefined,

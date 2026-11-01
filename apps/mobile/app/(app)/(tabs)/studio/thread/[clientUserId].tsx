@@ -4,7 +4,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { NativeButton, theme } from '@template/mobile-ui';
 import { NativeAiOrb } from '../../../../../components/mystic/NativeAiOrb';
 import { NativeUserAvatar } from '../../../../../components/mystic/NativeUserAvatar';
-import { MYSTIC_STYLIST, messageSenderLabel, mysticStylistPortraitUrl } from '@template/mystic';
+import { MYSTIC_STYLIST, messageSenderLabel, mysticStylistAvatarUrl } from '@template/mystic';
 import { useStudioAccess } from '../../../../../hooks/useStudioAccess';
 import {
   fetchAiMessageSuggest,
@@ -14,7 +14,7 @@ import {
 
 type Message = { id: string; body: string; sender_role: string };
 
-const lukePortraitUrl = mysticStylistPortraitUrl(process.env.EXPO_PUBLIC_APP_URL);
+const lukeAvatarUrl = mysticStylistAvatarUrl(process.env.EXPO_PUBLIC_APP_URL);
 
 export default function StudioThreadScreen() {
   const { clientUserId, clientName, clientAvatarUrl } = useLocalSearchParams<{
@@ -75,7 +75,7 @@ export default function StudioThreadScreen() {
       ) : null}
       {messages.map((msg) => {
         const isStylist = msg.sender_role === 'stylist';
-        const avatarUrl = isStylist ? lukePortraitUrl : clientAvatarUrl || null;
+        const avatarUrl = isStylist ? lukeAvatarUrl : clientAvatarUrl || null;
         const avatarName = isStylist ? MYSTIC_STYLIST.name : (clientName ?? 'Client');
         return (
           <View

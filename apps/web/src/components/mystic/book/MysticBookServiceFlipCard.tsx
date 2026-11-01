@@ -3,6 +3,7 @@
 import { formatUsd, type MysticService } from '@template/mystic';
 import { cn } from '@/lib/utils';
 import { MysticCardFlip } from '@/components/mystic/MysticCardFlip';
+import { MysticBookLukeCardScene } from '@/components/mystic/book/MysticBookLukeCardScene';
 import { MysticBookServiceCardScene } from '@/components/mystic/book/MysticBookServiceCardScene';
 
 type Props = {
@@ -59,11 +60,9 @@ export function MysticBookServiceFlipCard({ service, selected, onSelect }: Props
             <dd className="font-display text-2xl text-ink">{formatUsd(service.priceCents)}</dd>
           </div>
         </dl>
-        {selected ? (
-          <p className="type-eyebrow mt-3 text-center text-accent">Selected for this visit</p>
-        ) : (
-          <p className="type-eyebrow mt-3 text-center text-muted">Selected when you flip here</p>
-        )}
+        <p className="type-eyebrow mt-3 text-center text-muted">
+          {selected ? 'Luke · selected for this visit' : 'Your stylist · Luke'}
+        </p>
       </div>
     </>
   );
@@ -83,9 +82,9 @@ export function MysticBookServiceFlipCard({ service, selected, onSelect }: Props
         </MysticBookServiceCardScene>
       }
       back={
-        <MysticBookServiceCardScene serviceId={service.id} selected={selected}>
+        <MysticBookLukeCardScene serviceId={service.id} selected={selected}>
           {backBody}
-        </MysticBookServiceCardScene>
+        </MysticBookLukeCardScene>
       }
     />
   );

@@ -19,7 +19,7 @@ export function MysticUserAvatar({ url, name, size = 40, className = '' }: Props
         alt=""
         width={size}
         height={size}
-        className={frame}
+        className={`${frame} object-cover object-center`}
         style={{ width: size, height: size }}
       />
     );

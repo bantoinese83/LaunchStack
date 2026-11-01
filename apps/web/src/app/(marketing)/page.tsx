@@ -7,6 +7,8 @@ import { MysticServices } from './components/mystic/MysticServices';
 import { MysticPlans } from './components/mystic/MysticPlans';
 import { MysticFooter } from './components/mystic/MysticFooter';
 import { MysticExperience } from './components/mystic/MysticExperience';
+import { MysticBookCtaSlab } from '@/components/mystic/editorial/MysticBookCtaSlab';
+import { MysticBigTicker } from '@/components/mystic/editorial/MysticBigTicker';
 
 export default async function MarketingLandingPage() {
   const { userId } = await getVerifiedServerUser();
@@ -18,8 +20,10 @@ export default async function MarketingLandingPage() {
         <main id="main-content" tabIndex={-1} className="outline-none">
           <MysticHero />
           <MysticServices />
+          <MysticBookCtaSlab />
           <MysticExperience />
           <MysticPlans />
+          <MysticBigTicker className="bg-paper" />
         </main>
         <MysticFooter initialSignedIn={Boolean(userId)} />
       </div>

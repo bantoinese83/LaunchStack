@@ -2,6 +2,7 @@
 
 import { useLukeProfile } from '@/components/mystic/LukeProfileContext';
 import { MysticEditorialHero } from '@/components/mystic/editorial/MysticEditorialHero';
+import { MysticKeywordTicker } from '@/components/mystic/editorial/MysticKeywordTicker';
 
 const trustLines = [
   { kicker: 'House calls', line: 'Blowouts, cuts, and updos at your door.' },
@@ -28,6 +29,7 @@ export function MysticHero() {
           ))}
         </div>
       </div>
+      <MysticKeywordTicker />
     </>
   );
 }

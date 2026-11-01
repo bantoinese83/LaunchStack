@@ -12,6 +12,8 @@ export const MYSTIC_STYLIST = {
   name: 'Luke',
   /** Full studio headshot (green backdrop). */
   portraitPath: '/marketing/stylist.jpg',
+  /** Chat & circular avatars — emoji-style render, square crop-safe. */
+  avatarPath: '/marketing/luke-avatar.jpg',
   /** Background removed — hero overlays, transparent UI. */
   portraitCutoutPath: '/marketing/stylist-cutout.png',
 } as const;
@@ -19,6 +21,11 @@ export const MYSTIC_STYLIST = {
 export function mysticStylistPortraitUrl(appOrigin?: string | null): string {
   if (!appOrigin?.trim()) return MYSTIC_STYLIST.portraitPath;
   return `${appOrigin.replace(/\/$/, '')}${MYSTIC_STYLIST.portraitPath}`;
+}
+
+export function mysticStylistAvatarUrl(appOrigin?: string | null): string {
+  if (!appOrigin?.trim()) return MYSTIC_STYLIST.avatarPath;
+  return `${appOrigin.replace(/\/$/, '')}${MYSTIC_STYLIST.avatarPath}`;
 }
 
 export function mysticStylistCutoutUrl(appOrigin?: string | null): string {

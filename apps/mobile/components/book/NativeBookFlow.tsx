@@ -568,7 +568,6 @@ export function NativeBookFlow() {
           continueContent={
             confirmNoPay ? undefined : (
               <NativePayWithStripeLabel
-                logoHeight={14}
                 textStyle={{
                   fontSize: 15,
                   fontWeight: '600',

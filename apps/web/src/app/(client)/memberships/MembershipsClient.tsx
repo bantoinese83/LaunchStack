@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   MYSTIC_MEMBERSHIPS,
   MYSTIC_PACKAGES,
@@ -11,20 +11,35 @@ import {
   type MembershipId,
   type PackageId,
 } from '@template/mystic';
+import { parsePackageParam } from '@/lib/mystic/book-links';
 import { Alert } from '@template/ui';
 import { MysticClientPage } from '@/components/mystic/MysticClientPage';
 import { MysticPageIntro } from '@/components/mystic/MysticPageIntro';
 import { MysticMagneticLink } from '@/components/mystic/MysticMagneticButton';
 import { MysticPricingTiers } from '@/components/mystic/MysticPricingTiers';
 import { MysticPlansChooser } from '@/components/mystic/MysticPlansChooser';
+import { MysticPlansHouseCallStrip } from '@/components/mystic/MysticPlansHouseCallStrip';
 import { MysticPlansCreditsBanner } from '@/components/mystic/MysticPlansCreditsBanner';
+import { MysticPatternBand, mysticPatternBandEyebrow } from '@/components/mystic/MysticPatternBand';
 import { mysticEyebrow, mysticSectionTitle } from '@/components/mystic/mystic-styles';
 import { MysticStripeEncryptedFootnote } from '@/components/mystic/MysticStripeWordmark';
 
 export function MembershipsClient() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<string | null>(null);
+
+  useEffect(() => {
+    const packageId = parsePackageParam(searchParams.get('package'));
+    if (!packageId) return;
+    const row = document.getElementById(`plan-package-${packageId}`);
+    if (!row) return;
+    const timer = window.setTimeout(() => {
+      row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 120);
+    return () => window.clearTimeout(timer);
+  }, [searchParams]);
 
   async function checkoutMembership(id: MembershipId) {
     setLoading(id);
@@ -87,6 +102,7 @@ export function MembershipsClient() {
 
       <MysticPlansCreditsBanner />
       <MysticPlansChooser />
+      <MysticPlansHouseCallStrip />
 
       {error ? (
         <Alert className="mt-6" variant="error">
@@ -106,8 +122,8 @@ export function MembershipsClient() {
         />
       </div>
 
-      <section className="mystic-footer-grain relative mt-16 overflow-hidden rounded-[1.35rem] border border-line/50 bg-plum px-6 py-10 text-paper md:px-10 md:py-12">
-        <p className={mysticEyebrow}>Ready when you are</p>
+      <MysticPatternBand>
+        <p className={mysticPatternBandEyebrow}>Ready when you are</p>
         <h2 className={`${mysticSectionTitle} mt-2 text-paper`}>
           Use your credits on a house call
         </h2>
@@ -120,7 +136,7 @@ export function MembershipsClient() {
             {MYSTIC_PLANS_PAGE.bookCta}
           </MysticMagneticLink>
         </div>
-      </section>
+      </MysticPatternBand>
 
       <MysticStripeEncryptedFootnote className="mt-10" tail="Manage plans in your account" />
 

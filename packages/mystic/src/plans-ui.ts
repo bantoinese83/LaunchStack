@@ -24,14 +24,16 @@ export const MYSTIC_PLANS_SECTION_IDS = {
 export const MYSTIC_PLANS_CHOOSER = {
   title: 'Not sure which to pick?',
   membership: {
-    title: 'Monthly membership',
-    hint: 'Best if you want blowouts every month — Glow (2/mo) or Luxe (4/mo).',
+    kicker: 'Every month',
+    title: 'Membership',
+    hint: 'Glow (2 blowouts/mo) or Luxe (4/mo) — credits refresh automatically; cancel anytime.',
     cta: 'Compare memberships',
   },
   package: {
-    title: 'Prepaid package',
-    hint: 'Best to try Luke or gift yourself — 4, 6, or 10 blowouts, use within 6 months.',
-    cta: 'See blowout packages',
+    kicker: 'Pay once',
+    title: 'Blowout package',
+    hint: 'Try Luke or gift credits — 4, 6, or 10 blowouts to use within six months.',
+    cta: 'See packages',
   },
 } as const;
 
@@ -45,6 +47,15 @@ export function membershipSubscribeLabel(planName: string): string {
   return `Subscribe — ${planName}`;
 }
 
-export function packageBuyLabel(blowoutCount: number): string {
-  return `Buy ${blowoutCount}-blowout package`;
+/** Row heading — avoids repeating “blowout” beside the button. */
+export function packageRowTitle(visitCount: number): string {
+  return `${visitCount}-visit pack`;
+}
+
+export function packageBuyLabel(_blowoutCount?: number): string {
+  return 'Buy package';
+}
+
+export function packageBuyAriaLabel(blowoutCount: number, priceLabel: string): string {
+  return `Buy ${blowoutCount}-visit prepaid package, ${priceLabel}`;
 }

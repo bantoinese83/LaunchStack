@@ -6,6 +6,7 @@ import { MapPin } from 'lucide-react';
 import { MysticMagneticLink } from '@/components/mystic/MysticMagneticButton';
 import { MysticSignInOrAccountNav } from '@/components/mystic/MysticSignInOrAccountNav';
 import { cn } from '@/lib/utils';
+import { MysticFooterBlockWordmark } from '@/components/mystic/MysticFooterBlockWordmark';
 
 const linkCols = [
   {
@@ -46,16 +47,15 @@ export function MysticFooter({ initialSignedIn = false }: FooterProps) {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="mystic-footer-shell mystic-footer-grain relative overflow-hidden border-t border-gold/15 text-paper">
+    <footer className="mystic-footer-shell mystic-footer-grain mystic-pattern-band relative overflow-x-hidden border-t border-gold/15 text-paper">
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center overflow-hidden pb-4 select-none"
-      >
-        <p className="mystic-footer-watermark translate-y-[18%] text-center text-[clamp(3.5rem,16vw,11rem)] whitespace-nowrap">
-          MYSTIC HAIR
-        </p>
-      </div>
-
+        className="pointer-events-none absolute inset-0 mystic-pattern-overlapping-cubes opacity-[0.52]"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-gradient-to-b from-shell/55 via-shell/15 to-shell/70"
+      />
       <div className="relative z-10 mx-auto max-w-6xl px-5 md:px-8">
         <div className="flex flex-col gap-8 border-b border-white/10 py-14 md:flex-row md:items-end md:justify-between md:py-16">
           <div className="max-w-md">
@@ -131,6 +131,8 @@ export function MysticFooter({ initialSignedIn = false }: FooterProps) {
           </div>
         </div>
       </div>
+
+      <MysticFooterBlockWordmark />
     </footer>
   );
 }

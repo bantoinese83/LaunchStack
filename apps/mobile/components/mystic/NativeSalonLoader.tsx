@@ -3,6 +3,7 @@ import { Animated, Easing, StyleSheet, Text, View, type ViewStyle } from 'react-
 import Svg, { Circle, Path } from 'react-native-svg';
 import { MYSTIC_LOADING_COPY, type MysticLoadingCopyKey } from '@template/mystic';
 import { monoLabel, theme } from '@template/mobile-ui';
+import { NativeFlowerField } from './NativeFlowerField';
 
 type Props = {
   label?: string;
@@ -112,7 +113,12 @@ export function NativeSalonLoader({
   );
 
   if (fill) {
-    return <View style={styles.fill}>{content}</View>;
+    return (
+      <View style={styles.fill}>
+        <NativeFlowerField mode="launch" count={20} opacity={0.42} showGradient={false} />
+        <View style={styles.fillForeground}>{content}</View>
+      </View>
+    );
   }
 
   return content;
@@ -122,10 +128,14 @@ const styles = StyleSheet.create({
   fill: {
     flex: 1,
     minHeight: 200,
+    backgroundColor: theme.paper,
+    overflow: 'hidden',
+  },
+  fillForeground: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 32,
-    backgroundColor: theme.paper,
   },
   wrap: {
     alignItems: 'center',

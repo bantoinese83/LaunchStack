@@ -1,7 +1,7 @@
 {
   "source": "Pixabay",
   "license": "Pixabay Content License",
-  "fetchedAt": "2026-10-31T16:04:24.575Z",
+  "fetchedAt": "2026-11-01T16:45:50.540Z",
   "items": [
     {
       "id": 4556486,
@@ -65,6 +65,13 @@
       "user": "Art-Production",
       "tags": "model, beauty, beauty salon, care, client, fashion, women, hair, hairstyle, lady, makeup, salon, style, stylist, beautiful, woman, eyelash, eyelashes, haircut",
       "role": "auth_video"
+    },
+    {
+      "id": 43633,
+      "pageURL": "https://pixabay.com/videos/id-43633/",
+      "user": "GreenCardShow",
+      "tags": "hair, wind, girl, woman, people, person, model, young, dream, human, sunlight, passion, alone, aesthetics",
+      "role": "footer_watermark_video"
     }
   ]
 }

@@ -3,6 +3,7 @@ import { MysticClientPage } from '@/components/mystic/MysticClientPage';
 import { MysticPageIntro } from '@/components/mystic/MysticPageIntro';
 import { MysticMagneticLink } from '@/components/mystic/MysticMagneticButton';
 import { MysticShopProductCatalog } from '@/components/mystic/MysticShopProductCatalog';
+import { MysticPatternBand, mysticPatternBandEyebrow } from '@/components/mystic/MysticPatternBand';
 import { mysticEyebrow, mysticSectionTitle } from '@/components/mystic/mystic-styles';
 import { ShopCheckoutButton } from '@/app/(client)/shop/ShopCheckoutButton';
 import {
@@ -28,7 +29,7 @@ export function MysticShopCatalogLive() {
           <li key={item} className={`${mysticEyebrow} text-muted`}>
             {item === 'stripe-secure' ? (
               <span className="inline-flex items-center gap-1">
-                <MysticStripeWordmark height={11} />
+                <MysticStripeWordmark />
                 <span>secure checkout</span>
               </span>
             ) : (
@@ -44,8 +45,8 @@ export function MysticShopCatalogLive() {
         renderProductAction={(product) => <ShopCheckoutButton productId={product.id} />}
       />
 
-      <section className="mystic-footer-grain relative mt-16 overflow-hidden rounded-[1.35rem] border border-line/50 bg-plum px-6 py-10 text-paper md:px-10 md:py-12">
-        <p className={mysticEyebrow}>House calls</p>
+      <MysticPatternBand>
+        <p className={mysticPatternBandEyebrow}>House calls</p>
         <h2 className={`${mysticSectionTitle} mt-2 text-paper`}>Not sure what to pre-order?</h2>
         <p className="mt-3 max-w-lg text-sm leading-relaxed text-paper/80 md:text-base">
           Book a visit and Luke can recommend a routine for your hair texture, tools, and how often
@@ -59,7 +60,7 @@ export function MysticShopCatalogLive() {
             Message Luke
           </MysticMagneticLink>
         </div>
-      </section>
+      </MysticPatternBand>
 
       <MysticStripeEncryptedFootnote className="mt-10" tail="Charged when you pre-order" />
 

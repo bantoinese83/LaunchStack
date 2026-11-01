@@ -5,11 +5,12 @@ import {
   mysticPageStackLoose,
 } from '@/components/mystic/mystic-styles';
 
-type Width = 'narrow' | 'wide';
+type Width = 'narrow' | 'wide' | 'chat';
 
 const widthClass: Record<Width, string> = {
   narrow: 'max-w-lg',
   wide: 'max-w-5xl',
+  chat: 'max-w-6xl',
 };
 
 type Props = {

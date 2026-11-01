@@ -27,14 +27,13 @@ export function ClientMessages() {
   const [userId, setUserId] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [participants, setParticipants] = useState<ThreadParticipants>({
-    stylist: { name: MYSTIC_STYLIST.name, avatarUrl: MYSTIC_STYLIST.portraitPath },
+    stylist: { name: MYSTIC_STYLIST.name, avatarUrl: MYSTIC_STYLIST.avatarPath },
   });
 
   const load = useCallback(
     async (opts?: { silent?: boolean }) => {
       if (!workspaceId) return;
       if (!opts?.silent) setRefreshing(true);
-      // Cookie-backed session (same client as login) — not the plain localStorage client.
       const auth = await requireBrowserSession();
       const uid = auth?.user.id;
       if (!uid) {
@@ -49,7 +48,7 @@ export function ClientMessages() {
           const p = data.profile;
           if (p) {
             setParticipants({
-              stylist: { name: MYSTIC_STYLIST.name, avatarUrl: MYSTIC_STYLIST.portraitPath },
+              stylist: { name: MYSTIC_STYLIST.name, avatarUrl: MYSTIC_STYLIST.avatarPath },
               client: {
                 name: p.full_name ?? p.email ?? 'You',
                 avatarUrl: p.avatar_url ?? null,
@@ -120,54 +119,65 @@ export function ClientMessages() {
   const initialLoading = refreshing && messages.length === 0 && !loadError && !lastUpdatedAt;
 
   return (
-    <MysticClientPage>
-      <MysticPageIntro
-        eyebrow="Messages"
-        title="Message Luke"
-        description="Text timing, inspo, or parking — Luke replies between house calls."
-      />
-      <div className="mb-6 mt-4">
-        <MysticStylistChip size={48} />
-      </div>
-      {loadError ? (
-        <div className="mb-4 space-y-2 rounded-xl border border-line bg-paper px-3 py-3">
-          <p className="text-sm text-plum">
-            {loadError}
-            {loadError.toLowerCase().includes('sign in') ? (
-              <>
-                {' '}
-                <Link href="/login" className="font-medium text-plum underline underline-offset-2">
-                  Sign in
-                </Link>
-              </>
-            ) : null}
-          </p>
-          {!loadError.toLowerCase().includes('sign in') ? (
-            <button
-              type="button"
-              onClick={() => void load()}
-              className="text-sm font-medium text-accent underline"
-            >
-              Retry
-            </button>
+    <MysticClientPage width="chat" className="flex min-h-[calc(100dvh-7rem)] flex-col">
+      <div className="grid flex-1 gap-8 lg:grid-cols-[minmax(0,15rem)_minmax(0,1fr)] lg:gap-10 xl:grid-cols-[minmax(0,17rem)_minmax(0,1fr)]">
+        <header className="lg:sticky lg:top-24 lg:self-start">
+          <MysticPageIntro
+            eyebrow="Messages"
+            title="Message Luke"
+            description="Text timing, inspo, or parking — Luke replies between house calls."
+          />
+          <div className="mt-5">
+            <MysticStylistChip size={52} />
+          </div>
+        </header>
+
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+          {loadError ? (
+            <div className="mb-4 space-y-2 rounded-xl border border-line bg-paper px-3 py-3">
+              <p className="text-sm text-plum">
+                {loadError}
+                {loadError.toLowerCase().includes('sign in') ? (
+                  <>
+                    {' '}
+                    <Link
+                      href="/login"
+                      className="font-medium text-plum underline underline-offset-2"
+                    >
+                      Sign in
+                    </Link>
+                  </>
+                ) : null}
+              </p>
+              {!loadError.toLowerCase().includes('sign in') ? (
+                <button
+                  type="button"
+                  onClick={() => void load()}
+                  className="text-sm font-medium text-accent underline"
+                >
+                  Retry
+                </button>
+              ) : null}
+            </div>
           ) : null}
+          {initialLoading ? (
+            <MysticSalonLoader copyKey="messages" className="flex-1 py-12" />
+          ) : (
+            <MysticMessageThread
+              layout="room"
+              messages={messages}
+              mode="client"
+              placeholder="Hey Luke…"
+              quickReplies={CLIENT_MESSAGE_QUICK_REPLIES}
+              participants={participants}
+              onSend={onSend}
+              onRefresh={() => void load()}
+              refreshing={refreshing}
+              lastUpdatedAt={lastUpdatedAt}
+            />
+          )}
         </div>
-      ) : null}
-      {initialLoading ? (
-        <MysticSalonLoader copyKey="messages" className="py-12" />
-      ) : (
-        <MysticMessageThread
-          messages={messages}
-          mode="client"
-          placeholder="Hey Luke…"
-          quickReplies={CLIENT_MESSAGE_QUICK_REPLIES}
-          participants={participants}
-          onSend={onSend}
-          onRefresh={() => void load()}
-          refreshing={refreshing}
-          lastUpdatedAt={lastUpdatedAt}
-        />
-      )}
+      </div>
     </MysticClientPage>
   );
 }

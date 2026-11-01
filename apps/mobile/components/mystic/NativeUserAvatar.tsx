@@ -17,6 +17,7 @@ export function NativeUserAvatar({ url, source, name, size = 32 }: Props) {
       <Image
         source={source}
         style={[styles.img, { width: size, height: size, borderRadius: size / 2 }]}
+        resizeMode="cover"
         accessibilityIgnoresInvertColors
       />
     );
@@ -27,6 +28,7 @@ export function NativeUserAvatar({ url, source, name, size = 32 }: Props) {
       <Image
         source={{ uri: url }}
         style={[styles.img, { width: size, height: size, borderRadius: size / 2 }]}
+        resizeMode="cover"
         accessibilityIgnoresInvertColors
       />
     );

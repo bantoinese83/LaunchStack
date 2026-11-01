@@ -66,6 +66,8 @@ import { Alert } from '@template/ui';
 import { useReferralAttribution } from '@/hooks/useReferralAttribution';
 import { useValidatedReferralCode } from '@/hooks/useValidatedReferralCode';
 import { clearReferralAttribution } from '@/lib/mystic/referral-storage';
+import { parseBookServiceParam } from '@/lib/mystic/book-links';
+import { useDeferredEffect } from '@/lib/react/useDeferredEffect';
 
 export function BookFlowClient() {
   const router = useRouter();
@@ -74,7 +76,9 @@ export function BookFlowClient() {
   const { referralApplied } = useValidatedReferralCode(referralCode);
   const checkoutReferralCode = referralApplied ? referralCode : null;
   const [step, setStep] = useState<BookingFlowStep>('service');
-  const [serviceId, setServiceId] = useState<ServiceId>('blowout');
+  const [serviceId, setServiceId] = useState<ServiceId>(
+    () => parseBookServiceParam(searchParams.get('service')) ?? 'blowout'
+  );
   const [date, setDate] = useState(() => defaultBookingDateIso());
   const [time, setTime] = useState('');
   const [slots, setSlots] = useState<string[]>([]);
@@ -183,6 +187,11 @@ export function BookFlowClient() {
       })
       .catch(() => setProfilePhone(null));
   }, []);
+
+  useDeferredEffect(() => {
+    const fromQuery = parseBookServiceParam(searchParams.get('service'));
+    if (fromQuery) setServiceId(fromQuery);
+  }, [searchParams]);
 
   useEffect(() => {
     if (searchParams.get('canceled') !== '1') return;
@@ -1076,7 +1085,7 @@ export function BookFlowClient() {
                   ) : quote.totalCents === 0 ? (
                     'Confirm booking'
                   ) : (
-                    <MysticPayWithStripeLabel logoHeight={15} />
+                    <MysticPayWithStripeLabel />
                   )}
                 </MysticMagneticButton>
               </div>

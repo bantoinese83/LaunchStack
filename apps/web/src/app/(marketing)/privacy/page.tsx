@@ -24,7 +24,7 @@ export default function PrivacyPage() {
             <p className="mt-2">
               Account email and name, workspace membership, feedback you submit, invite records,
               optional analytics events after consent, billing identifiers from{' '}
-              <MysticStripeWordmark height={12} className="inline-block align-[-0.12em]" />, and
+              <MysticStripeWordmark size={40} className="inline-block align-middle" />, and
               authentication factors you enroll (TOTP, passkeys, recovery-code hashes).
             </p>
           </div>
@@ -47,9 +47,9 @@ export default function PrivacyPage() {
             </h2>
             <p className="mt-2">
               Supabase (auth and database),{' '}
-              <MysticStripeWordmark height={12} className="inline-block align-[-0.12em]" />{' '}
-              (payments), Brevo (transactional email), PostHog (analytics only after consent),
-              Sentry (error telemetry), and Expo (push delivery).
+              <MysticStripeWordmark size={40} className="inline-block align-middle" /> (payments),
+              Brevo (transactional email), PostHog (analytics only after consent), Sentry (error
+              telemetry), and Expo (push delivery).
             </p>
           </div>
           <div>
@@ -58,7 +58,7 @@ export default function PrivacyPage() {
             </h2>
             <p className="mt-2">
               Signed-in users can export or delete their account from Settings → Privacy. Deletion
-              cancels <MysticStripeWordmark height={12} className="inline-block align-[-0.12em]" />{' '}
+              cancels <MysticStripeWordmark size={40} className="inline-block align-middle" />{' '}
               subscriptions, removes owned workspaces, and anonymizes remaining profile data.
             </p>
           </div>

@@ -607,6 +607,51 @@ body {
   background: color-mix(in srgb, var(--surface) 55%, var(--paper));
 }
 
+/* Marketing keyword marquee (ROSSI-style ticker) */
+.mystic-keyword-marquee__track,
+.mystic-big-ticker-marquee__track {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+  animation: mystic-marquee-left 56s linear infinite;
+}
+
+.mystic-big-ticker-marquee__track {
+  animation-duration: 48s;
+}
+
+@keyframes mystic-marquee-left {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* Hero image contact-sheet grid */
+.mystic-hero-photo-grid__cell {
+  opacity: 0;
+  transform: scale(0.88);
+}
+
+.mystic-hero-photo-grid--revealed .mystic-hero-photo-grid__cell {
+  animation: mystic-hero-grid-cell-in 0.38s ease forwards;
+  animation-delay: 0s;
+}
+
+@keyframes mystic-hero-grid-cell-in {
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.mystic-book-cta-slab:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--gold) 70%, white);
+  outline-offset: 3px;
+}
+
 .mystic-menu-row {
   border-top: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
 }
@@ -642,8 +687,204 @@ body {
   opacity: 0.9;
 }
 
+/* Oversized footer logotype (Tinder-style block type) */
+.mystic-footer-block-wordmark {
+  margin: 0;
+  width: 100%;
+  text-align: center;
+  white-space: nowrap;
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-weight: 800;
+  font-size: clamp(3rem, 19vw, 11.5rem);
+  line-height: 0.88;
+  letter-spacing: -0.085em;
+  color: color-mix(in srgb, var(--gold) 42%, transparent);
+  transform: none;
+}
+
 .mystic-footer-grain {
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E");
+}
+
+/* Below-fold marketing sections — skip layout/paint until near viewport */
+.mystic-marketing-section--defer {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 640px;
+}
+
+/* —— CSS gradient patterns (technique: css-pattern.com / Temani Afif) —— */
+
+.mystic-pattern-band {
+  isolation: isolate;
+}
+
+/* Nested rhombus — https://css-pattern.com/nested-rhombus/ */
+.mystic-pattern-nested-rhombus {
+  --mystic-rhomb-size: 52px;
+  --mystic-rhomb-a: color-mix(in srgb, var(--gold) 42%, transparent);
+  --mystic-rhomb-b: color-mix(in srgb, var(--accent) 32%, transparent);
+  --mystic-rhomb-g1:
+    var(--mystic-rhomb-a) calc(25% / 3), transparent 0 calc(50% / 3),
+    color-mix(in srgb, var(--gold) 28%, transparent) 0 25%, transparent 0 75%,
+    var(--mystic-rhomb-a) 0 calc(250% / 3), transparent 0 calc(275% / 3), var(--mystic-rhomb-a) 0;
+  --mystic-rhomb-g2:
+    transparent calc(25% / 3), var(--mystic-rhomb-b) 0 calc(50% / 3), transparent 0 calc(250% / 3),
+    var(--mystic-rhomb-b) 0 calc(275% / 3), transparent 0;
+  background:
+    linear-gradient(45deg, var(--mystic-rhomb-g2)), linear-gradient(45deg, var(--mystic-rhomb-g1)),
+    linear-gradient(-45deg, var(--mystic-rhomb-g2)),
+    linear-gradient(-45deg, var(--mystic-rhomb-g1)),
+    linear-gradient(
+      155deg,
+      color-mix(in srgb, var(--color-plum) 78%, var(--shell)) 0%,
+      var(--color-plum) 42%,
+      color-mix(in srgb, var(--color-plum) 90%, black) 100%
+    );
+  background-position:
+    0 0,
+    var(--mystic-rhomb-size) var(--mystic-rhomb-size),
+    0 0,
+    var(--mystic-rhomb-size) var(--mystic-rhomb-size),
+    0 0;
+  background-size:
+    calc(2 * var(--mystic-rhomb-size)) calc(2 * var(--mystic-rhomb-size)),
+    calc(2 * var(--mystic-rhomb-size)) calc(2 * var(--mystic-rhomb-size)),
+    calc(2 * var(--mystic-rhomb-size)) calc(2 * var(--mystic-rhomb-size)),
+    calc(2 * var(--mystic-rhomb-size)) calc(2 * var(--mystic-rhomb-size)),
+    100% 100%;
+}
+
+/* Overlapping cubes — https://css-pattern.com/overlapping-cubes/ */
+.mystic-pattern-overlapping-cubes {
+  --mystic-cube-s: 22px;
+  --mystic-cube-c1: color-mix(in srgb, var(--gold) 16%, var(--shell));
+  --mystic-cube-c2: color-mix(in srgb, var(--accent) 14%, var(--shell));
+  --mystic-cube-c3: color-mix(in srgb, var(--paper) 8%, var(--shell));
+  --mystic-cube-g: 0 120deg, #0000 0;
+  background:
+    conic-gradient(at calc(250% / 3) calc(100% / 3), var(--mystic-cube-c3) var(--mystic-cube-g)),
+    conic-gradient(
+      from -120deg at calc(50% / 3) calc(100% / 3),
+      var(--mystic-cube-c2) var(--mystic-cube-g)
+    ),
+    conic-gradient(
+      from 120deg at calc(100% / 3) calc(250% / 3),
+      var(--mystic-cube-c1) var(--mystic-cube-g)
+    ),
+    conic-gradient(
+      from 120deg at calc(200% / 3) calc(250% / 3),
+      var(--mystic-cube-c1) var(--mystic-cube-g)
+    ),
+    conic-gradient(
+      from -180deg at calc(100% / 3) 50%,
+      var(--mystic-cube-c2) 60deg,
+      var(--mystic-cube-c1) var(--mystic-cube-g)
+    ),
+    conic-gradient(
+      from 60deg at calc(200% / 3) 50%,
+      var(--mystic-cube-c1) 60deg,
+      var(--mystic-cube-c3) var(--mystic-cube-g)
+    ),
+    conic-gradient(
+      from -60deg at 50% calc(100% / 3),
+      var(--mystic-cube-c1) 120deg,
+      var(--mystic-cube-c2) 0 240deg,
+      var(--mystic-cube-c3) 0
+    );
+  background-size: calc(var(--mystic-cube-s) * 1.73205080757) var(--mystic-cube-s);
+}
+
+/* Braided lines — https://css-pattern.com/two-braided-lines/ */
+.mystic-pattern-braided-lines {
+  --mystic-braid-gap: 18px;
+  --mystic-braid-line: color-mix(in srgb, var(--gold) 22%, transparent);
+  --mystic-braid-accent: color-mix(in srgb, var(--accent) 18%, transparent);
+  background:
+    conic-gradient(at 20px calc(100% - 20px), transparent 270deg, var(--mystic-braid-line) 0)
+      calc(20px + var(--mystic-braid-gap)) 0,
+    linear-gradient(var(--mystic-braid-accent) 20px, transparent 0) 0 var(--mystic-braid-gap),
+    conic-gradient(
+      at 20px calc(100% - 20px),
+      transparent 90deg,
+      var(--mystic-braid-accent) 0 180deg,
+      var(--mystic-braid-line) 0
+    ),
+    transparent;
+  background-size: calc(2 * (20px + var(--mystic-braid-gap)))
+    calc(2 * (20px + var(--mystic-braid-gap)));
+  opacity: 0.65;
+}
+
+/* Light-page accent band (memberships hero nudge, etc.) */
+.mystic-pattern-band--accent {
+  --mystic-graph-line: color-mix(in srgb, var(--accent) 14%, transparent);
+  background-color: var(--color-accent-soft);
+  background-image:
+    linear-gradient(var(--mystic-graph-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--mystic-graph-line) 1px, transparent 1px),
+    radial-gradient(
+      ellipse 70% 80% at 100% 0%,
+      color-mix(in srgb, var(--gold) 25%, transparent),
+      transparent 55%
+    );
+  background-size:
+    32px 32px,
+    32px 32px,
+    100% 100%;
+}
+
+/* Soft pattern for lifted surface cards (empty states, etc.) */
+.mystic-pattern-surface-card {
+  --mystic-surface-graph: color-mix(in srgb, var(--accent) 11%, transparent);
+  --mystic-surface-rhomb-size: 36px;
+  --mystic-surface-rhomb-a: color-mix(in srgb, var(--gold) 14%, transparent);
+  --mystic-surface-rhomb-b: color-mix(in srgb, var(--accent) 10%, transparent);
+  --mystic-surface-rhomb-g1:
+    var(--mystic-surface-rhomb-a) calc(25% / 3), transparent 0 calc(50% / 3),
+    color-mix(in srgb, var(--gold) 9%, transparent) 0 25%, transparent 0 75%,
+    var(--mystic-surface-rhomb-a) 0 calc(250% / 3), transparent 0 calc(275% / 3),
+    var(--mystic-surface-rhomb-a) 0;
+  --mystic-surface-rhomb-g2:
+    transparent calc(25% / 3), var(--mystic-surface-rhomb-b) 0 calc(50% / 3),
+    transparent 0 calc(250% / 3), var(--mystic-surface-rhomb-b) 0 calc(275% / 3), transparent 0;
+  background-image:
+    linear-gradient(165deg, color-mix(in srgb, var(--paper) 55%, transparent), transparent 42%),
+    radial-gradient(
+      ellipse 85% 70% at 100% 0%,
+      color-mix(in srgb, var(--gold) 18%, transparent),
+      transparent 58%
+    ),
+    radial-gradient(
+      ellipse 60% 50% at 0% 100%,
+      color-mix(in srgb, var(--accent) 12%, transparent),
+      transparent 55%
+    ),
+    linear-gradient(var(--mystic-surface-graph) 1px, transparent 1px),
+    linear-gradient(90deg, var(--mystic-surface-graph) 1px, transparent 1px),
+    linear-gradient(45deg, var(--mystic-surface-rhomb-g2)),
+    linear-gradient(45deg, var(--mystic-surface-rhomb-g1)),
+    linear-gradient(-45deg, var(--mystic-surface-rhomb-g2)),
+    linear-gradient(-45deg, var(--mystic-surface-rhomb-g1));
+  background-position:
+    0 0,
+    0 0,
+    0 0,
+    0 0,
+    0 0,
+    0 0,
+    var(--mystic-surface-rhomb-size) var(--mystic-surface-rhomb-size),
+    0 0,
+    var(--mystic-surface-rhomb-size) var(--mystic-surface-rhomb-size);
+  background-size:
+    100% 100%,
+    100% 100%,
+    100% 100%,
+    26px 26px,
+    26px 26px,
+    calc(2 * var(--mystic-surface-rhomb-size)) calc(2 * var(--mystic-surface-rhomb-size)),
+    calc(2 * var(--mystic-surface-rhomb-size)) calc(2 * var(--mystic-surface-rhomb-size)),
+    calc(2 * var(--mystic-surface-rhomb-size)) calc(2 * var(--mystic-surface-rhomb-size)),
+    calc(2 * var(--mystic-surface-rhomb-size)) calc(2 * var(--mystic-surface-rhomb-size));
 }
 
 .mystic-hero-enter {
@@ -1377,6 +1618,16 @@ body {
     transition: none;
   }
   .tech-marquee__track--left {
+    animation: none !important;
+  }
+  .mystic-keyword-marquee__track,
+  .mystic-big-ticker-marquee__track {
+    animation: none !important;
+    transform: none;
+  }
+  .mystic-hero-photo-grid__cell {
+    opacity: 1;
+    transform: none;
     animation: none !important;
   }
   .tech-stack-stage {

@@ -1,7 +1,7 @@
 'use client';
 
-import Image from 'next/image';
-import { MYSTIC_SERVICE_CARD_IMAGE_PATH, type ServiceId } from '@template/mystic';
+import { type ServiceId } from '@template/mystic';
+import { MysticServiceCardImage } from '@/components/mystic/MysticServiceCardImage';
 import { cn } from '@/lib/utils';
 import type { ReactNode } from 'react';
 
@@ -14,17 +14,13 @@ type Props = {
 
 /** Full-bleed mirror moment photography with readable text overlay. */
 export function MysticBookServiceCardScene({ serviceId, selected, children, className }: Props) {
-  const src = MYSTIC_SERVICE_CARD_IMAGE_PATH[serviceId];
-
   return (
     <div className={cn('relative flex h-full min-h-0 w-full flex-col overflow-hidden', className)}>
-      <Image
-        src={src}
-        alt=""
-        data-testid={`service-card-photo-${serviceId}`}
+      <MysticServiceCardImage
+        serviceId={serviceId}
         fill
-        sizes="(max-width: 640px) 100vw, 360px"
-        className="object-cover object-[center_35%]"
+        sizes="(max-width: 640px) 100vw, 480px"
+        testId={`service-card-photo-${serviceId}`}
         priority={serviceId === 'blowout'}
       />
       <div

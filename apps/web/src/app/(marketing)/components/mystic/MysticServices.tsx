@@ -1,20 +1,20 @@
 import Link from 'next/link';
 import { MYSTIC_SERVICES, formatUsd, type ServiceId } from '@template/mystic';
+import { MysticMagneticLink } from '@/components/mystic/MysticMagneticButton';
 import { MysticServiceIllustration } from '@/components/mystic/illustrations/MysticServiceIllustration';
-import { mysticEyebrow, mysticSectionTitle } from './mystic-styles';
+import { MysticMarketingSectionHead } from '@/components/mystic/editorial/MysticMarketingSectionHead';
+import { mysticBookHref } from '@/lib/mystic/book-links';
 
 export function MysticServices() {
   return (
-    <section id="services" className="px-5 py-16 md:px-8 md:py-24">
+    <section id="services" className="px-5 pt-16 pb-10 md:px-8 md:pt-24 md:pb-12">
       <div className="mx-auto max-w-5xl">
-        <div className="max-w-2xl">
-          <p className={mysticEyebrow}>Services</p>
-          <h2 className={`${mysticSectionTitle} mt-3`}>House-call menu</h2>
-          <p className="mt-4 text-base leading-relaxed text-muted">
-            Travel within our service area is included for the first five miles. Color is arranged
-            by message — not online yet.
-          </p>
-        </div>
+        <MysticMarketingSectionHead
+          handLabel="At your door"
+          eyebrow="Services"
+          title="House-call menu"
+          description="Travel within our service area is included for the first five miles. Color is arranged by message — not online yet."
+        />
 
         <ul className="mt-14">
           {MYSTIC_SERVICES.map((service, index) => (
@@ -24,12 +24,12 @@ export function MysticServices() {
                 index === MYSTIC_SERVICES.length - 1 ? 'border-b border-line/70' : ''
               }`}
             >
-              <div className="grid gap-6 md:grid-cols-[4.5rem_1fr_auto] md:items-start md:gap-10">
-                <div className="flex items-center gap-4 md:flex-col md:items-start md:gap-3">
+              <div className="grid gap-6 md:grid-cols-[12.5rem_1fr_auto] md:items-start md:gap-10">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start md:flex-col">
                   <span className="font-display text-3xl text-line/90 transition group-hover:text-gold/80">
                     {String(index + 1).padStart(2, '0')}
                   </span>
-                  <MysticServiceIllustration serviceId={service.id as ServiceId} />
+                  <MysticServiceIllustration serviceId={service.id as ServiceId} size="lg" />
                 </div>
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
@@ -44,9 +44,14 @@ export function MysticServices() {
                     {service.description}
                   </p>
                 </div>
-                <p className="font-display shrink-0 text-2xl text-ink md:text-right md:text-[1.85rem]">
-                  {formatUsd(service.priceCents)}
-                </p>
+                <div className="flex shrink-0 flex-col items-start gap-3 sm:items-end md:items-end md:text-right">
+                  <p className="font-display text-2xl text-ink md:text-[1.85rem]">
+                    {formatUsd(service.priceCents)}
+                  </p>
+                  <MysticMagneticLink href={mysticBookHref(service.id)} size="sm">
+                    Book now
+                  </MysticMagneticLink>
+                </div>
               </div>
             </li>
           ))}

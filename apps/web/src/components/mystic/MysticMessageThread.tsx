@@ -35,6 +35,8 @@ type Props = {
   onRefresh?: () => void;
   refreshing?: boolean;
   lastUpdatedAt?: number | null;
+  /** Taller scroll region for client /messages (uses viewport height). */
+  layout?: 'compact' | 'room';
 };
 
 function senderPeer(
@@ -46,7 +48,7 @@ function senderPeer(
   if (isStylist) {
     return {
       name: participants?.stylist?.name ?? MYSTIC_STYLIST.name,
-      avatarUrl: participants?.stylist?.avatarUrl ?? MYSTIC_STYLIST.portraitPath,
+      avatarUrl: participants?.stylist?.avatarUrl ?? MYSTIC_STYLIST.avatarPath,
     };
   }
   return {
@@ -66,7 +68,9 @@ export function MysticMessageThread({
   refreshing = false,
   lastUpdatedAt,
   participants,
+  layout = 'compact',
 }: Props) {
+  const room = layout === 'room';
   const [body, setBody] = useState('');
   const [sending, setSending] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
@@ -104,7 +108,9 @@ export function MysticMessageThread({
   }
 
   return (
-    <div className={`min-h-[380px] ${mysticPageStack}`}>
+    <div
+      className={`flex min-h-0 flex-col ${room ? 'min-h-[min(720px,calc(100dvh-11rem))] flex-1 gap-4 md:gap-5' : `min-h-[380px] ${mysticPageStack}`}`}
+    >
       <div className={`${mysticToolbarRow} text-xs text-muted`}>
         <span>
           {lastUpdatedAt
@@ -127,7 +133,7 @@ export function MysticMessageThread({
 
       <div
         ref={scrollRef}
-        className={`${mysticCard} flex min-h-0 flex-1 flex-col overflow-hidden p-0`}
+        className={`${mysticCard} flex min-h-0 flex-1 flex-col overflow-hidden p-0 ${room ? 'shadow-[0_24px_60px_-40px_rgba(26,31,24,0.2)]' : ''}`}
       >
         {messages.length === 0 ? (
           <div className="p-4">
@@ -143,7 +149,11 @@ export function MysticMessageThread({
             />
           </div>
         ) : (
-          <ul className="flex max-h-[min(52vh,420px)] flex-1 flex-col gap-2 overflow-y-auto p-4">
+          <ul
+            className={`flex flex-1 flex-col gap-3 overflow-y-auto p-4 md:gap-3.5 md:p-6 ${
+              room ? 'min-h-[280px]' : 'max-h-[min(52vh,420px)]'
+            }`}
+          >
             {messages.map((msg) => {
               const isSelf =
                 mode === 'client' ? msg.sender_role !== 'stylist' : msg.sender_role === 'stylist';
@@ -156,14 +166,14 @@ export function MysticMessageThread({
                   <MysticUserAvatar
                     url={peer.avatarUrl}
                     name={peer.name}
-                    size={38}
+                    size={room ? 44 : 38}
                     className="mb-5 ring-1 ring-line/50"
                   />
                   <div
-                    className={`flex max-w-[78%] flex-col ${isSelf ? 'items-end' : 'items-start'}`}
+                    className={`flex max-w-[78%] flex-col md:max-w-[min(36rem,72%)] ${isSelf ? 'items-end' : 'items-start'}`}
                   >
                     <div
-                      className={`rounded-2xl px-3 py-2 text-sm ${
+                      className={`rounded-2xl px-3 py-2 text-sm md:px-4 md:py-2.5 md:text-[0.9375rem] ${
                         isSelf
                           ? 'rounded-br-md bg-accent text-paper'
                           : 'rounded-bl-md bg-accent-soft text-ink'
@@ -194,13 +204,13 @@ export function MysticMessageThread({
       </div>
 
       {quickReplies?.length ? (
-        <div className="flex flex-wrap gap-2">
+        <div className={`flex flex-wrap gap-2 ${room ? 'md:gap-2.5' : ''}`}>
           {quickReplies.map((q) => (
             <button
               key={q}
               type="button"
               onClick={() => setBody((b) => (b ? `${b} ${q}` : q))}
-              className="rounded-full border border-line bg-surface px-3 py-1 text-xs text-ink transition hover:border-accent/40 hover:bg-accent-soft"
+              className={`rounded-full border border-line bg-surface px-3 py-1 text-xs text-ink transition hover:border-accent/40 hover:bg-accent-soft ${room ? 'md:px-4 md:py-1.5 md:text-sm' : ''}`}
             >
               {q}
             </button>
@@ -214,8 +224,8 @@ export function MysticMessageThread({
         onChange={(e) => setBody(e.target.value)}
         onKeyDown={onKeyDown}
         placeholder={placeholder}
-        rows={3}
-        className={`${mysticInput} min-h-[88px] resize-y`}
+        rows={room ? 4 : 3}
+        className={`${mysticInput} resize-y ${room ? 'min-h-[100px] md:min-h-[112px]' : 'min-h-[88px]'}`}
       />
       <p className="text-[11px] text-muted">Enter to send · Shift+Enter for a new line</p>
       <MysticMagneticButton

@@ -15,7 +15,7 @@ export function MysticSecureBookingLine({ className = '' }: Props) {
       <span className="inline-flex flex-wrap items-center justify-center gap-x-1 gap-y-0.5">
         <span className="font-medium text-ink/80">Secure booking</span>
         <span>· Encrypted checkout via</span>
-        <MysticStripeWordmark height={11} />
+        <MysticStripeWordmark />
         <span>. Your card is charged after Luke confirms your time.</span>
       </span>
     </p>

@@ -1,3 +1,8 @@
+/**
+ * Mobile is a signed-in client (and studio) app — not a full marketing site.
+ * Flow: native splash → animated launch → login → optional welcome onboarding → tabs (book).
+ * Web owns long-form marketing; deep links land on login or book after auth.
+ */
 import { needsClientOnboarding } from '@template/mystic';
 import { fetchClientProfile } from './mysticApi';
 import { fetchStudioAccess } from './studioApi';

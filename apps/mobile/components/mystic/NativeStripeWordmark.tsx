@@ -2,36 +2,42 @@ import React from 'react';
 import { Image, StyleSheet, Text, View, type ImageStyle, type ViewStyle } from 'react-native';
 import stripeWordmark from '../../assets/brand/stripe-wordmark.png';
 
+/** Match web — square padded asset needs a larger box. */
+export const NATIVE_STRIPE_WORDMARK_SIZE = {
+  inline: 40,
+  footnote: 48,
+  button: 56,
+} as const;
+
 type Props = {
-  height?: number;
+  size?: number;
   style?: ImageStyle;
 };
 
-export function NativeStripeWordmark({ height = 14, style }: Props) {
-  const width = Math.round(height * 2.55);
+export function NativeStripeWordmark({ size = NATIVE_STRIPE_WORDMARK_SIZE.inline, style }: Props) {
   return (
     <Image
       source={stripeWordmark}
       accessibilityLabel="Stripe"
-      style={[{ width, height }, style]}
+      style={[{ width: size, height: size }, style]}
       resizeMode="contain"
     />
   );
 }
 
 export function NativePayWithStripeLabel({
-  logoHeight = 15,
+  logoSize = NATIVE_STRIPE_WORDMARK_SIZE.button,
   textStyle,
   style,
 }: {
-  logoHeight?: number;
+  logoSize?: number;
   textStyle?: React.ComponentProps<typeof Text>['style'];
   style?: ViewStyle;
 }) {
   return (
     <View style={[styles.row, style]} importantForAccessibility="no-hide-descendants">
       <Text style={textStyle}>Pay with </Text>
-      <NativeStripeWordmark height={logoHeight} />
+      <NativeStripeWordmark size={logoSize} />
     </View>
   );
 }
@@ -41,6 +47,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 4,
+    gap: 8,
   },
 });

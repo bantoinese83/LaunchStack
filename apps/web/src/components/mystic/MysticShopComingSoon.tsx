@@ -3,7 +3,8 @@ import { MysticClientPage } from '@/components/mystic/MysticClientPage';
 import { MysticPageIntro } from '@/components/mystic/MysticPageIntro';
 import { MysticMagneticLink } from '@/components/mystic/MysticMagneticButton';
 import { MysticShopProductCatalog } from '@/components/mystic/MysticShopProductCatalog';
-import { mysticEyebrow, mysticSectionTitle } from '@/components/mystic/mystic-styles';
+import { MysticPatternBand, mysticPatternBandEyebrow } from '@/components/mystic/MysticPatternBand';
+import { mysticSectionTitle } from '@/components/mystic/mystic-styles';
 
 /** Pre-launch shop — same catalog rhythm as live shop, without checkout or empty-state card. */
 export function MysticShopComingSoon() {
@@ -30,8 +31,8 @@ export function MysticShopComingSoon() {
         )}
       />
 
-      <section className="mystic-footer-grain relative mt-16 overflow-hidden rounded-[1.35rem] border border-line/50 bg-plum px-6 py-10 text-paper md:px-10 md:py-12">
-        <p className={mysticEyebrow}>Until checkout opens</p>
+      <MysticPatternBand>
+        <p className={mysticPatternBandEyebrow}>Until checkout opens</p>
         <h2 className={`${mysticSectionTitle} mt-2 text-paper`}>
           Get a routine on your next visit
         </h2>
@@ -47,7 +48,7 @@ export function MysticShopComingSoon() {
             Message Luke
           </MysticMagneticLink>
         </div>
-      </section>
+      </MysticPatternBand>
     </MysticClientPage>
   );
 }

@@ -133,31 +133,36 @@ async function main() {
     });
   }
 
-  const videoData = await searchVideos(key, {
-    q: 'hair salon stylist working',
-    video_type: 'film',
-  });
-  const videoHit = pickUniqueVideo(videoData.hits, usedIds, { blockedUsers: usedUsers });
-  if (videoHit) {
+  async function fetchVideoSlot({ role, file, q }) {
+    const videoData = await searchVideos(key, { q, video_type: 'film' });
+    const videoHit = pickUniqueVideo(videoData.hits, usedIds, { blockedUsers: usedUsers });
+    if (!videoHit) {
+      console.warn(`No unique video for ${role} — keeping existing ${file} if present`);
+      return;
+    }
     const videoUrl =
       videoHit.videos?.medium?.url ||
       videoHit.videos?.small?.url ||
       videoHit.videos?.large?.url;
-    if (videoUrl) {
-      console.log(`auth_video → auth-bg.mp4 (id ${videoHit.id}, ${videoHit.user})`);
-      await download(videoUrl, join(marketingDir, 'auth-bg.mp4'));
-      items.push({
-        id: videoHit.id,
-        pageURL: videoHit.pageURL,
-        user: videoHit.user,
-        tags: videoHit.tags,
-        role: 'auth_video',
-      });
-    }
-  } else {
-    console.warn('No unique video hit — keeping existing auth-bg.mp4 if present');
+    if (!videoUrl) return;
+    usedIds.add(videoHit.id);
+    usedUsers.push(videoHit.user);
+    console.log(`${role} → ${file} (id ${videoHit.id}, ${videoHit.user})`);
+    await download(videoUrl, join(marketingDir, file));
+    items.push({
+      id: videoHit.id,
+      pageURL: videoHit.pageURL,
+      user: videoHit.user,
+      tags: videoHit.tags,
+      role,
+    });
   }
 
+  await fetchVideoSlot({
+    role: 'auth_video',
+    file: 'auth-bg.mp4',
+    q: 'hair salon stylist working',
+  });
   const payload = {
     source: 'Pixabay',
     license: 'Pixabay Content License',

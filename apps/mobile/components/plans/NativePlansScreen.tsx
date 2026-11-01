@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   MYSTIC_MEMBERSHIPS,
@@ -11,8 +11,16 @@ import {
   getCelebrationContent,
   membershipSubscribeLabel,
   packageBuyLabel,
+  packageRowTitle,
   type MysticCelebrationKind,
+  type MembershipId,
 } from '@template/mystic';
+import {
+  NATIVE_PLANS_MEMBERSHIP_IMAGE,
+  NATIVE_PLANS_PACKAGES_SECTION_IMAGE,
+  NATIVE_PLANS_PACKAGE_ROW_IMAGE,
+  NATIVE_PLANS_STRIP_IMAGE,
+} from '../../lib/plans-images';
 import { NativeButton, monoLabel, theme } from '@template/mobile-ui';
 import { MYSTIC_TAB_BAR_SCROLL_PADDING } from '../navigation/mysticTabBarIcon';
 import { NativeCelebrationBurst } from '../mystic/NativeCelebrationBurst';
@@ -165,15 +173,46 @@ export function NativePlansScreen() {
         </View>
       ) : null}
 
-      <Text style={styles.chooserTitle}>{MYSTIC_PLANS_CHOOSER.title}</Text>
+      <View style={styles.chooserHeader}>
+        <Text style={styles.chooserTitle}>{MYSTIC_PLANS_CHOOSER.title}</Text>
+        <View style={styles.chooserRule} />
+      </View>
       <View style={styles.chooserRow}>
-        <View style={styles.chooserCard}>
+        <View style={[styles.chooserCard, styles.chooserCardGold]}>
+          <Text style={styles.chooserKicker}>{MYSTIC_PLANS_CHOOSER.membership.kicker}</Text>
           <Text style={styles.chooserCardTitle}>{MYSTIC_PLANS_CHOOSER.membership.title}</Text>
           <Text style={styles.chooserHint}>{MYSTIC_PLANS_CHOOSER.membership.hint}</Text>
+          <View style={styles.chooserFooter}>
+            <Text style={styles.chooserPrice}>
+              From {formatUsd(MYSTIC_MEMBERSHIPS[0]!.priceCentsMonthly)}/mo
+            </Text>
+            <Text style={styles.chooserCta}>{MYSTIC_PLANS_CHOOSER.membership.cta} →</Text>
+          </View>
         </View>
-        <View style={styles.chooserCard}>
+        <View style={[styles.chooserCard, styles.chooserCardPlum]}>
+          <Text style={styles.chooserKicker}>{MYSTIC_PLANS_CHOOSER.package.kicker}</Text>
           <Text style={styles.chooserCardTitle}>{MYSTIC_PLANS_CHOOSER.package.title}</Text>
           <Text style={styles.chooserHint}>{MYSTIC_PLANS_CHOOSER.package.hint}</Text>
+          <View style={styles.chooserFooter}>
+            <Text style={styles.chooserPrice}>
+              From {formatUsd(MYSTIC_PACKAGES[0]!.priceCents)}
+            </Text>
+            <Text style={styles.chooserCta}>{MYSTIC_PLANS_CHOOSER.package.cta} →</Text>
+          </View>
+        </View>
+      </View>
+
+      <View style={styles.stripCard}>
+        <Image
+          source={NATIVE_PLANS_STRIP_IMAGE}
+          style={styles.stripPhoto}
+          accessibilityIgnoresInvertColors
+        />
+        <View style={styles.stripBody}>
+          <Text style={styles.stripEyebrow}>Same visit as booking</Text>
+          <Text style={styles.stripTitle}>
+            Credits cover pro styling at your door — fees waived on plan visits.
+          </Text>
         </View>
       </View>
 
@@ -195,12 +234,26 @@ export function NativePlansScreen() {
         </View>
       ) : null}
 
-      <Text style={styles.section}>Monthly memberships</Text>
-      <Text style={styles.sectionHint}>
-        Recurring clients — blowouts refresh every month; travel and evening fees waived.
-      </Text>
+      <View style={styles.sectionIntro}>
+        <View style={styles.sectionIntroText}>
+          <Text style={styles.section}>Monthly memberships</Text>
+          <Text style={styles.sectionHint}>
+            Recurring visits each month — travel and evening fees waived when you book on plan.
+          </Text>
+        </View>
+        <Image
+          source={NATIVE_PLANS_MEMBERSHIP_IMAGE.glow}
+          style={styles.sectionIntroPhoto}
+          accessibilityIgnoresInvertColors
+        />
+      </View>
       {MYSTIC_MEMBERSHIPS.map((plan) => (
         <View key={plan.id} style={[styles.card, Platform.OS === 'android' && styles.cardAndroid]}>
+          <Image
+            source={NATIVE_PLANS_MEMBERSHIP_IMAGE[plan.id as MembershipId]}
+            style={styles.planPhoto}
+            accessibilityIgnoresInvertColors
+          />
           <Text style={styles.planName}>{plan.name}</Text>
           {plan.id === 'luxe' ? <Text style={styles.featuredBadge}>Most loved</Text> : null}
           <Text style={styles.price}>
@@ -208,8 +261,8 @@ export function NativePlansScreen() {
             <Text style={styles.per}>/mo</Text>
           </Text>
           <Text style={styles.detail}>
-            {plan.blowoutsPerMonth} blowouts · extra {formatUsd(plan.extraBlowoutCents)} · house
-            call only
+            {plan.blowoutsPerMonth} visits/mo · extra visit {formatUsd(plan.extraBlowoutCents)} ·
+            house call only
           </Text>
           {plan.perks.map((perk) => (
             <Text key={perk} style={styles.perk}>
@@ -226,21 +279,39 @@ export function NativePlansScreen() {
         </View>
       ))}
 
-      <Text style={styles.section}>Blowout packages</Text>
-      <Text style={styles.sectionHint}>
-        New clients — prepaid blowouts within six months; same fee waivers when you book.
-      </Text>
+      <View style={styles.sectionIntro}>
+        <View style={styles.sectionIntroText}>
+          <Text style={styles.section}>Prepaid packages</Text>
+          <Text style={styles.sectionHint}>
+            Pay once — use visits within six months. Same fee waivers when you book.
+          </Text>
+        </View>
+        <Image
+          source={NATIVE_PLANS_PACKAGES_SECTION_IMAGE}
+          style={styles.sectionIntroPhoto}
+          accessibilityIgnoresInvertColors
+        />
+      </View>
       {MYSTIC_PACKAGES.map((pack) => (
         <View key={pack.id} style={styles.packCard}>
+          <View style={styles.packPhotoWrap}>
+            <Image
+              source={NATIVE_PLANS_PACKAGE_ROW_IMAGE[pack.id]}
+              style={styles.packPhoto}
+              accessibilityIgnoresInvertColors
+            />
+            <Text style={styles.packPhotoCount}>×{pack.blowoutCount}</Text>
+          </View>
           <View style={styles.packMain}>
-            <Text style={styles.packTitle}>{pack.blowoutCount} blowouts</Text>
+            <Text style={styles.packTitle}>{packageRowTitle(pack.blowoutCount)}</Text>
             <Text style={styles.packMeta}>
               {formatUsd(pack.pricePerBlowoutCents)} each · {pack.savingsLabel}
             </Text>
             <Text style={styles.packPrice}>{formatUsd(pack.priceCents)}</Text>
           </View>
           <NativeButton
-            title={packageBuyLabel(pack.blowoutCount)}
+            title={packageBuyLabel()}
+            accessibilityLabel={`Buy ${pack.blowoutCount}-visit prepaid package, ${formatUsd(pack.priceCents)}`}
             variant="secondary"
             onPress={() => void buyPackage(pack.id)}
             isLoading={checkoutBusy === pack.id}
@@ -275,18 +346,70 @@ const styles = StyleSheet.create({
   creditsTitle: { marginTop: 6, fontSize: 22, fontWeight: '600', color: theme.ink },
   creditsHint: { marginTop: 8, fontSize: 13, lineHeight: 18, color: theme.muted },
   creditsCta: { marginTop: 12 },
-  chooserTitle: { ...monoLabel, marginTop: 20, color: theme.muted },
-  chooserRow: { flexDirection: 'row', gap: 10, marginTop: 10 },
+  chooserHeader: { marginTop: 20 },
+  chooserTitle: { ...monoLabel, color: theme.muted },
+  chooserRule: {
+    marginTop: 10,
+    width: 56,
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: theme.line,
+  },
+  chooserRow: { flexDirection: 'column', gap: 12, marginTop: 16 },
   chooserCard: {
-    flex: 1,
-    padding: 12,
+    padding: 16,
     borderRadius: theme.radii.lg,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderWidth: 1,
     borderColor: theme.line,
     backgroundColor: theme.surface,
   },
-  chooserCardTitle: { fontSize: 13, fontWeight: '600', color: theme.ink },
-  chooserHint: { marginTop: 6, fontSize: 11, lineHeight: 15, color: theme.muted },
+  chooserCardGold: {
+    borderColor: `${theme.gold}55`,
+    backgroundColor: theme.goldSoft,
+  },
+  chooserCardPlum: {
+    borderColor: `${theme.plum}33`,
+  },
+  chooserKicker: { ...monoLabel, fontSize: 10, color: theme.plum },
+  chooserCardTitle: { marginTop: 6, fontSize: 22, fontWeight: '600', color: theme.ink },
+  chooserHint: { marginTop: 8, fontSize: 13, lineHeight: 18, color: theme.muted },
+  chooserFooter: {
+    marginTop: 14,
+    paddingTop: 14,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: theme.line,
+    gap: 6,
+  },
+  chooserPrice: { fontSize: 18, fontWeight: '600', color: theme.ink },
+  chooserCta: { ...monoLabel, fontSize: 10, color: theme.accent },
+  stripCard: {
+    marginTop: 16,
+    borderRadius: theme.radii.lg,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: theme.line,
+    backgroundColor: theme.surface,
+  },
+  stripPhoto: { width: '100%', maxWidth: 220, alignSelf: 'center', aspectRatio: 3 / 4 },
+  stripBody: { padding: 16 },
+  stripEyebrow: { ...monoLabel, fontSize: 10, color: theme.plum },
+  stripTitle: { marginTop: 8, fontSize: 17, lineHeight: 23, fontWeight: '600', color: theme.ink },
+  sectionIntro: { marginTop: 24, gap: 12 },
+  sectionIntroText: { gap: 4 },
+  sectionIntroPhoto: {
+    alignSelf: 'flex-end',
+    width: '100%',
+    maxWidth: 168,
+    aspectRatio: 3 / 4,
+    borderRadius: theme.radii.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.line,
+  },
+  planPhoto: {
+    width: 120,
+    aspectRatio: 3 / 4,
+    borderRadius: theme.radii.md,
+    marginBottom: 12,
+  },
   successCard: {
     marginTop: 16,
     padding: 16,
@@ -304,8 +427,8 @@ const styles = StyleSheet.create({
   successTitle: { fontSize: 22, fontWeight: '600', color: theme.ink, marginTop: 6 },
   successBody: { fontSize: 14, lineHeight: 20, color: theme.muted, marginTop: 8, marginBottom: 12 },
   dismiss: { marginTop: 8 },
-  section: { ...monoLabel, color: theme.muted, marginTop: 24, marginBottom: 4 },
-  sectionHint: { fontSize: 13, lineHeight: 18, color: theme.muted, marginBottom: 12 },
+  section: { ...monoLabel, color: theme.muted },
+  sectionHint: { fontSize: 13, lineHeight: 18, color: theme.muted },
   card: {
     backgroundColor: theme.accentSoft,
     borderRadius: theme.radii.lg,
@@ -332,6 +455,23 @@ const styles = StyleSheet.create({
   per: { fontSize: 14, fontWeight: '400', color: theme.muted },
   detail: { marginTop: 6, color: theme.muted, fontSize: 13 },
   perk: { marginTop: 4, fontSize: 13, color: theme.ink },
+  packPhotoWrap: {
+    position: 'relative',
+    width: 112,
+    height: 84,
+    borderRadius: theme.radii.md,
+    overflow: 'hidden',
+    marginBottom: 10,
+  },
+  packPhoto: { width: '100%', height: '100%' },
+  packPhotoCount: {
+    position: 'absolute',
+    left: 8,
+    bottom: 6,
+    fontSize: 22,
+    fontWeight: '600',
+    color: theme.paper,
+  },
   packCard: {
     marginBottom: 12,
     paddingVertical: 14,

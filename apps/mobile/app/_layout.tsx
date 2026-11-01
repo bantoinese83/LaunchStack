@@ -1,5 +1,5 @@
 import 'react-native-gesture-handler';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Stack, type ErrorBoundaryProps } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts, Caveat_500Medium, Caveat_600SemiBold } from '@expo-google-fonts/caveat';
@@ -7,6 +7,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { NativeButton, displayTitle, theme } from '@template/mobile-ui';
 import { StyleSheet, Text, View } from 'react-native';
 import { MysticPressProvider } from '../components/motion/MysticPressProvider';
+import { NativeLaunchSplash } from '../components/mystic/NativeLaunchSplash';
 
 SplashScreen.preventAutoHideAsync().catch(() => {
   /* dev reload */
@@ -22,20 +23,30 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
   );
 }
 
+const LAUNCH_MIN_MS = 2200;
+
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
     Caveat_500Medium,
     Caveat_600SemiBold,
   });
+  const [launchDone, setLaunchDone] = useState(false);
 
   useEffect(() => {
-    if (fontsLoaded) {
+    if (!fontsLoaded) return;
+    const started = Date.now();
+    const finish = () => {
       void SplashScreen.hideAsync();
-    }
+      setLaunchDone(true);
+    };
+    const elapsed = Date.now() - started;
+    const wait = Math.max(0, LAUNCH_MIN_MS - elapsed);
+    const timer = setTimeout(finish, wait);
+    return () => clearTimeout(timer);
   }, [fontsLoaded]);
 
-  if (!fontsLoaded) {
-    return null;
+  if (!fontsLoaded || !launchDone) {
+    return <NativeLaunchSplash />;
   }
 
   return (

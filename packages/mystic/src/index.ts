@@ -1,6 +1,7 @@
 export * from './catalog';
 export * from './service-icons';
 export * from './service-card-art';
+export * from './book-card-art';
 export * from './pricing';
 export * from './policies';
 export * from './referrals';
@@ -10,6 +11,7 @@ export * from './workspace';
 export * from './geo';
 export * from './shop';
 export * from './plans-ui';
+export * from './plans-art';
 export * from './visits';
 export * from './booking-flow';
 export * from './book-flow-ui';

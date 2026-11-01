@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, View, type ViewStyle } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeScreen } from '@template/mobile-ui';
+import { NativeFlowerField } from '../mystic/NativeFlowerField';
 
 type Props = {
   children: React.ReactNode;
@@ -16,7 +17,9 @@ export function AuthScreenFrame({ children, contentStyle }: Props) {
   return (
     <NativeScreen style={styles.screen}>
       <StatusBar style="dark" />
+      <NativeFlowerField mode="idle" count={22} opacity={0.38} />
       <ScrollView
+        style={styles.scroll}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
@@ -36,6 +39,7 @@ export function AuthScreenFrame({ children, contentStyle }: Props) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
+  scroll: { flex: 1, zIndex: 1 },
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: 24,

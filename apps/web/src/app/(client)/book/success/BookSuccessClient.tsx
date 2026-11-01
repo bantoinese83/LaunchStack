@@ -11,6 +11,7 @@ import {
   formatUsd,
   formatVisitWhen,
   packageBuyLabel,
+  packageRowTitle,
   type PackageId,
   type ServiceId,
 } from '@template/mystic';
@@ -127,7 +128,7 @@ export function BookSuccessClient({ appointment, refShort }: Props) {
               We&apos;re confirming your visit
             </h1>
             <p className="mt-4 flex flex-wrap items-center gap-x-1 gap-y-1 text-muted">
-              <MysticStripeWordmark height={12} className="shrink-0" />
+              <MysticStripeWordmark className="shrink-0" />
               <span>
                 checkout went through, but visit details aren&apos;t ready yet — that can take a
                 moment after payment. Check Visits, refresh this page, or message Luke if nothing
@@ -198,7 +199,7 @@ export function BookSuccessClient({ appointment, refShort }: Props) {
             <div>
               <p className="type-eyebrow text-plum">Save on your next visits</p>
               <h2 className="font-display mt-1 text-xl font-medium text-ink">
-                {upsellPack.blowoutCount}-blowout package
+                {packageRowTitle(upsellPack.blowoutCount)}
               </h2>
               <p className="mt-2 text-sm text-muted">
                 {formatUsd(upsellPack.priceCents)} total · {upsellPack.savingsLabel} · valid{' '}
@@ -207,7 +208,7 @@ export function BookSuccessClient({ appointment, refShort }: Props) {
               {checkoutError ? <p className="mt-2 text-sm text-danger">{checkoutError}</p> : null}
               <div className="mt-4 flex flex-col gap-2 sm:flex-row">
                 <MysticMagneticButton type="button" disabled={checkoutLoading} onClick={buyPackage}>
-                  {checkoutLoading ? 'Redirecting…' : packageBuyLabel(upsellPack.blowoutCount)}
+                  {checkoutLoading ? 'Redirecting…' : packageBuyLabel()}
                 </MysticMagneticButton>
                 <MysticMagneticLink href="/memberships#monthly-memberships" variant="secondary">
                   Subscribe monthly instead

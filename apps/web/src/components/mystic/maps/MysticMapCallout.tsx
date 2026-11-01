@@ -10,7 +10,7 @@ function resolveAvatar(marker: MysticMapMarker) {
     };
   }
   if (marker.tone === 'stylist') {
-    return { url: MYSTIC_STYLIST.portraitPath, name: MYSTIC_STYLIST.name };
+    return { url: MYSTIC_STYLIST.avatarPath, name: MYSTIC_STYLIST.name };
   }
   return { url: marker.avatarUrl ?? null, name: marker.avatarName ?? marker.title };
 }
