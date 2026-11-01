@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation';
 import {
   MYSTIC_MEMBERSHIPS,
   MYSTIC_PACKAGES,
+  MYSTIC_PLANS_PAGE,
+  MYSTIC_PLANS_TRUST,
   type MembershipId,
   type PackageId,
 } from '@template/mystic';
@@ -14,14 +16,10 @@ import { MysticClientPage } from '@/components/mystic/MysticClientPage';
 import { MysticPageIntro } from '@/components/mystic/MysticPageIntro';
 import { MysticMagneticLink } from '@/components/mystic/MysticMagneticButton';
 import { MysticPricingTiers } from '@/components/mystic/MysticPricingTiers';
+import { MysticPlansChooser } from '@/components/mystic/MysticPlansChooser';
+import { MysticPlansCreditsBanner } from '@/components/mystic/MysticPlansCreditsBanner';
 import { mysticEyebrow, mysticSectionTitle } from '@/components/mystic/mystic-styles';
 import { MysticStripeEncryptedFootnote } from '@/components/mystic/MysticStripeWordmark';
-
-const TRUST = [
-  'Credits at checkout',
-  'No travel or evening surcharges',
-  'House-call blowouts only',
-];
 
 export function MembershipsClient() {
   const router = useRouter();
@@ -73,19 +71,22 @@ export function MembershipsClient() {
   return (
     <MysticClientPage width="wide" loose>
       <MysticPageIntro
-        eyebrow="Plans"
-        title="Memberships & packages"
-        description="Monthly Glow & Luxe memberships and prepaid blowout packages — credits apply automatically the next time you book."
+        eyebrow={MYSTIC_PLANS_PAGE.eyebrow}
+        title={MYSTIC_PLANS_PAGE.title}
+        description={MYSTIC_PLANS_PAGE.description}
         className="max-w-2xl"
       />
 
       <ul className="flex flex-wrap gap-x-8 gap-y-2 border-y border-line/60 py-4">
-        {TRUST.map((item) => (
+        {MYSTIC_PLANS_TRUST.map((item) => (
           <li key={item} className={`${mysticEyebrow} text-muted`}>
             {item}
           </li>
         ))}
       </ul>
+
+      <MysticPlansCreditsBanner />
+      <MysticPlansChooser />
 
       {error ? (
         <Alert className="mt-6" variant="error">
@@ -116,7 +117,7 @@ export function MembershipsClient() {
         </p>
         <div className="mt-8">
           <MysticMagneticLink href="/book" surface="dark">
-            Book a blowout
+            {MYSTIC_PLANS_PAGE.bookCta}
           </MysticMagneticLink>
         </div>
       </section>

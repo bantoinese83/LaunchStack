@@ -64,6 +64,7 @@ import { NativeBookServiceCard } from './NativeBookServiceCard';
 import { NativeBookStepBreadcrumb } from './NativeBookStepBreadcrumb';
 import { NativeBookStepProgress } from './NativeBookStepProgress';
 import { NativeBookTripSummary } from './NativeBookTripSummary';
+import { NativeBookPlansPromo } from './NativeBookPlansPromo';
 import { NativeBookStepActions, NATIVE_BOOK_STICKY_ACTIONS_HEIGHT } from './NativeBookStepActions';
 import { NativeBookingCopilot, type NativeBookingCopilotExtras } from './NativeBookingCopilot';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -643,6 +644,7 @@ export function NativeBookFlow() {
 
         {step === 'service' && (
           <>
+            <NativeBookPlansPromo />
             <View
               style={styles.serviceGrid}
               accessibilityRole="list"

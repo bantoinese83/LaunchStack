@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { MysticBlastService, createSupabaseAdminClient } from '@template/api';
+import { normalizePromoCode } from '@template/mystic';
 import { firstZodIssueMessage, mysticBlastSchema } from '@template/validation';
 import { requireAuthenticatedUser, routeErrorResponse } from '@/lib/api/route-auth';
 import { requireStudioManager } from '@/lib/mystic/studio-auth';
@@ -42,13 +43,19 @@ export async function POST(req: Request) {
 
     const admin = createSupabaseAdminClient();
     const blastService = new MysticBlastService(admin);
+    let body = parsed.data.body;
+    if (parsed.data.promoCode?.trim()) {
+      const code = normalizePromoCode(parsed.data.promoCode);
+      body = `${body.trim()}\n\nUse promo code ${code} at checkout on your next house call.`;
+    }
+
     const draft = await blastService.createDraft({
       workspaceId: parsed.data.workspaceId,
       createdBy: auth.user.id,
       channel: parsed.data.channel,
       segment: parsed.data.segment,
       subject: parsed.data.subject,
-      body: parsed.data.body,
+      body,
     });
 
     const recipients = await resolveBlastRecipients(
@@ -60,7 +67,7 @@ export async function POST(req: Request) {
       recipients,
       channel: parsed.data.channel,
       subject: parsed.data.subject,
-      body: parsed.data.body,
+      body,
     });
 
     const updated = await blastService.markSent(draft.id, sent);

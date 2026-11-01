@@ -58,6 +58,7 @@ import {
 import { MysticBookDateStrip } from '@/components/mystic/book/MysticBookDateStrip';
 import { MysticBookStepActions } from '@/components/mystic/book/MysticBookStepActions';
 import { MysticBookTripSummary } from '@/components/mystic/book/MysticBookTripSummary';
+import { MysticBookPlansPromo } from '@/components/mystic/book/MysticBookPlansPromo';
 import { mysticTimeChip } from '@/components/mystic/mystic-styles';
 import { MysticSecureBookingLine } from '@/components/mystic/MysticSecureBookingLine';
 import { MysticSummaryRowGroup } from '@/components/mystic/MysticSummaryRowGroup';
@@ -114,6 +115,10 @@ export function BookFlowClient() {
   const [profilePhone, setProfilePhone] = useState<string | null | undefined>(undefined);
   const [slotsReloadToken, setSlotsReloadToken] = useState(0);
   const [myCredits, setMyCredits] = useState<MysticCreditRow[]>([]);
+  const [menuPriceCents, setMenuPriceCents] = useState<Partial<Record<ServiceId, number>>>({});
+  const [promoCode, setPromoCode] = useState('');
+  const [promoDiscountCents, setPromoDiscountCents] = useState(0);
+  const appliedPromoDiscountCents = promoCode.trim() ? promoDiscountCents : 0;
 
   useEffect(() => {
     void fetch('/api/mystic/public/booking-settings')
@@ -130,6 +135,19 @@ export function BookFlowClient() {
       .then((r) => (r.ok ? r.json() : { credits: [] }))
       .then((data) => setMyCredits(Array.isArray(data.credits) ? data.credits : []))
       .catch(() => setMyCredits([]));
+  }, []);
+
+  useEffect(() => {
+    void fetch('/api/mystic/catalog')
+      .then((r) => r.json())
+      .then((data) => {
+        const map: Partial<Record<ServiceId, number>> = {};
+        for (const s of data.services ?? []) {
+          map[s.id as ServiceId] = s.priceCents;
+        }
+        setMenuPriceCents(map);
+      })
+      .catch(() => undefined);
   }, []);
 
   const inferredEntitlement = useMemo(
@@ -297,8 +315,54 @@ export function BookFlowClient() {
       entitlement: activeEntitlement,
       tipCents: 0,
       rules: surchargeRules ?? undefined,
+      basePriceCents: menuPriceCents[serviceId],
+      discountCents: appliedPromoDiscountCents,
     });
-  }, [scheduledAt, serviceId, distanceMiles, activeEntitlement, surchargeRules]);
+  }, [
+    scheduledAt,
+    serviceId,
+    distanceMiles,
+    activeEntitlement,
+    surchargeRules,
+    menuPriceCents,
+    appliedPromoDiscountCents,
+  ]);
+
+  useEffect(() => {
+    if (!promoCode.trim() || !scheduledAt) return;
+    let cancelled = false;
+    const draft = computeBookingQuote({
+      serviceId,
+      scheduledAt,
+      distanceMiles,
+      entitlement: activeEntitlement,
+      tipCents: 0,
+      rules: surchargeRules ?? undefined,
+      basePriceCents: menuPriceCents[serviceId],
+    });
+    const subtotal = draft.baseCents + draft.surcharges.reduce((s, l) => s + l.amountCents, 0);
+    void fetch(
+      `/api/mystic/promo/preview?code=${encodeURIComponent(promoCode)}&subtotalCents=${subtotal}`
+    )
+      .then((r) => r.json())
+      .then((data) => {
+        if (!cancelled) setPromoDiscountCents(data.valid ? data.discountCents : 0);
+      })
+      .catch(() => {
+        if (!cancelled) setPromoDiscountCents(0);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    promoCode,
+    scheduledAt,
+    serviceId,
+    distanceMiles,
+    activeEntitlement,
+    surchargeRules,
+    menuPriceCents,
+  ]);
 
   const tipSubtotalCents = quoteWithoutTip ? bookingSubtotalBeforeTip(quoteWithoutTip) : 0;
 
@@ -319,9 +383,9 @@ export function BookFlowClient() {
     return {
       ...quoteWithoutTip,
       tipCents,
-      totalCents: tipSubtotalCents + tipCents,
+      totalCents: quoteWithoutTip.totalCents + tipCents,
     };
-  }, [quoteWithoutTip, tipCents, tipSubtotalCents]);
+  }, [quoteWithoutTip, tipCents]);
 
   const distanceVerified = !geocodeBusy && Boolean(distanceNote?.includes('(auto)'));
   const distanceOutOfArea = distanceVerified && !isWithinHouseCallServiceArea(distanceMiles);
@@ -411,6 +475,7 @@ export function BookFlowClient() {
             .filter(Boolean)
             .join('\n') || undefined,
         policiesAccepted: true,
+        ...(promoCode.trim() ? { promoCode: promoCode.trim() } : {}),
         idempotencyKey: checkoutIdempotencyKey.current,
       };
 
@@ -497,6 +562,7 @@ export function BookFlowClient() {
         ) : null}
         {step === 'service' && (
           <section className="w-full space-y-6">
+            <MysticBookPlansPromo />
             <div
               className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6"
               role="listbox"
@@ -814,6 +880,21 @@ export function BookFlowClient() {
                 </MysticMagneticLink>
               </div>
             ) : null}
+            <label className="block text-sm">
+              Promo code (optional)
+              <input
+                type="text"
+                value={promoCode}
+                onChange={(e) => setPromoCode(e.target.value)}
+                className="mt-1 w-full rounded-lg border border-line bg-paper px-3 py-2 text-sm"
+                placeholder="e.g. HOLIDAY20"
+              />
+              {appliedPromoDiscountCents > 0 ? (
+                <span className="mt-1 block text-xs text-accent">
+                  −{formatUsd(appliedPromoDiscountCents)} applied
+                </span>
+              ) : null}
+            </label>
             <div className="rounded-2xl bg-surface p-5">
               <p className="type-eyebrow text-plum">Payment</p>
               <ul className="mt-3 space-y-2 text-sm">
@@ -821,6 +902,12 @@ export function BookFlowClient() {
                   <span>Service + surcharges</span>
                   <span className="tabular-nums">{formatUsd(quote.totalCents - tipCents)}</span>
                 </li>
+                {quote.discountCents > 0 ? (
+                  <li className="flex justify-between gap-3 text-accent">
+                    <span>Promo</span>
+                    <span className="tabular-nums">−{formatUsd(quote.discountCents)}</span>
+                  </li>
+                ) : null}
                 {quote.surcharges.map((line) => (
                   <li key={line.code} className="flex justify-between gap-3 text-muted">
                     <span>{line.label}</span>

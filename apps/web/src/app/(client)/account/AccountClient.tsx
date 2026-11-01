@@ -8,6 +8,7 @@ import { MysticMagneticButton } from '@/components/mystic/MysticMagneticButton';
 import { MysticSalonLoader } from '@/components/mystic/MysticSalonLoader';
 import { mysticInput } from '@/components/mystic/mystic-styles';
 import { MysticReferralShareCard } from '@/components/mystic/MysticReferralShareCard';
+import { MYSTIC_PLANS_ACCOUNT_NUDGE } from '@template/mystic';
 
 type ProfileForm = {
   fullName: string;
@@ -156,7 +157,16 @@ export function AccountClient({ initialEmail }: { initialEmail: string | null })
       ) : null}
       {creditsSummary ? (
         <p className="rounded-xl bg-surface px-4 py-3 text-sm text-chalk">{creditsSummary}</p>
-      ) : null}
+      ) : (
+        <Link
+          href="/memberships"
+          className="block rounded-2xl border border-accent/25 bg-accent-soft/40 px-4 py-4 transition hover:border-accent/45"
+        >
+          <p className="font-medium text-ink">{MYSTIC_PLANS_ACCOUNT_NUDGE.title}</p>
+          <p className="mt-1 text-sm text-muted">{MYSTIC_PLANS_ACCOUNT_NUDGE.body}</p>
+          <p className="type-eyebrow mt-3 text-accent">{MYSTIC_PLANS_ACCOUNT_NUDGE.cta} →</p>
+        </Link>
+      )}
 
       <MysticProfileAvatar
         avatarUrl={avatarUrl}

@@ -11,6 +11,7 @@ import {
   mysticInput,
   mysticPageStack,
   mysticToolbarRow,
+  mysticStudioBtnOutline,
 } from '@/components/mystic/mystic-styles';
 import { getMysticWorkspaceId } from '@/lib/mystic/config';
 import { useDeferredEffect } from '@/lib/react/useDeferredEffect';
@@ -38,7 +39,9 @@ function creditLabel(c: Credit) {
       ? 'Membership'
       : c.source_kind === 'package'
         ? 'Package'
-        : c.source_kind;
+        : c.source_kind === 'manual'
+          ? 'Studio comp'
+          : c.source_kind;
   const exp = c.expires_at ? ` · exp ${new Date(c.expires_at).toLocaleDateString()}` : '';
   return `${c.blowouts_remaining} blowout${c.blowouts_remaining === 1 ? '' : 's'} · ${kind}${exp}`;
 }
@@ -50,6 +53,9 @@ export function ClientsPanel() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [copyId, setCopyId] = useState<string | null>(null);
+  const [grantUserId, setGrantUserId] = useState<string | null>(null);
+  const [grantCount, setGrantCount] = useState('1');
+  const [grantStatus, setGrantStatus] = useState<string | null>(null);
 
   const load = useCallback(() => {
     if (!workspaceId) {
@@ -82,6 +88,30 @@ export function ClientsPanel() {
     });
   }, [clients, query]);
 
+  async function grantCredit(userId: string) {
+    if (!workspaceId) return;
+    const n = Number.parseInt(grantCount, 10);
+    if (!Number.isFinite(n) || n < 1) return;
+    setGrantStatus(null);
+    const res = await fetch('/api/mystic/studio/credits/grant', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        workspaceId,
+        userId,
+        blowoutsRemaining: n,
+      }),
+    });
+    if (res.ok) {
+      setGrantUserId(null);
+      setGrantStatus('Credit added.');
+      load();
+    } else {
+      const data = await res.json();
+      setGrantStatus(data.error ?? 'Grant failed');
+    }
+  }
+
   async function copyCode(code: string, userId: string) {
     try {
       await navigator.clipboard.writeText(code);
@@ -106,15 +136,24 @@ export function ClientsPanel() {
           placeholder="Search name, email, phone, referral code…"
           className={`${mysticInput} max-w-md`}
         />
-        <button
-          type="button"
-          onClick={load}
-          disabled={loading}
-          className="text-sm text-accent underline disabled:opacity-50"
-        >
-          {loading ? 'Refreshing…' : 'Refresh'}
-        </button>
+        <div className="flex flex-wrap items-center gap-3">
+          <a
+            href={`/api/mystic/studio/export?workspaceId=${workspaceId}&kind=clients`}
+            className="text-sm text-accent underline"
+          >
+            Export CSV
+          </a>
+          <button
+            type="button"
+            onClick={load}
+            disabled={loading}
+            className="text-sm text-accent underline disabled:opacity-50"
+          >
+            {loading ? 'Refreshing…' : 'Refresh'}
+          </button>
+        </div>
       </div>
+      {grantStatus ? <p className="text-sm text-accent">{grantStatus}</p> : null}
       {error ? <p className="text-sm text-danger">{error}</p> : null}
       {loading && clients.length === 0 ? <StudioLoadingRows count={4} /> : null}
       {!loading && clients.length === 0 && !error ? <MysticEmptyState variant="clients" /> : null}
@@ -143,12 +182,23 @@ export function ClientsPanel() {
                   <p className="font-medium text-ink">
                     {client.full_name ?? client.email ?? `Client ${client.user_id.slice(0, 8)}`}
                   </p>
-                  <Link
-                    href={`/studio/messages?client=${client.user_id}`}
-                    className="text-xs font-medium text-accent underline"
-                  >
-                    Message
-                  </Link>
+                  <div className="flex flex-wrap gap-2">
+                    <Link
+                      href={`/studio/messages?client=${client.user_id}`}
+                      className="text-xs font-medium text-accent underline"
+                    >
+                      Message
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setGrantUserId(grantUserId === client.user_id ? null : client.user_id)
+                      }
+                      className="text-xs font-medium text-accent underline"
+                    >
+                      Grant blowouts
+                    </button>
+                  </div>
                 </div>
                 {client.email && client.full_name ? (
                   <p className="text-sm text-muted">{client.email}</p>
@@ -166,6 +216,25 @@ export function ClientsPanel() {
                 ) : (
                   <p className="mt-1 text-xs text-muted">No referral code yet</p>
                 )}
+                {grantUserId === client.user_id ? (
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <input
+                      type="number"
+                      min={1}
+                      max={20}
+                      value={grantCount}
+                      onChange={(e) => setGrantCount(e.target.value)}
+                      className={`${mysticInput} w-16 text-xs`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => void grantCredit(client.user_id)}
+                      className={mysticStudioBtnOutline + ' text-xs'}
+                    >
+                      Add comp credits
+                    </button>
+                  </div>
+                ) : null}
                 {client.credits.length > 0 ? (
                   <ul className="mt-2 space-y-0.5 text-xs text-chalk">
                     {client.credits.map((c) => (

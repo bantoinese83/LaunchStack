@@ -11,10 +11,10 @@ export type BookingTipChoice =
   | { kind: 'customAmount'; amountCents: number };
 
 export function bookingSubtotalBeforeTip(
-  quote: Pick<BookingQuote, 'baseCents' | 'surcharges'>
+  quote: Pick<BookingQuote, 'baseCents' | 'surcharges' | 'discountCents'>
 ): number {
   const surchargeTotal = quote.surcharges.reduce((sum, line) => sum + line.amountCents, 0);
-  return quote.baseCents + surchargeTotal;
+  return quote.baseCents + surchargeTotal - (quote.discountCents ?? 0);
 }
 
 export function tipCentsFromPercent(subtotalCents: number, percent: number): number {

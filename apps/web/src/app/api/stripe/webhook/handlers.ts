@@ -65,6 +65,9 @@ export const checkoutSessionCompleted: WebhookHandler = async (event, _stripe, s
     return;
   }
 
+  const stripeCustomerId =
+    typeof session.customer === 'string' ? session.customer : (session.customer?.id ?? null);
+
   if (mysticKind === 'membership' && session.metadata?.client_user_id) {
     const workspaceId = session.metadata.workspace_id;
     const userId = session.metadata.client_user_id;
@@ -72,6 +75,7 @@ export const checkoutSessionCompleted: WebhookHandler = async (event, _stripe, s
     await supabaseAdmin.from('mystic_client_profiles').upsert({
       user_id: userId,
       workspace_id: workspaceId,
+      ...(stripeCustomerId ? { stripe_customer_id: stripeCustomerId } : {}),
       updated_at: new Date().toISOString(),
     });
     if (workspaceId && membershipId) {

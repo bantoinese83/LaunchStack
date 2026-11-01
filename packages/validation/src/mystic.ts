@@ -130,10 +130,74 @@ export const mysticCreateAppointmentSchema = z.object({
   tags: mysticAppointmentTagsSchema.optional(),
   referredByName: z.string().max(120).optional(),
   referralCode: z.string().max(16).optional(),
+  promoCode: z.string().max(32).optional(),
   clientNotes: z.string().max(1000).optional(),
   policiesAccepted: z.boolean().refine((value) => value, {
     message: 'Please accept house-call policies',
   }),
+});
+
+export const mysticStudioBookForClientSchema = mysticCreateAppointmentSchema
+  .extend({
+    clientUserId: mysticUserIdSchema,
+    policiesAccepted: z.boolean().optional(),
+  })
+  .superRefine((value, ctx) => {
+    if (value.policiesAccepted === false) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Policies must be accepted for client bookings',
+        path: ['policiesAccepted'],
+      });
+    }
+  });
+
+export const mysticGrantCreditSchema = z.object({
+  workspaceId: mysticWorkspaceIdSchema,
+  userId: mysticUserIdSchema,
+  blowoutsRemaining: z.number().int().min(1).max(50),
+  expiresAt: z.iso.datetime().optional(),
+  note: z.string().max(200).optional(),
+});
+
+export const mysticBlockedIntervalSchema = z.object({
+  workspaceId: mysticWorkspaceIdSchema,
+  startsAt: z.iso.datetime(),
+  endsAt: z.iso.datetime(),
+  reason: z.string().max(200).optional(),
+});
+
+export const mysticPromotionSchema = z
+  .object({
+    workspaceId: mysticWorkspaceIdSchema,
+    code: z.string().min(2).max(32),
+    label: z.string().max(120).optional(),
+    percentOff: z.number().int().min(1).max(100).optional(),
+    amountOffCents: z.number().int().min(1).max(50000).optional(),
+    active: z.boolean().optional(),
+    expiresAt: z.iso.datetime().optional(),
+  })
+  .superRefine((value, ctx) => {
+    if (value.percentOff == null && value.amountOffCents == null) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Set percent off or amount off',
+        path: ['percentOff'],
+      });
+    }
+  });
+
+export const mysticStudioSchedulingSchema = z.object({
+  workspaceId: mysticWorkspaceIdSchema,
+  bookingStartHour: z.number().int().min(0).max(23).optional(),
+  bookingEndHour: z.number().int().min(1).max(24).optional(),
+  slotMinutes: z.number().int().min(15).max(60).optional(),
+  weeklyHours: z.record(z.string(), z.unknown()).optional(),
+});
+
+export const mysticStudioMenuOverridesSchema = z.object({
+  workspaceId: mysticWorkspaceIdSchema,
+  menuOverrides: z.record(z.string(), z.unknown()),
 });
 
 export const mysticBlockedDateSchema = z.object({
@@ -177,6 +241,8 @@ export const mysticBlastSchema = z
     segment: z.enum(['all', 'members', 'packages', 'upcoming_week']),
     subject: z.string().max(120).optional(),
     body: z.string().min(1).max(4000),
+    /** Appends checkout instructions when set. */
+    promoCode: z.string().max(32).optional(),
   })
   .superRefine((value, ctx) => {
     if (value.channel !== 'sms' && !value.subject?.trim()) {

@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import {
   MYSTIC_CLIENT_ONBOARDING,
   MYSTIC_ONBOARDING_POLICY_SNIPPETS,
+  MYSTIC_PLANS_ACCOUNT_NUDGE,
   buildReferralBookPath,
   formatUsPhoneInput,
   stripUsPhoneDigits,
@@ -121,6 +123,16 @@ export function WelcomeClient() {
           {error}
         </p>
       ) : null}
+
+      <p className="text-center text-sm text-muted">
+        Blowouts every month?{' '}
+        <Link
+          href="/memberships"
+          className="font-medium text-accent underline-offset-4 hover:underline"
+        >
+          {MYSTIC_PLANS_ACCOUNT_NUDGE.cta}
+        </Link>
+      </p>
 
       <div className="flex flex-col gap-3 sm:flex-row">
         <MysticMagneticButton

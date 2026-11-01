@@ -154,14 +154,28 @@ export function AnalyticsPanel() {
             </button>
           ))}
         </div>
-        <button
-          type="button"
-          onClick={() => void load()}
-          disabled={loading}
-          className="shrink-0 text-sm text-accent underline disabled:opacity-50"
-        >
-          {loading ? 'Refreshing…' : 'Refresh'}
-        </button>
+        <div className="flex shrink-0 flex-wrap items-center gap-3">
+          <a
+            href={`/api/mystic/studio/export?workspaceId=${workspaceId}&kind=analytics&period=${period}`}
+            className="text-sm text-accent underline"
+          >
+            Export summary CSV
+          </a>
+          <a
+            href={`/api/mystic/studio/export?workspaceId=${workspaceId}&kind=appointments`}
+            className="text-sm text-accent underline"
+          >
+            Export visits CSV
+          </a>
+          <button
+            type="button"
+            onClick={() => void load()}
+            disabled={loading}
+            className="text-sm text-accent underline disabled:opacity-50"
+          >
+            {loading ? 'Refreshing…' : 'Refresh'}
+          </button>
+        </div>
       </div>
 
       {error ? (

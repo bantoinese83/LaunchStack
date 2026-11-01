@@ -10,6 +10,7 @@ import {
   MYSTIC_SERVICES,
   formatUsd,
   formatVisitWhen,
+  packageBuyLabel,
   type PackageId,
   type ServiceId,
 } from '@template/mystic';
@@ -206,10 +207,10 @@ export function BookSuccessClient({ appointment, refShort }: Props) {
               {checkoutError ? <p className="mt-2 text-sm text-danger">{checkoutError}</p> : null}
               <div className="mt-4 flex flex-col gap-2 sm:flex-row">
                 <MysticMagneticButton type="button" disabled={checkoutLoading} onClick={buyPackage}>
-                  {checkoutLoading ? 'Redirecting…' : 'Buy package'}
+                  {checkoutLoading ? 'Redirecting…' : packageBuyLabel(upsellPack.blowoutCount)}
                 </MysticMagneticButton>
-                <MysticMagneticLink href="/memberships" variant="secondary">
-                  Compare memberships
+                <MysticMagneticLink href="/memberships#monthly-memberships" variant="secondary">
+                  Subscribe monthly instead
                 </MysticMagneticLink>
               </div>
             </div>

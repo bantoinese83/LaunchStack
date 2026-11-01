@@ -89,11 +89,16 @@ export type BookingQuoteInput = {
   rules?: SurchargeRules;
   /** Override the studio timezone (tests / multi-market). */
   timeZone?: string;
+  /** Menu price override from studio CMS. */
+  basePriceCents?: number;
+  /** Promo discount applied to base + surcharges (not tip). */
+  discountCents?: number;
 };
 
 export type BookingQuote = {
   baseCents: number;
   surcharges: SurchargeLine[];
+  discountCents: number;
   tipCents: number;
   totalCents: number;
   durationMinutes: number;
@@ -125,16 +130,20 @@ export function computeBookingQuote(input: BookingQuoteInput): BookingQuote {
   }
 
   const tipCents = input.tipCents ?? 0;
+  const baseCents = input.basePriceCents ?? service.priceCents;
   const surchargeTotal = surcharges.reduce((sum, line) => sum + line.amountCents, 0);
+  const preDiscount = baseCents + surchargeTotal;
+  const discountCents = Math.min(preDiscount, Math.max(0, Math.round(input.discountCents ?? 0)));
   const travelBufferMinutes = input.winterBufferMode
     ? rules.winterTravelBufferMinutes
     : rules.defaultTravelBufferMinutes;
 
   return {
-    baseCents: service.priceCents,
+    baseCents,
     surcharges,
+    discountCents,
     tipCents,
-    totalCents: service.priceCents + surchargeTotal + tipCents,
+    totalCents: preDiscount - discountCents + tipCents,
     durationMinutes: service.durationMinutes,
     travelBufferMinutes,
   };

@@ -71,7 +71,7 @@ export function shouldShowBookingPlansNudge(
 }
 
 export const BOOKING_PLANS_NUDGE = {
-  title: 'Save with a plan',
-  body: 'Glow, Luxe, and prepaid blowout packages waive travel and evening fees on house calls.',
-  cta: 'View plans',
+  title: 'Member & package blowouts skip fees',
+  body: 'Subscribe monthly (Glow or Luxe) or buy a prepaid pack — credits apply automatically when you book.',
+  cta: 'Memberships & packages',
 } as const;

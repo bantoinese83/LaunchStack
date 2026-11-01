@@ -28,6 +28,7 @@ export function BlastComposer() {
   const [segment, setSegment] = useState<'all' | 'members' | 'packages' | 'upcoming_week'>('all');
   const [subject, setSubject] = useState('Mystic Hair Co.');
   const [body, setBody] = useState('');
+  const [promoCode, setPromoCode] = useState('');
   const [status, setStatus] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
   const [sending, setSending] = useState(false);
   const [history, setHistory] = useState<BlastRow[]>([]);
@@ -75,6 +76,7 @@ export function BlastComposer() {
         segment,
         subject: subject.trim() || 'Mystic Hair Co.',
         body: trimmed,
+        ...(promoCode.trim() ? { promoCode: promoCode.trim() } : {}),
       }),
     });
     const data = await res.json();
@@ -134,6 +136,15 @@ export function BlastComposer() {
             />
           </label>
         )}
+        <label className="block text-xs text-muted">
+          Promo code (optional)
+          <input
+            value={promoCode}
+            onChange={(e) => setPromoCode(e.target.value)}
+            placeholder="Appended to message for checkout"
+            className={`${mysticInput} mt-1`}
+          />
+        </label>
         <label className="block text-xs text-muted">
           Message
           <textarea

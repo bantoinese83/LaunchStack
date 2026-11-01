@@ -40,6 +40,8 @@ export type CreateAppointmentInput = {
   referredByName?: string;
   depositCents?: number;
   clientNotes?: string;
+  promoCode?: string | null;
+  discountCents?: number;
 };
 
 export class MysticAppointmentService {
@@ -111,6 +113,8 @@ export class MysticAppointmentService {
         referred_by_name: input.referredByName ?? null,
         deposit_cents: input.depositCents ?? 0,
         client_notes: input.clientNotes ?? null,
+        promo_code: input.promoCode ?? null,
+        discount_cents: input.discountCents ?? 0,
         status: 'pending',
       })
       .select('*')

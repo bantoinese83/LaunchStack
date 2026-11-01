@@ -9,6 +9,11 @@ export type MysticStudioSettingsRow = {
   deposit_cents: number;
   door_timer_minutes: number;
   referral_reward_after: number;
+  booking_start_hour?: number;
+  booking_end_hour?: number;
+  slot_minutes?: number;
+  weekly_hours?: Record<string, unknown>;
+  menu_overrides?: Record<string, unknown>;
 };
 
 export class MysticStudioService {
@@ -26,7 +31,7 @@ export class MysticStudioService {
 
   async upsertSettings(
     workspaceId: string,
-    patch: Partial<Omit<MysticStudioSettingsRow, 'workspace_id'>>
+    patch: Partial<Omit<MysticStudioSettingsRow, 'workspace_id'>> & Record<string, unknown>
   ) {
     const { data, error } = await this.supabase
       .from('mystic_studio_settings')

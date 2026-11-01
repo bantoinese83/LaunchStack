@@ -20,7 +20,7 @@ export function groupCreditsByUserId<T extends { user_id: string }>(
 export type GrantCreditInput = {
   workspaceId: string;
   userId: string;
-  sourceKind: 'membership' | 'package';
+  sourceKind: 'membership' | 'package' | 'manual';
   sourceId: string;
   blowoutsRemaining: number;
   expiresAt: string | null;

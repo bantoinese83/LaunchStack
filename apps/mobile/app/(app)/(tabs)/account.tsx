@@ -3,7 +3,11 @@ import { Pressable, StyleSheet, Switch, Text, TextInput, View } from 'react-nati
 import { useRouter } from 'expo-router';
 import { createSupabaseMobileClient } from '@template/api/mobile';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { formatUsPhoneInput, stripUsPhoneDigits } from '@template/mystic';
+import {
+  MYSTIC_PLANS_ACCOUNT_NUDGE,
+  formatUsPhoneInput,
+  stripUsPhoneDigits,
+} from '@template/mystic';
 import { NativeButton, monoLabel, roadTrip, theme } from '@template/mobile-ui';
 import { NativeProfileAvatar } from '../../../components/mystic/NativeProfileAvatar';
 import { NativeSalonLoader } from '../../../components/mystic/NativeSalonLoader';
@@ -150,7 +154,19 @@ export default function AccountTab() {
           towardNext={referralTowardNext}
         />
       ) : null}
-      {creditsSummary ? <Text style={styles.credits}>{creditsSummary}</Text> : null}
+      {creditsSummary ? (
+        <Text style={styles.credits}>{creditsSummary}</Text>
+      ) : (
+        <Pressable
+          style={styles.plansNudge}
+          onPress={() => router.push('/(app)/(tabs)/membership')}
+          accessibilityRole="button"
+        >
+          <Text style={styles.plansNudgeTitle}>{MYSTIC_PLANS_ACCOUNT_NUDGE.title}</Text>
+          <Text style={styles.plansNudgeBody}>{MYSTIC_PLANS_ACCOUNT_NUDGE.body}</Text>
+          <Text style={styles.plansNudgeCta}>{MYSTIC_PLANS_ACCOUNT_NUDGE.cta} →</Text>
+        </Pressable>
+      )}
 
       <NativeProfileAvatar
         avatarUrl={avatarUrl}
@@ -293,6 +309,23 @@ const styles = StyleSheet.create({
     borderBottomColor: theme.line,
     color: theme.chalk,
     fontSize: 13,
+  },
+  plansNudge: {
+    marginBottom: 16,
+    padding: 14,
+    borderRadius: theme.radii.lg,
+    borderWidth: 1,
+    borderColor: theme.accent,
+    backgroundColor: theme.accentSoft,
+  },
+  plansNudgeTitle: { fontSize: 15, fontWeight: '600', color: theme.ink },
+  plansNudgeBody: { marginTop: 6, fontSize: 13, lineHeight: 18, color: theme.muted },
+  plansNudgeCta: {
+    ...monoLabel,
+    marginTop: 10,
+    fontSize: 11,
+    color: theme.accent,
+    fontWeight: '600',
   },
   field: { marginBottom: 16 },
   label: { ...monoLabel, color: theme.plum, marginBottom: 6 },

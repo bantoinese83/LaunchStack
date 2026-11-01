@@ -5,12 +5,18 @@ import {
   getServiceById,
   zonedDayRangeIso,
   DEFAULT_SURCHARGE_RULES,
+  filterSlotsByBlockedIntervals,
+  resolveStudioHoursForDate,
 } from '@template/mystic';
 import { z } from 'zod';
 import { SERVICE_IDS } from '@template/mystic';
 import { firstZodIssueMessage } from '@template/validation';
 import { routeErrorResponse } from '@/lib/api/route-auth';
 import { getMysticWorkspaceId } from '@/lib/mystic/config';
+import {
+  loadStudioSettingsExtended,
+  studioSettingsToBookingHours,
+} from '@/lib/mystic/studio-booking-config';
 
 const querySchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
@@ -34,28 +40,26 @@ export async function GET(req: Request) {
     const admin = createSupabaseAdminClient();
     await new MysticAppointmentService(admin).cancelStalePending(workspaceId, 90);
 
-    const { data: blocked } = await admin
+    const settings = await loadStudioSettingsExtended(admin, workspaceId);
+    const hoursConfig = studioSettingsToBookingHours(settings);
+    const dayHours = resolveStudioHoursForDate(parsed.data.date, hoursConfig);
+    if (!dayHours) {
+      return NextResponse.json({ slots: [], closed: true, bufferMinutes: 0 });
+    }
+
+    const { data: blockedDay } = await admin
       .from('mystic_blocked_dates')
       .select('id')
       .eq('workspace_id', workspaceId)
       .eq('block_date', parsed.data.date)
       .maybeSingle();
 
-    if (blocked) {
+    if (blockedDay) {
       return NextResponse.json({ slots: [], blocked: true, bufferMinutes: 0 });
     }
 
-    const { data: settings } = await admin
-      .from('mystic_studio_settings')
-      .select('winter_buffer_enabled')
-      .eq('workspace_id', workspaceId)
-      .maybeSingle();
-
     const useWinterBuffer = parsed.data.winterBuffer ?? settings?.winter_buffer_enabled ?? false;
 
-    // Query the studio's local calendar day, not the UTC day: a 19:00 Chicago visit
-    // is 00:00Z the following day, so a UTC window silently missed evening bookings
-    // and offered their slot to the next client.
     const { from: dayStart, to: dayEnd } = zonedDayRangeIso(parsed.data.date);
 
     const { data: rows, error } = await admin
@@ -68,7 +72,6 @@ export async function GET(req: Request) {
 
     if (error) throw error;
 
-    // Keep each visit's real length — the overlap check used to assume 60 minutes.
     const booked = (rows ?? []).map((row) => ({
       start: new Date(row.starts_at as string),
       durationMinutes: row.duration_minutes ?? undefined,
@@ -77,7 +80,30 @@ export async function GET(req: Request) {
       ? DEFAULT_SURCHARGE_RULES.winterTravelBufferMinutes
       : DEFAULT_SURCHARGE_RULES.defaultTravelBufferMinutes;
 
-    const slots = buildTimeSlotsForDate(parsed.data.date, service.durationMinutes, buffer, booked);
+    let slots = buildTimeSlotsForDate(parsed.data.date, service.durationMinutes, buffer, booked, {
+      hours: {
+        startHour: dayHours.startHour,
+        endHour: dayHours.endHour,
+        slotMinutes: dayHours.slotMinutes,
+      },
+    });
+
+    const { data: blockedIntervals } = await admin
+      .from('mystic_blocked_intervals')
+      .select('starts_at, ends_at')
+      .eq('workspace_id', workspaceId)
+      .lt('starts_at', dayEnd)
+      .gt('ends_at', dayStart);
+
+    slots = filterSlotsByBlockedIntervals(
+      parsed.data.date,
+      slots,
+      service.durationMinutes,
+      (blockedIntervals ?? []).map((b) => ({
+        startsAt: b.starts_at as string,
+        endsAt: b.ends_at as string,
+      }))
+    );
 
     return NextResponse.json({ slots, bufferMinutes: buffer });
   } catch (err) {

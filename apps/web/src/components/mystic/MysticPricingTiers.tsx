@@ -1,6 +1,11 @@
 import Link from 'next/link';
 import type { MembershipId, MysticMembership, MysticPackage, PackageId } from '@template/mystic';
-import { formatUsd } from '@template/mystic';
+import {
+  MYSTIC_PLANS_SECTION_IDS,
+  formatUsd,
+  membershipSubscribeLabel,
+  packageBuyLabel,
+} from '@template/mystic';
 import { MysticMagneticButton, MysticMagneticLink } from '@/components/mystic/MysticMagneticButton';
 
 export type MysticPricingCheckout = {
@@ -21,8 +26,12 @@ type Props = {
 export function MysticPricingTiers({ memberships, packages, checkout }: Props) {
   return (
     <div className="space-y-16">
-      <div>
+      <div id={MYSTIC_PLANS_SECTION_IDS.memberships}>
         <h3 className="type-eyebrow text-muted">Monthly memberships</h3>
+        <p className="mt-2 max-w-xl text-sm text-muted">
+          Recurring clients — blowouts refresh every month; travel and evening fees waived on plan
+          visits.
+        </p>
         <ul className="mt-6 divide-y divide-line/70 border-y border-line/70">
           {memberships.map((plan) => {
             const featured = plan.id === 'luxe';
@@ -70,7 +79,7 @@ export function MysticPricingTiers({ memberships, packages, checkout }: Props) {
                       onClick={() => checkout.onMembership(plan.id)}
                       faceClassName="min-w-[9.5rem]"
                     >
-                      {loading ? 'Opening checkout…' : 'Subscribe'}
+                      {loading ? 'Opening checkout…' : membershipSubscribeLabel(plan.name)}
                     </MysticMagneticButton>
                   ) : (
                     <MysticMagneticLink href="/memberships" variant="secondary" size="sm">
@@ -84,8 +93,12 @@ export function MysticPricingTiers({ memberships, packages, checkout }: Props) {
         </ul>
       </div>
 
-      <div>
+      <div id={MYSTIC_PLANS_SECTION_IDS.packages}>
         <h3 className="type-eyebrow text-muted">Blowout packages</h3>
+        <p className="mt-2 max-w-xl text-sm text-muted">
+          New clients & gifts — prepaid blowouts to use within six months; same fee waivers when you
+          book.
+        </p>
         <ul className="mt-6 divide-y divide-line/70 border-y border-line/70">
           {packages.map((pack) => {
             const loading = checkout?.loadingId === pack.id;
@@ -117,7 +130,7 @@ export function MysticPricingTiers({ memberships, packages, checkout }: Props) {
                       onClick={() => checkout.onPackage(pack.id)}
                       faceClassName="min-w-[9.5rem]"
                     >
-                      {loading ? 'Opening checkout…' : 'Buy package'}
+                      {loading ? 'Opening checkout…' : packageBuyLabel(pack.blowoutCount)}
                     </MysticMagneticButton>
                   ) : null}
                 </div>
