@@ -16,6 +16,17 @@ import {
   type AddressSuggestion,
   formatUsd,
   formatVisitWhen,
+  formatBookingSlotLabel,
+  scheduledAtFromBookingSlot,
+  inferClientEntitlementFromCredits,
+  clientEntitlementSummary,
+  shouldShowBookingPlansNudge,
+  BOOKING_PLANS_NUDGE,
+  type MysticCreditRow,
+  bookingSubtotalBeforeTip,
+  buildTipChoiceFromUi,
+  formatTipPresetLabel,
+  resolveBookingTipCents,
   type AppointmentTagId,
   toggleAppointmentTag,
   type BookingFlowStep,
@@ -28,7 +39,7 @@ import { MysticPageIntro } from '@/components/mystic/MysticPageIntro';
 import { MysticBookStepProgress } from '@/components/mystic/book/MysticBookStepProgress';
 import { fetchGeocodedDistance } from '@/lib/mystic/client-geocode';
 import { uploadInspoPhotosForAppointment } from '@/lib/mystic/inspo-upload';
-import { MysticMagneticButton } from '@/components/mystic/MysticMagneticButton';
+import { MysticMagneticButton, MysticMagneticLink } from '@/components/mystic/MysticMagneticButton';
 import { MysticServiceIllustration } from '@/components/mystic/illustrations/MysticServiceIllustration';
 import {
   MysticAddressLookup,
@@ -57,7 +68,9 @@ export function BookFlowClient() {
   const [referredBy, setReferredBy] = useState('');
   const [referralCode, setReferralCode] = useState('');
   const [policiesAccepted, setPoliciesAccepted] = useState(false);
-  const [tipCents, setTipCents] = useState(0);
+  const [tipPreset, setTipPreset] = useState<'none' | 15 | 18 | 20 | 'custom'>('none');
+  const [customTipPercent, setCustomTipPercent] = useState('');
+  const [customTipDollars, setCustomTipDollars] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const checkoutIdempotencyKey = useRef<string | null>(null);
@@ -81,6 +94,7 @@ export function BookFlowClient() {
   } | null>(null);
   const [profilePhone, setProfilePhone] = useState<string | null | undefined>(undefined);
   const [slotsReloadToken, setSlotsReloadToken] = useState(0);
+  const [myCredits, setMyCredits] = useState<MysticCreditRow[]>([]);
 
   useEffect(() => {
     void fetch('/api/mystic/public/booking-settings')
@@ -91,6 +105,22 @@ export function BookFlowClient() {
       })
       .catch(() => setSurchargeRules(null));
   }, []);
+
+  useEffect(() => {
+    void fetch('/api/mystic/credits/mine')
+      .then((r) => (r.ok ? r.json() : { credits: [] }))
+      .then((data) => setMyCredits(Array.isArray(data.credits) ? data.credits : []))
+      .catch(() => setMyCredits([]));
+  }, []);
+
+  const inferredEntitlement = useMemo(
+    () => inferClientEntitlementFromCredits(myCredits, serviceId),
+    [myCredits, serviceId]
+  );
+
+  useEffect(() => {
+    setEntitlement(inferredEntitlement);
+  }, [inferredEntitlement]);
 
   useEffect(() => {
     void fetch('/api/mystic/client-profile')
@@ -218,21 +248,44 @@ export function BookFlowClient() {
 
   const scheduledAt = useMemo(() => {
     if (!date || !time) return null;
-    const normalized = time.length === 5 ? time : time.slice(0, 5);
-    return new Date(`${date}T${normalized}:00`);
+    const at = scheduledAtFromBookingSlot(date, time);
+    return Number.isNaN(at.getTime()) ? null : at;
   }, [date, time]);
 
-  const quote = useMemo(() => {
+  const quoteWithoutTip = useMemo(() => {
     if (!scheduledAt) return null;
     return computeBookingQuote({
       serviceId,
       scheduledAt,
       distanceMiles,
       entitlement,
-      tipCents,
+      tipCents: 0,
       rules: surchargeRules ?? undefined,
     });
-  }, [scheduledAt, serviceId, distanceMiles, entitlement, tipCents, surchargeRules]);
+  }, [scheduledAt, serviceId, distanceMiles, entitlement, surchargeRules]);
+
+  const tipSubtotalCents = quoteWithoutTip ? bookingSubtotalBeforeTip(quoteWithoutTip) : 0;
+
+  const tipCents = useMemo(() => {
+    if (!quoteWithoutTip) return 0;
+    return resolveBookingTipCents(
+      tipSubtotalCents,
+      buildTipChoiceFromUi({
+        preset: tipPreset,
+        customPercent: customTipPercent,
+        customDollars: customTipDollars,
+      })
+    );
+  }, [quoteWithoutTip, tipSubtotalCents, tipPreset, customTipPercent, customTipDollars]);
+
+  const quote = useMemo(() => {
+    if (!quoteWithoutTip) return null;
+    return {
+      ...quoteWithoutTip,
+      tipCents,
+      totalCents: tipSubtotalCents + tipCents,
+    };
+  }, [quoteWithoutTip, tipCents, tipSubtotalCents]);
 
   const distanceVerified = !geocodeBusy && Boolean(distanceNote?.includes('(auto)'));
   const distanceOutOfArea = distanceVerified && !isWithinHouseCallServiceArea(distanceMiles);
@@ -511,21 +564,40 @@ export function BookFlowClient() {
                   onClick={() => setTime(slot)}
                   className={mysticTimeChip(time === slot)}
                 >
-                  {slot}
+                  {formatBookingSlotLabel(slot)}
                 </button>
               ))}
             </div>
           ) : null}
-          <label className="block text-sm font-medium">Booking type</label>
-          <select
-            value={entitlement}
-            onChange={(e) => setEntitlement(e.target.value as typeof entitlement)}
-            className="w-full rounded-xl bg-surface px-4 py-3 text-ink outline-none focus:bg-accent-soft/40"
-          >
-            <option value="none">One-off (surcharges may apply)</option>
-            <option value="membership">Member</option>
-            <option value="package">Package holder</option>
-          </select>
+          {clientEntitlementSummary(entitlement) ? (
+            <p className="rounded-xl bg-gold-soft/60 px-4 py-3 text-sm text-ink">
+              {clientEntitlementSummary(entitlement)}
+            </p>
+          ) : shouldShowBookingPlansNudge(serviceId, entitlement) ? (
+            <div className="space-y-3 rounded-xl border border-accent/25 bg-accent-soft/50 px-4 py-3">
+              <div>
+                <p className="font-medium text-ink">{BOOKING_PLANS_NUDGE.title}</p>
+                <p className="mt-1 text-sm leading-relaxed text-muted">
+                  {BOOKING_PLANS_NUDGE.body}
+                </p>
+              </div>
+              <MysticMagneticLink href="/memberships" variant="secondary" size="sm">
+                {BOOKING_PLANS_NUDGE.cta}
+              </MysticMagneticLink>
+              <p className="text-xs text-muted">
+                You can keep booking now — fees below apply to this visit.
+              </p>
+            </div>
+          ) : serviceId !== 'blowout' ? (
+            <p className="text-sm text-muted">
+              Membership and package credits apply to blowouts only — this service is menu price
+              plus any travel or evening fees.
+            </p>
+          ) : (
+            <p className="text-sm text-muted">
+              Evening and travel fees may apply when you book outside a membership or package.
+            </p>
+          )}
           <div className="flex gap-3">
             <MysticMagneticButton
               type="button"
@@ -722,6 +794,23 @@ export function BookFlowClient() {
               },
             ]}
           />
+          {shouldShowBookingPlansNudge(serviceId, entitlement) && quote.surcharges.length > 0 ? (
+            <div className="rounded-xl border border-accent/25 bg-accent-soft/40 px-4 py-3 text-sm">
+              <p className="font-medium text-ink">{BOOKING_PLANS_NUDGE.title}</p>
+              <p className="mt-1 text-muted">
+                This visit includes travel or evening fees — members and package holders skip those
+                on blowouts.
+              </p>
+              <MysticMagneticLink
+                href="/memberships"
+                variant="secondary"
+                size="sm"
+                className="mt-3"
+              >
+                {BOOKING_PLANS_NUDGE.cta}
+              </MysticMagneticLink>
+            </div>
+          ) : null}
           <div className="rounded-2xl bg-surface p-5">
             <p className="type-eyebrow text-plum">Payment</p>
             <ul className="mt-3 space-y-2 text-sm">
@@ -736,19 +825,84 @@ export function BookFlowClient() {
                 </li>
               ))}
             </ul>
-            <label className="mt-4 block text-sm font-medium">Tip</label>
-            <select
-              value={tipCents}
-              onChange={(e) => setTipCents(Number(e.target.value))}
-              className="mt-1 w-full rounded-xl bg-paper px-4 py-2.5 text-ink outline-none"
-            >
-              <option value={0}>No tip</option>
-              <option value={1000}>$10</option>
-              <option value={1500}>$15</option>
-              <option value={2000}>$20</option>
-            </select>
+            <p className="mt-4 text-sm font-medium">Tip</p>
+            <p className="text-xs text-muted">Based on service + surcharges before tip.</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {([15, 18, 20] as const).map((percent) => (
+                <button
+                  key={percent}
+                  type="button"
+                  aria-pressed={tipPreset === percent}
+                  onClick={() => {
+                    setTipPreset(percent);
+                    setCustomTipPercent('');
+                    setCustomTipDollars('');
+                  }}
+                  className={mysticTimeChip(tipPreset === percent)}
+                >
+                  {formatTipPresetLabel(percent, tipSubtotalCents)}
+                </button>
+              ))}
+              <button
+                type="button"
+                aria-pressed={tipPreset === 'custom'}
+                onClick={() => setTipPreset('custom')}
+                className={mysticTimeChip(tipPreset === 'custom')}
+              >
+                Custom
+              </button>
+              <button
+                type="button"
+                aria-pressed={tipPreset === 'none'}
+                onClick={() => {
+                  setTipPreset('none');
+                  setCustomTipPercent('');
+                  setCustomTipDollars('');
+                }}
+                className={mysticTimeChip(tipPreset === 'none')}
+              >
+                No tip
+              </button>
+            </div>
+            {tipPreset === 'custom' ? (
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <label className="block text-sm">
+                  <span className="text-muted">Custom %</span>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={customTipPercent}
+                    onChange={(e) => {
+                      setCustomTipDollars('');
+                      setCustomTipPercent(e.target.value);
+                    }}
+                    placeholder="e.g. 22"
+                    className="mt-1 w-full rounded-xl bg-paper px-4 py-2.5 text-ink outline-none"
+                  />
+                </label>
+                <label className="block text-sm">
+                  <span className="text-muted">Or custom amount</span>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={customTipDollars}
+                    onChange={(e) => {
+                      setCustomTipPercent('');
+                      setCustomTipDollars(e.target.value);
+                    }}
+                    placeholder="e.g. 15.00"
+                    className="mt-1 w-full rounded-xl bg-paper px-4 py-2.5 text-ink outline-none"
+                  />
+                </label>
+              </div>
+            ) : null}
+            {tipCents > 0 ? (
+              <p className="mt-2 text-sm text-muted">
+                Tip total: <span className="tabular-nums text-ink">{formatUsd(tipCents)}</span>
+              </p>
+            ) : null}
             <p className="mt-3 flex justify-between gap-3 text-sm text-muted">
-              <span>Refundable hold (no-show / door timer)</span>
+              <span>Refundable booking deposit</span>
               <span className="tabular-nums">{formatUsd(depositCents)}</span>
             </p>
             <p className="mt-4 flex justify-between gap-3 rounded-xl bg-gold-soft/80 px-3 py-3 font-medium">
@@ -772,7 +926,7 @@ export function BookFlowClient() {
               <Link href="/account" className="font-medium underline underline-offset-2">
                 Account
               </Link>{' '}
-              so you get on-the-way and door-timer texts. You can still pay now.
+              so you get on-the-way and arrival texts. You can still pay now.
             </Alert>
           ) : null}
 

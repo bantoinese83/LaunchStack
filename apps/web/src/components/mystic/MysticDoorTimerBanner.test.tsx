@@ -25,7 +25,7 @@ describe('MysticDoorTimerBanner', () => {
     // the door timer unusable with a screen reader.
     expect(container.querySelector('[aria-live]')).toBeNull();
     expect(screen.getByRole('status').textContent).toBe(
-      'Door timer active — Luke is waiting at your door.'
+      'Luke is at your door — please answer when you can.'
     );
     expect(container.textContent).toContain('10:00 left');
   });
@@ -52,8 +52,8 @@ describe('MysticDoorTimerBanner', () => {
   test('renders the ended state once the timer expires', () => {
     const { container } = renderBanner(-5);
 
-    expect(screen.getByRole('status').textContent).toContain('Door timer ended');
-    expect(container.textContent).toContain('Door timer ended');
+    expect(screen.getByRole('status').textContent).toContain('Arrival window ended');
+    expect(container.textContent).toContain('Luke has left');
     expect(screen.queryByRole('progressbar')).toBeNull();
   });
 });

@@ -4,7 +4,11 @@ import type { ServiceId, SurchargeRules } from '@template/mystic';
 import type { AppointmentTagId } from '@template/mystic';
 import { fetchMysticJson } from './fetchMysticJson';
 
-const appUrl = Constants.expoConfig?.extra?.appUrl ?? process.env.EXPO_PUBLIC_APP_URL ?? '';
+const appUrl = (
+  process.env.EXPO_PUBLIC_APP_URL ??
+  Constants.expoConfig?.extra?.appUrl ??
+  ''
+).replace(/\/$/, '');
 
 export function isMysticApiConfigured() {
   return Boolean(appUrl?.trim());
@@ -199,7 +203,7 @@ export async function startMembershipCheckout(membershipId: string) {
   const res = await fetch(`${appUrl}/api/mystic/checkout/membership`, {
     method: 'POST',
     headers: await authHeaders(),
-    body: JSON.stringify({ membershipId }),
+    body: JSON.stringify({ membershipId, useMobileReturnDeepLink: true }),
   });
   return res.json();
 }
@@ -209,7 +213,7 @@ export async function startPackageCheckout(packageId: string) {
   const res = await fetch(`${appUrl}/api/mystic/checkout/package`, {
     method: 'POST',
     headers: await authHeaders(),
-    body: JSON.stringify({ packageId }),
+    body: JSON.stringify({ packageId, useMobileReturnDeepLink: true }),
   });
   return res.json();
 }

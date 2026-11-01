@@ -18,7 +18,7 @@ export default async function AccountPage() {
       <MysticPageIntro
         eyebrow="Account"
         title="Your profile"
-        description="Phone and SMS consent are required for house-call updates and door-timer texts."
+        description="Phone and SMS consent are required for house-call updates and arrival texts."
       />
       <AccountClient initialEmail={user?.email ?? null} />
     </MysticClientPage>

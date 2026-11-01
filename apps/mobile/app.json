@@ -9,7 +9,10 @@
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "co.mystichair.app"
+      "bundleIdentifier": "co.mystichair.app",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -25,12 +28,14 @@
       "policy": "appVersion"
     },
     "updates": {
-      "url": "https://u.expo.dev/00000000-0000-0000-0000-000000000000"
+      "url": "https://u.expo.dev/03a387d4-94e2-49b3-8448-2bcbda7109b8"
     },
     "extra": {
-      "appUrl": "http://localhost:3000",
+      "appUrl": "https://mystic-hair-co.vercel.app",
+      "googleMapsApiKey": "",
+      "router": {},
       "eas": {
-        "projectId": "00000000-0000-0000-0000-000000000000"
+        "projectId": "03a387d4-94e2-49b3-8448-2bcbda7109b8"
       }
     },
     "plugins": [
@@ -52,6 +57,7 @@
         }
       ],
       "expo-web-browser"
-    ]
+    ],
+    "owner": "mlabs83"
   }
 }

@@ -89,10 +89,12 @@ export const mysticClientProfileSchema = z.object({
 
 export const mysticMembershipCheckoutSchema = z.object({
   membershipId: z.enum(MEMBERSHIP_IDS),
+  useMobileReturnDeepLink: z.boolean().optional(),
 });
 
 export const mysticPackageCheckoutSchema = z.object({
   packageId: z.enum(PACKAGE_IDS),
+  useMobileReturnDeepLink: z.boolean().optional(),
 });
 
 export type MysticBookingDraftInput = z.infer<typeof mysticBookingDraftSchema>;

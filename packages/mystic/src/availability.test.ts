@@ -1,5 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { buildTimeSlotsForDate, zonedDayRangeIso, zonedTimeToUtc } from './availability';
+import {
+  buildTimeSlotsForDate,
+  formatBookingSlotLabel,
+  scheduledAtFromBookingSlot,
+  zonedDayRangeIso,
+  zonedTimeToUtc,
+} from './availability';
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -53,6 +59,23 @@ describe('buildTimeSlotsForDate', () => {
 
   it('returns no slots for a malformed date', () => {
     expect(buildTimeSlotsForDate('not-a-date', 60, 30, [])).toEqual([]);
+  });
+});
+
+describe('formatBookingSlotLabel', () => {
+  it('formats studio slots in 12-hour time', () => {
+    expect(formatBookingSlotLabel('09:00')).toBe('9 AM');
+    expect(formatBookingSlotLabel('12:00')).toBe('12 PM');
+    expect(formatBookingSlotLabel('13:30')).toBe('1:30 PM');
+    expect(formatBookingSlotLabel('20:00')).toBe('8 PM');
+  });
+});
+
+describe('scheduledAtFromBookingSlot', () => {
+  it('matches zonedTimeToUtc for the same wall clock', () => {
+    expect(scheduledAtFromBookingSlot('2026-08-01', '09:00').toISOString()).toBe(
+      zonedTimeToUtc('2026-08-01', 9, 0).toISOString()
+    );
   });
 });
 

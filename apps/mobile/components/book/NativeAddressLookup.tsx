@@ -65,6 +65,8 @@ export function NativeAddressLookup({ address, onChange, onSuggestionSelected }:
         style={styles.input}
         autoCorrect={false}
         autoCapitalize="words"
+        returnKeyType="search"
+        blurOnSubmit
       />
       {busy ? <Text style={styles.hint}>Looking up addresses…</Text> : null}
       {suggestions.length > 0 ? (

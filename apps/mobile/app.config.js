@@ -7,7 +7,10 @@ module.exports = ({ config }) => ({
   ...config,
   extra: {
     ...config.extra,
-    appUrl: process.env.EXPO_PUBLIC_APP_URL ?? config.extra?.appUrl,
+    appUrl:
+      process.env.EXPO_PUBLIC_APP_URL?.replace(/\/$/, '') ||
+      config.extra?.appUrl ||
+      'https://mystic-hair-co.vercel.app',
     googleMapsApiKey,
   },
   plugins: [

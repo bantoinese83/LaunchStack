@@ -45,7 +45,7 @@ export function NativeDoorTimerBanner({ endsAt }: { endsAt: string }) {
   return (
     <View style={[styles.box, expired ? styles.expired : urgent ? styles.urgent : styles.normal]}>
       {expired ? (
-        <Text style={styles.expiredText}>Door timer ended — message Luke if you need help.</Text>
+        <Text style={styles.expiredText}>Luke has left — message him if you still need help.</Text>
       ) : (
         <>
           <Text style={[styles.title, urgent && styles.titleUrgent]}>

@@ -1,13 +1,45 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Linking, Platform, StyleSheet, Text, View } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
 import { MYSTIC_MEMBERSHIPS, MYSTIC_PACKAGES, formatUsd } from '@template/mystic';
 import { NativeButton, monoLabel, theme } from '@template/mobile-ui';
 import { NativeScreenHeader } from '../../../components/mystic/NativeScreenHeader';
 import { NativeScreenShell } from '../../../components/mystic/NativeScreenShell';
 import { startMembershipCheckout, startPackageCheckout } from '../../../lib/mysticApi';
 
+function messageFromMembershipUrl(url: string | null): string | null {
+  if (!url || !url.includes('membership')) return null;
+  if (url.includes('success=1')) {
+    return 'Payment complete — your credits apply the next time you book a blowout.';
+  }
+  if (url.includes('canceled=1')) {
+    return 'Checkout canceled — no charge. Tap Subscribe or Buy when you are ready.';
+  }
+  return null;
+}
+
 export default function MembershipTab() {
   const [status, setStatus] = useState<string | null>(null);
+  const params = useLocalSearchParams<{ success?: string; canceled?: string }>();
+
+  const handleDeepLink = useCallback((url: string | null) => {
+    const msg = messageFromMembershipUrl(url);
+    if (msg) setStatus(msg);
+  }, []);
+
+  useEffect(() => {
+    if (params.success === '1') {
+      setStatus('Payment complete — your credits apply the next time you book a blowout.');
+    } else if (params.canceled === '1') {
+      setStatus('Checkout canceled — no charge. Tap Subscribe or Buy when you are ready.');
+    }
+  }, [params.success, params.canceled]);
+
+  useEffect(() => {
+    void Linking.getInitialURL().then(handleDeepLink);
+    const sub = Linking.addEventListener('url', ({ url }) => handleDeepLink(url));
+    return () => sub.remove();
+  }, [handleDeepLink]);
 
   async function subscribe(id: string) {
     try {
@@ -46,6 +78,11 @@ export default function MembershipTab() {
           <Text style={styles.detail}>
             {plan.blowoutsPerMonth} blowouts · extras {formatUsd(plan.extraBlowoutCents)}
           </Text>
+          <NativeButton
+            title={`Subscribe — ${plan.name}`}
+            onPress={() => subscribe(plan.id)}
+            style={styles.cardCta}
+          />
         </View>
       ))}
       <Text style={styles.section}>Packages</Text>
@@ -58,15 +95,11 @@ export default function MembershipTab() {
           <NativeButton title="Buy" variant="outline" onPress={() => buyPackage(pack.id)} />
         </View>
       ))}
-      {MYSTIC_MEMBERSHIPS.map((plan) => (
-        <NativeButton
-          key={`btn-${plan.id}`}
-          title={`Subscribe — ${plan.name}`}
-          onPress={() => subscribe(plan.id)}
-          style={styles.cta}
-        />
-      ))}
-      {status ? <Text style={styles.status}>{status}</Text> : null}
+      {status ? (
+        <Text style={styles.status} accessibilityRole="alert">
+          {status}
+        </Text>
+      ) : null}
     </NativeScreenShell>
   );
 }
@@ -95,6 +128,6 @@ const styles = StyleSheet.create({
   },
   packTitle: { color: theme.ink },
   packPrice: { fontWeight: '600', color: theme.ink },
-  cta: { marginTop: 12 },
-  status: { marginTop: 12, color: theme.muted, fontSize: 13 },
+  cardCta: { marginTop: 14 },
+  status: { marginTop: 12, color: theme.plum, fontSize: 14, lineHeight: 20 },
 });

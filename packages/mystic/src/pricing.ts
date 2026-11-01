@@ -1,5 +1,6 @@
 import type { ServiceId } from './catalog';
 import { getServiceById } from './catalog';
+import { formatStudioHourLabel } from './availability';
 
 /** Studio timezone — Mystic runs Chicago house calls. */
 export const MYSTIC_STUDIO_TIME_ZONE = 'America/Chicago';
@@ -108,7 +109,7 @@ export function computeBookingQuote(input: BookingQuoteInput): BookingQuote {
   if (!exempt && zonedHour(input.scheduledAt, input.timeZone) >= rules.eveningStartHour) {
     surcharges.push({
       code: 'evening',
-      label: `After ${rules.eveningStartHour}:00 house call`,
+      label: `After ${formatStudioHourLabel(rules.eveningStartHour)} house call`,
       amountCents: rules.eveningSurchargeCents,
     });
   }

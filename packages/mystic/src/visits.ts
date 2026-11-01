@@ -2,7 +2,7 @@
 export const VISIT_STATUS_LABEL: Record<string, string> = {
   pending: 'Complete payment',
   stylist_en_route: 'Luke is on the way',
-  door_timer_active: 'Door timer — please answer',
+  door_timer_active: 'Luke is at your door',
   confirmed: 'Confirmed',
   completed: 'Completed',
   canceled: 'Canceled',
@@ -68,13 +68,13 @@ export function doorTimerTone(remainingSeconds: number): DoorTimerTone {
 export function doorTimerAnnouncement(remainingSeconds: number): string {
   switch (doorTimerTone(remainingSeconds)) {
     case 'expired':
-      return 'Door timer ended. Message Luke if you still need help.';
+      return 'Arrival window ended. Message Luke if you still need help.';
     case 'final':
-      return 'Less than 30 seconds left on the door timer. Please answer the door.';
+      return 'Less than 30 seconds left — please answer the door.';
     case 'urgent':
-      return 'About 2 minutes left on the door timer. Please answer the door.';
+      return 'About 2 minutes left — please answer the door.';
     default:
-      return 'Door timer active — Luke is waiting at your door.';
+      return 'Luke is at your door — please answer when you can.';
   }
 }
 

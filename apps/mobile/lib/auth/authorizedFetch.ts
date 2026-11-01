@@ -1,7 +1,11 @@
 import Constants from 'expo-constants';
 import { createSupabaseMobileClient } from '@template/api/mobile';
 
-const appUrl = Constants.expoConfig?.extra?.appUrl ?? process.env.EXPO_PUBLIC_APP_URL ?? '';
+const appUrl = (
+  process.env.EXPO_PUBLIC_APP_URL ??
+  Constants.expoConfig?.extra?.appUrl ??
+  ''
+).replace(/\/$/, '');
 
 export async function authorizedFetch(path: string, init: RequestInit = {}) {
   if (!appUrl) throw new Error('EXPO_PUBLIC_APP_URL not set');

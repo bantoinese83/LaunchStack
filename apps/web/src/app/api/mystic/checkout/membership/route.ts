@@ -40,12 +40,15 @@ export async function POST(req: Request) {
       );
     }
 
+    const mobileReturn = parsed.data.useMobileReturnDeepLink === true;
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
       customer_email: auth.user.email ?? undefined,
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${appUrl}/memberships/success?plan=${plan.id}`,
-      cancel_url: `${appUrl}/memberships`,
+      success_url: mobileReturn
+        ? `mystichair://membership?success=1&kind=membership&id=${plan.id}`
+        : `${appUrl}/memberships/success?plan=${plan.id}`,
+      cancel_url: mobileReturn ? 'mystichair://membership?canceled=1' : `${appUrl}/memberships`,
       metadata: {
         mystic_kind: 'membership',
         membership_id: plan.id,

@@ -1,7 +1,11 @@
 import Constants from 'expo-constants';
 import { createSupabaseMobileClient } from '@template/api/mobile';
 
-const appUrl = Constants.expoConfig?.extra?.appUrl ?? process.env.EXPO_PUBLIC_APP_URL ?? '';
+const appUrl = (
+  process.env.EXPO_PUBLIC_APP_URL ??
+  Constants.expoConfig?.extra?.appUrl ??
+  ''
+).replace(/\/$/, '');
 
 async function authHeaders(json = true): Promise<HeadersInit> {
   const supabase = createSupabaseMobileClient();

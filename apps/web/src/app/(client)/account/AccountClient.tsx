@@ -229,7 +229,7 @@ export function AccountClient({ initialEmail }: { initialEmail: string | null })
         />
       </label>
       <label className="type-eyebrow block text-plum">
-        Mobile (SMS for en route & door timer)
+        Mobile (SMS for on-the-way & arrival updates)
         <input
           type="tel"
           className={mysticInput}
@@ -260,7 +260,7 @@ export function AccountClient({ initialEmail }: { initialEmail: string | null })
             onChange={(e) => setForm({ ...form, marketingSms: e.target.checked })}
           />
           <span>
-            Text me appointment updates (on the way, door timer, confirmations). Turn off anytime.
+            Text me appointment updates (on the way, arrival, confirmations). Turn off anytime.
           </span>
         </label>
         <label className="flex items-start gap-2 text-sm">

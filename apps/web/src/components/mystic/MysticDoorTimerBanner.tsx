@@ -55,9 +55,7 @@ export function MysticDoorTimerBanner({ endsAt }: { endsAt: string }) {
       }`}
     >
       {expired ? (
-        <p className="text-sm text-danger">
-          Door timer ended — message Luke if you still need help.
-        </p>
+        <p className="text-sm text-danger">Luke has left — message him if you still need help.</p>
       ) : (
         <>
           <p className={`text-sm font-medium ${urgent ? 'text-danger' : 'text-chalk'}`}>

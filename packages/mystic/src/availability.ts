@@ -91,6 +91,46 @@ function formatHhMm(minutesFromMidnight: number): string {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 }
 
+/** Parse a studio wall-clock slot (`HH:mm`) from availability API. */
+export function parseBookingSlotHhMm(slotHhMm: string): { hour: number; minute: number } | null {
+  const match = /^(\d{1,2}):(\d{2})$/.exec(slotHhMm.trim());
+  if (!match) return null;
+  const hour = Number.parseInt(match[1], 10);
+  const minute = Number.parseInt(match[2], 10);
+  if (!Number.isFinite(hour) || !Number.isFinite(minute) || hour > 23 || minute > 59) return null;
+  return { hour, minute };
+}
+
+/** 12-hour label for booking chips (studio local time). */
+export function formatBookingSlotLabel(slotHhMm: string): string {
+  const parsed = parseBookingSlotHhMm(slotHhMm);
+  if (!parsed) return slotHhMm;
+  const { hour, minute } = parsed;
+  const period = hour >= 12 ? 'PM' : 'AM';
+  const h12 = hour % 12 || 12;
+  if (minute === 0) return `${h12} ${period}`;
+  return `${h12}:${String(minute).padStart(2, '0')} ${period}`;
+}
+
+/** Instant for checkout/pricing — always Chicago wall clock, not the device timezone. */
+export function scheduledAtFromBookingSlot(
+  dateIso: string,
+  slotHhMm: string,
+  timeZone: string = MYSTIC_STUDIO_TIME_ZONE
+): Date {
+  const parsed = parseBookingSlotHhMm(slotHhMm);
+  if (!parsed) return new Date(Number.NaN);
+  return zonedTimeToUtc(dateIso, parsed.hour, parsed.minute, timeZone);
+}
+
+/** Client-facing hour label (e.g. surcharge copy). */
+export function formatStudioHourLabel(hour24: number): string {
+  const h = ((hour24 % 24) + 24) % 24;
+  const period = h >= 12 ? 'PM' : 'AM';
+  const h12 = h % 12 || 12;
+  return `${h12} ${period}`;
+}
+
 export function buildTimeSlotsForDate(
   dateIso: string,
   durationMinutes: number,

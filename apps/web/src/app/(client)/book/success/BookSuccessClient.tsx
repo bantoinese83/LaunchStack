@@ -92,7 +92,7 @@ export function BookSuccessClient({ appointment, refShort }: Props) {
               You&apos;re on the books
             </h1>
             <p className="mt-4 text-muted">
-              Luke will see you soon. Check SMS and email for door-timer and on-the-way updates.
+              Luke will see you soon. Check SMS and email for on-the-way and arrival updates.
               {refShort ? (
                 <>
                   <br />

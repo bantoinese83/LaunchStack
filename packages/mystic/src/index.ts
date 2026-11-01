@@ -9,6 +9,8 @@ export * from './geo';
 export * from './shop';
 export * from './visits';
 export * from './booking-flow';
+export * from './booking-entitlement';
+export * from './booking-tips';
 export * from './booking-limits';
 export * from './empty-states';
 export * from './studio-board';
