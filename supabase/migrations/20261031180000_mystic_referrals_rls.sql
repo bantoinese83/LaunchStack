@@ -12,6 +12,8 @@ CREATE POLICY mystic_referrals_insert ON public.mystic_referrals
     )
   );
 
+DROP POLICY IF EXISTS mystic_referrals_update ON public.mystic_referrals;
+
 CREATE POLICY mystic_referrals_update ON public.mystic_referrals
   FOR UPDATE
   USING (
