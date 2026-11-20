@@ -1,10 +1,9 @@
-# Door timer expiry runs every 5 min (Vercel Hobby only allows daily crons).
-# Repo secrets: CRON_SECRET, MYSTIC_APP_URL (e.g. https://mystic-hair-co.vercel.app)
+# Door timer expiry — schedule removed Nov 20, 2026 (was every 5 min and failing,
+# burning Actions minutes and flooding email). Run manually via workflow_dispatch
+# or move to Vercel/Supabase cron. Secrets: CRON_SECRET, MYSTIC_APP_URL.
 name: Mystic door timer cron
 
 on:
-  schedule:
-    - cron: '*/5 * * * *'
   workflow_dispatch:
 
 jobs:
